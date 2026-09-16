@@ -1,6 +1,12 @@
 package com.nihongoquest.server;
 
 import com.nihongoquest.common.Protocol;
+import com.nihongoquest.server.db.Database;
+import com.nihongoquest.server.db.PlayerRepository;
+
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 /**
  * GameServer là entry point phía Server.
@@ -12,11 +18,14 @@ public class GameServer {
 
     private MatchmakingManager matchmakingManager;
     private QuestionManager questionManager;
-    private boolean running;
+    private final PlayerRepository playerRepository;
+    private volatile boolean running;
+    private ServerSocket serverSocket;
 
     public GameServer() {
-        this.matchmakingManager = new MatchmakingManager();
         this.questionManager = new QuestionManager();
+        this.matchmakingManager = new MatchmakingManager(questionManager);
+        this.playerRepository = new PlayerRepository(new Database());
         this.running = false;
     }
 
@@ -25,10 +34,24 @@ public class GameServer {
      * TODO: Tạo ServerSocket, vòng lặp accept(), tạo ClientHandler cho mỗi kết nối.
      */
     public void start(int port) {
+        questionManager.loadQuestions();
         running = true;
-        System.out.println("TODO: GameServer lắng nghe tại cổng " + port);
-        // TODO: ServerSocket serverSocket = new ServerSocket(port);
-        // TODO: while (running) { Socket clientSocket = serverSocket.accept(); ... }
+        try {
+            serverSocket = new ServerSocket(port);
+            System.out.println("GameServer đang lắng nghe tại cổng " + port);
+            while (running) {
+                Socket clientSocket = serverSocket.accept();
+                ClientHandler handler = new ClientHandler(
+                        clientSocket, matchmakingManager, playerRepository);
+                new Thread(handler, "client-" + clientSocket.getRemoteSocketAddress()).start();
+            }
+        } catch (IOException e) {
+            if (running) {
+                throw new IllegalStateException("Không thể chạy GameServer", e);
+            }
+        } finally {
+            running = false;
+        }
     }
 
     /**
@@ -37,7 +60,14 @@ public class GameServer {
      */
     public void stop() {
         running = false;
-        System.out.println("TODO: Dừng GameServer");
+        if (serverSocket != null) {
+            try {
+                serverSocket.close();
+            } catch (IOException ignored) {
+                // Server đang dừng.
+            }
+        }
+        System.out.println("Đã dừng GameServer");
     }
 
     public MatchmakingManager getMatchmakingManager() {

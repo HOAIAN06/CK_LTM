@@ -1,7 +1,12 @@
 package com.nihongoquest.server;
 
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import com.nihongoquest.common.Message;
+import com.nihongoquest.common.MessageType;
+
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Objects;
+import java.util.UUID;
 
 /**
  * MatchmakingManager quản lý hàng chờ tìm trận.
@@ -14,41 +19,114 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 public class MatchmakingManager {
 
-    // Hàng chờ tìm trận — ConcurrentLinkedQueue an toàn khi nhiều thread cùng truy cập.
-    private final Queue<ClientHandler> waitingQueue;
+    private final Deque<ClientHandler> waitingQueue;
+    private final QuestionManager questionManager;
 
     public MatchmakingManager() {
-        this.waitingQueue = new ConcurrentLinkedQueue<>();
+        this(createLoadedQuestionManager());
+    }
+
+    public MatchmakingManager(QuestionManager questionManager) {
+        this.waitingQueue = new ArrayDeque<>();
+        this.questionManager = Objects.requireNonNull(questionManager);
     }
 
     /**
      * Thêm Client vào hàng chờ tìm trận.
      * TODO: Nếu đủ 2 người thì tạo GameRoom và thông báo MATCH_FOUND.
      */
-    public void enqueue(ClientHandler client) {
-        waitingQueue.offer(client);
-        System.out.println("TODO: Thêm Client vào hàng chờ. Hiện có: " + waitingQueue.size());
-        // TODO: tryCreateMatch();
+    public synchronized void enqueue(ClientHandler client) {
+        if (!client.isAuthenticated()) {
+            client.send(new Message(MessageType.MATCH_ERROR, "NOT_AUTHENTICATED"));
+            return;
+        }
+        if (client.getCurrentRoom() != null) {
+            client.send(new Message(MessageType.MATCH_ERROR, "ALREADY_MATCHED"));
+            return;
+        }
+        if (client.isQueued()) {
+            client.send(new Message(MessageType.MATCH_ERROR, "ALREADY_WAITING"));
+            return;
+        }
+
+        waitingQueue.offerLast(client);
+        client.setQueued(true);
+        client.send(new Message(MessageType.WAITING, ""));
+        System.out.println(client.getUsername() + " đã vào hàng chờ. Hiện có: "
+                + waitingQueue.size());
+        tryCreateMatch();
     }
 
     /**
      * Gỡ Client khỏi hàng chờ (khi hủy tìm trận hoặc disconnect).
      */
-    public void dequeue(ClientHandler client) {
-        waitingQueue.remove(client);
-        System.out.println("TODO: Gỡ Client khỏi hàng chờ. Còn lại: " + waitingQueue.size());
+    public synchronized void dequeue(ClientHandler client) {
+        if (client.getCurrentRoom() != null) {
+            client.send(new Message(MessageType.MATCH_ERROR, "ALREADY_MATCHED"));
+            return;
+        }
+        removeFromQueue(client);
+        client.send(new Message(MessageType.MATCH_CANCELLED, ""));
     }
 
     /**
      * Thử ghép cặp khi đủ 2 Client trong hàng chờ.
      * TODO: Lấy 2 Client, tạo GameRoom, gửi MATCH_FOUND.
      */
-    public void tryCreateMatch() {
-        // TODO: if (waitingQueue.size() >= 2) { ... new GameRoom(...) }
-        System.out.println("TODO: tryCreateMatch");
+    public synchronized void tryCreateMatch() {
+        while (true) {
+            ClientHandler player1 = pollValidClient();
+            if (player1 == null) {
+                return;
+            }
+            ClientHandler player2 = pollValidClient();
+            if (player2 == null) {
+                waitingQueue.addFirst(player1);
+                return;
+            }
+
+            player1.setQueued(false);
+            player2.setQueued(false);
+            GameRoom room = new GameRoom(
+                    UUID.randomUUID().toString(), player1, player2,
+                    questionManager.getQuestions());
+            System.out.println("Đã tạo room " + room.getRoomId() + ": "
+                    + player1.getUsername() + " vs " + player2.getUsername());
+            room.start();
+        }
     }
 
-    public int getWaitingCount() {
+    public synchronized void disconnect(ClientHandler client) {
+        removeFromQueue(client);
+    }
+
+    private ClientHandler pollValidClient() {
+        while (!waitingQueue.isEmpty()) {
+            ClientHandler client = waitingQueue.pollFirst();
+            if (client.isConnected() && client.isAuthenticated()
+                    && client.getCurrentRoom() == null) {
+                return client;
+            }
+            client.setQueued(false);
+        }
+        return null;
+    }
+
+    private void removeFromQueue(ClientHandler client) {
+        if (waitingQueue.remove(client)) {
+            client.setQueued(false);
+            System.out.println(client.getUsername()
+                    + " đã rời hàng chờ. Còn lại: " + waitingQueue.size());
+        }
+    }
+
+    public synchronized int getWaitingCount() {
         return waitingQueue.size();
+    }
+
+    private static QuestionManager createLoadedQuestionManager() {
+        QuestionManager manager = new QuestionManager();
+        manager.loadQuestions();
+        return manager;
     }
 }

@@ -325,10 +325,26 @@ Không nên để một người tự ý thay đổi vì sẽ ảnh hưởng c�
 | ANSWER        | Client → Server | Client gửi đáp án   |
 | ANSWER_RESULT | Server → Client | Kết quả đáp án      |
 | SCORE_UPDATE  | Server → Client | Cập nhật điểm       |
+| PLAYER_FINISHED | Server → Client | Người chơi đã hoàn thành, chờ đối thủ |
 | GAME_OVER     | Server → Client | Kết thúc trận       |
 | DISCONNECT    | Hai chiều       | Ngắt kết nối        |
 
-> Đây mới chỉ là **protocol dự kiến**, chưa cần triển khai toàn bộ ở task hiện tại (skeleton).
+Payload gameplay dùng chung:
+
+| Message | Payload |
+| ------- | ------- |
+| `QUESTION` | `round\|totalQuestions\|durationSeconds\|text\|answer0\|answer1\|answer2\|answer3` (round bắt đầu từ 0, không gửi đáp án đúng) |
+| `ANSWER` | `answerIndex` (0–3) |
+| `ANSWER_RESULT` | `correct\|chosenIndex\|correctIndex`; `chosenIndex = -1` khi hết giờ |
+| `SCORE_UPDATE` | `myScore\|opponentScore` |
+| `PLAYER_FINISHED` | Payload rỗng |
+| `GAME_OVER` | `result\|myScore\|opponentScore`, với result là `WIN`, `LOSE` hoặc `DRAW` |
+
+Mỗi người tiến qua các câu độc lập, không cần đợi đối thủ trả lời. Mỗi câu có
+30 giây do Server kiểm soát bằng deadline riêng. Client chỉ hiển thị thanh thời
+gian và phản hồi từ Server, không tự chấm hoặc tự chuyển câu. Hết giờ được tính
+là sai; Server trả đáp án đúng rồi gửi câu tiếp sau 1,5 giây. Mỗi câu đúng được
+1 điểm, không trừ điểm. `GAME_OVER` chỉ được gửi khi cả hai đã hoàn thành.
 
 Cổng mặc định: `Protocol.DEFAULT_PORT = 5000`.
 
@@ -410,7 +426,9 @@ mvn exec:java -Dexec.mainClass="com.nihongoquest.server.GameServer"
 
 Hoặc chạy `GameServer.main` từ IDE.
 
-> Hiện tại Server chỉ là skeleton (in ra TODO), chưa mở `ServerSocket` thật.
+Server hiện đã mở TCP Socket thật và xử lý đăng ký/đăng nhập qua Supabase.
+Trước khi chạy, sao chép `src/main/resources/db.properties.example` thành
+`db.properties` và điền cấu hình database.
 
 ---
 
@@ -423,14 +441,60 @@ Hoặc chạy `GameServer.main` từ IDE.
 - FXML + CSS cơ bản
 - `questions.json` demo
 - README kiến trúc cho 2 thành viên
-- `ClientApp` mở được `home.fxml`
+- TCP Server/Client cơ bản
+- Đăng ký, đăng nhập và đọc hồ sơ từ Supabase
+- `ClientApp` mở màn đăng nhập trước khi vào Home
+- Matchmaking TCP 1v1, hủy hàng chờ và chuyển sang Battle
+- Gameplay 1v1 gồm gửi câu hỏi, Server chấm đáp án, cập nhật điểm và kết thúc trận
+- Feedback đáp án xanh/đỏ và màn Result thắng, thua hoặc hòa
 
 ### Chưa làm (cố ý)
 
-- TCP gameplay hoàn chỉnh
-- Login / register / database
 - Rank, coin, shop, inventory, AI
 - WebSocket, UDP, P2P
-- Animation, sound, chat, friend system
+- Sound, chat, friend system
 
 Ưu tiên của giai đoạn này: **cấu trúc sạch, dễ hiểu, tài liệu rõ** — không over-engineer.
+
+---
+
+## 13. Cách kiểm tra hai người chơi đã ghép trận
+
+Matchmaking đã hoạt động qua TCP. Kiểm thử bằng quy trình sau:
+
+1. Chạy một `GameServer`.
+2. Mở hai terminal và chạy `mvn javafx:run` ở mỗi terminal để có hai cửa sổ Client.
+3. Đăng nhập bằng hai tài khoản khác nhau, ví dụ `player_a` và `player_b`.
+4. Ở cả hai cửa sổ, bấm **TÌM TRẬN**.
+5. Kiểm tra log Server phải lần lượt cho biết:
+   - `player_a đã vào hàng chờ`;
+   - `player_b đã vào hàng chờ`;
+   - `Đã tạo room <roomId>: player_a vs player_b`.
+6. Kiểm tra cả hai Client đều nhận `MATCH_FOUND`, hiển thị đúng tên đối thủ
+   và chuyển sang màn Battle. `roomId` chỉ dùng nội bộ, không hiển thị cho người chơi.
+
+Khi chỉ có một người tìm trận, màn hình hiển thị vòng tròn đang tải. Bấm
+**HỦY TÌM TRẬN** phải quay về Home; log Server phải cho biết người đó đã
+rời hàng chờ. Đóng Client trong lúc chờ cũng phải xóa người chơi khỏi queue.
+
+Chỉ xem hai tài khoản tồn tại trong database **không chứng minh đã ghép trận**.
+Ghép trận chỉ thành công khi Server đã tạo room và cả hai kết nối TCP nhận
+`MATCH_FOUND` có cùng `roomId`.
+
+---
+
+## 14. Cách kiểm tra trận đấu câu hỏi
+
+1. Ghép hai Client vào cùng một trận theo mục 13.
+2. Kiểm tra hai bên cùng nhận 3 câu hỏi từ `questions.json`.
+3. Mỗi bên chọn một đáp án. Nút đáp án đúng phải chuyển xanh; nếu chọn sai,
+   nút đã chọn chuyển đỏ đồng thời đáp án đúng chuyển xanh.
+4. Một người trả lời trước phải nhận câu tiếp theo sau 1,5 giây mà không cần
+   đợi người còn lại; hai Client có thể đang ở hai câu khác nhau.
+5. Mỗi đáp án đúng cộng 1 điểm, đáp án sai không trừ điểm.
+6. Để một Client không chọn đáp án: thanh thời gian phải giảm từ 30 giây về 0,
+   các nút bị khóa và Server trả timeout cùng đáp án đúng.
+7. Người hoàn thành trước phải thấy “Đang chờ đối thủ hoàn thành”.
+8. Sau khi cả hai hoàn thành, hai Client chuyển sang Result với kết quả tương ứng
+   `CHIẾN THẮNG`, `THẤT BẠI` hoặc `HÒA` và điểm theo góc nhìn của từng người.
+9. Bấm **VỀ TRANG CHỦ** phải quay lại Home.

@@ -1,9 +1,12 @@
 package com.nihongoquest.client.controller;
 
+import com.nihongoquest.client.ClientApp;
+import com.nihongoquest.client.model.Player;
+import com.nihongoquest.client.network.GameClient;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
-import javafx.scene.control.TextField;
+import javafx.scene.control.Label;
 
 /**
  * HomeController xử lý màn hình chính (home.fxml).
@@ -13,10 +16,33 @@ import javafx.scene.control.TextField;
 public class HomeController {
 
     @FXML
-    private TextField usernameField;
-
+    private Label usernameLabel;
+    @FXML
+    private Label winsLabel;
+    @FXML
+    private Label lossesLabel;
+    @FXML
+    private Label questionsLabel;
+    @FXML
+    private Label correctAnswersLabel;
     @FXML
     private Button findMatchButton;
+
+    private GameClient gameClient;
+    private Player player;
+    private ClientApp app;
+
+    public void setSession(ClientApp app, GameClient gameClient, Player player) {
+        this.app = app;
+        this.gameClient = gameClient;
+        this.player = player;
+        gameClient.setMessageHandler(message -> { });
+        usernameLabel.setText("Người chơi: " + player.getUsername());
+        winsLabel.setText("Số trận thắng: " + player.getWins());
+        lossesLabel.setText("Số trận thua: " + player.getLosses());
+        questionsLabel.setText("Số câu đã trả lời: " + player.getQuestionsAnswered());
+        correctAnswersLabel.setText("Số câu trả lời đúng: " + player.getCorrectAnswers());
+    }
 
     /**
      * Xử lý khi người dùng bấm "TÌM TRẬN".
@@ -24,8 +50,7 @@ public class HomeController {
      */
     @FXML
     private void onFindMatch(ActionEvent event) {
-        String username = usernameField != null ? usernameField.getText() : "";
-        System.out.println("TODO: Tìm trận với username = " + username);
-        // TODO: Không viết new Socket(...) tại đây — phải gọi GameClient.
+        findMatchButton.setDisable(true);
+        app.showMatchmaking();
     }
 }

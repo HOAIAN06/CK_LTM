@@ -1,10 +1,19 @@
 package com.nihongoquest.client;
 
+import com.nihongoquest.client.controller.BattleController;
+import com.nihongoquest.client.controller.HomeController;
+import com.nihongoquest.client.controller.LoginController;
+import com.nihongoquest.client.controller.MatchmakingController;
+import com.nihongoquest.client.controller.ResultController;
+import com.nihongoquest.client.model.Player;
+import com.nihongoquest.client.network.GameClient;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+
+import java.io.IOException;
 
 /**
  * ClientApp là entry point của ứng dụng JavaFX phía Client.
@@ -13,21 +22,97 @@ import javafx.stage.Stage;
  */
 public class ClientApp extends Application {
 
-    @Override
-    public void start(Stage primaryStage) throws Exception {
-        FXMLLoader loader = new FXMLLoader(
-                getClass().getResource("/fxml/home.fxml")
-        );
-        Parent root = loader.load();
+    private Stage primaryStage;
+    private final GameClient gameClient = new GameClient();
+    private Player currentPlayer;
 
+    @Override
+    public void start(Stage primaryStage) throws IOException {
+        this.primaryStage = primaryStage;
+        primaryStage.setTitle("NihongoQuest");
+        showLogin();
+        primaryStage.show();
+    }
+
+    public void showLogin() throws IOException {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
+        Parent root = loader.load();
+        LoginController controller = loader.getController();
+        controller.setApp(this, gameClient);
+        setScene(root);
+    }
+
+    public void showHome(Player player) {
+        currentPlayer = player;
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/home.fxml"));
+            Parent root = loader.load();
+            HomeController controller = loader.getController();
+            controller.setSession(this, gameClient, player);
+            setScene(root);
+        } catch (IOException e) {
+            throw new IllegalStateException("Không thể mở màn hình Home", e);
+        }
+    }
+
+    public void showHome() {
+        if (currentPlayer == null) {
+            throw new IllegalStateException("Chưa có người chơi đăng nhập");
+        }
+        showHome(currentPlayer);
+    }
+
+    public void showMatchmaking() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/fxml/matchmaking.fxml"));
+            Parent root = loader.load();
+            MatchmakingController controller = loader.getController();
+            controller.setSession(this, gameClient, currentPlayer);
+            setScene(root);
+            controller.startSearch();
+        } catch (IOException e) {
+            throw new IllegalStateException("Không thể mở màn hình tìm trận", e);
+        }
+    }
+
+    public void showBattle(String roomId, String opponentUsername) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/battle.fxml"));
+            Parent root = loader.load();
+            BattleController controller = loader.getController();
+            controller.setSession(this, gameClient, currentPlayer, roomId, opponentUsername);
+            setScene(root);
+        } catch (IOException e) {
+            throw new IllegalStateException("Không thể mở màn hình Battle", e);
+        }
+    }
+
+    public void showResult(String result, int myScore, int opponentScore,
+                           String opponentUsername) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/result.fxml"));
+            Parent root = loader.load();
+            ResultController controller = loader.getController();
+            controller.setResult(
+                    this, result, myScore, opponentScore, opponentUsername);
+            setScene(root);
+        } catch (IOException e) {
+            throw new IllegalStateException("Không thể mở màn hình Result", e);
+        }
+    }
+
+    private void setScene(Parent root) {
         Scene scene = new Scene(root, 800, 600);
         scene.getStylesheets().add(
                 getClass().getResource("/css/style.css").toExternalForm()
         );
-
-        primaryStage.setTitle("NihongoQuest");
         primaryStage.setScene(scene);
-        primaryStage.show();
+    }
+
+    @Override
+    public void stop() {
+        gameClient.disconnect();
     }
 
     public static void main(String[] args) {

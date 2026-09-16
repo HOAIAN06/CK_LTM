@@ -34,5 +34,18 @@ public class Message {
         this.payload = payload;
     }
 
-    // TODO: Thêm phương thức serialize/deserialize khi thống nhất format gửi qua Socket.
+    public String toWire() {
+        return type.name() + Protocol.SEPARATOR + (payload == null ? "" : payload);
+    }
+
+    public static Message fromWire(String line) {
+        if (line == null || line.isBlank()) {
+            throw new IllegalArgumentException("Message rỗng");
+        }
+
+        String[] parts = line.split("\\" + Protocol.SEPARATOR, 2);
+        MessageType type = MessageType.valueOf(parts[0]);
+        String payload = parts.length == 2 ? parts[1] : "";
+        return new Message(type, payload);
+    }
 }

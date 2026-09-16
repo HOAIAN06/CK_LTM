@@ -1,5 +1,6 @@
 package com.nihongoquest.client.controller;
 
+import com.nihongoquest.client.ClientApp;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -10,6 +11,8 @@ import javafx.scene.control.Label;
  * Hiển thị thắng/thua, điểm và tên đối thủ theo dữ liệu Server gửi về.
  */
 public class ResultController {
+
+    private ClientApp app;
 
     @FXML
     private Label resultLabel;
@@ -23,28 +26,21 @@ public class ResultController {
     @FXML
     private Button homeButton;
 
-    /**
-     * Quay lại màn hình Home.
-     * TODO: Load home.fxml.
-     */
     @FXML
     private void onBackHome(ActionEvent event) {
-        System.out.println("TODO: Về trang chủ");
+        app.showHome();
     }
 
-    /**
-     * Cập nhật UI kết quả từ dữ liệu Server.
-     * TODO: Gọi sau khi nhận GAME_OVER.
-     */
-    public void showResult(String resultText, int myScore, int opponentScore, String opponentName) {
-        if (resultLabel != null) {
-            resultLabel.setText(resultText);
-        }
-        if (scoreLabel != null) {
-            scoreLabel.setText(myScore + " - " + opponentScore);
-        }
-        if (opponentLabel != null) {
-            opponentLabel.setText(opponentName);
-        }
+    public void setResult(ClientApp app, String result, int myScore,
+                          int opponentScore, String opponentName) {
+        this.app = app;
+        resultLabel.setText(switch (result) {
+            case "WIN" -> "CHIẾN THẮNG";
+            case "LOSE" -> "THẤT BẠI";
+            case "DRAW" -> "HÒA";
+            default -> "KẾT THÚC TRẬN";
+        });
+        scoreLabel.setText(myScore + " - " + opponentScore);
+        opponentLabel.setText("Đối thủ: " + opponentName);
     }
 }

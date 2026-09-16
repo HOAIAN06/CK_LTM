@@ -1,5 +1,9 @@
 package com.nihongoquest.client.network;
 
+import com.nihongoquest.common.Message;
+
+import java.io.IOException;
+
 /**
  * ServerListener chạy trên thread riêng để nhận message từ Server.
  * Không được chạy vòng lặp nhận dữ liệu trên JavaFX Application Thread
@@ -20,18 +24,23 @@ public class ServerListener implements Runnable {
     @Override
     public void run() {
         running = true;
-        // TODO: vòng lặp đọc dữ liệu từ InputStream của Socket
-        // TODO: parse thành Message rồi chuyển cho GameClient xử lý
-        // TODO: cập nhật UI phải dùng Platform.runLater(...)
-        System.out.println("TODO: ServerListener đang chờ message từ Server");
-        while (running) {
-            // Placeholder: tránh busy-loop khi chưa có Socket thật.
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                running = false;
+        try {
+            while (running) {
+                Message message = gameClient.readMessage();
+                if (message == null) {
+                    if (running) {
+                        gameClient.connectionLost("Server đã đóng kết nối");
+                    }
+                    break;
+                }
+                gameClient.receive(message);
             }
+        } catch (IOException | IllegalArgumentException e) {
+            if (running) {
+                gameClient.connectionLost("Mất kết nối: " + e.getMessage());
+            }
+        } finally {
+            running = false;
         }
     }
 
