@@ -1,0 +1,61 @@
+---
+description: NihongoQuest — kiến trúc, TCP/server ưu tiên, code gọn, UI tối giản
+alwaysApply: true
+---
+
+# NihongoQuest
+
+JavaFX 1v1 học tiếng Nhật. Client A/B chỉ TCP tới Game Server (không P2P). Stack: Java 17, JavaFX (FXML+CSS), Maven, TCP Socket, JSON câu hỏi.
+
+## Ưu tiên (môn lập trình mạng)
+
+Tập trung **server, connect, protocol, matchmaking, game room**. Đúng luồng: connect → find match → battle → answer → score → game over.
+
+Protocol dự kiến (`common`): CONNECT, FIND_MATCH, CANCEL_MATCH, MATCH_FOUND, QUESTION, ANSWER, ANSWER_RESULT, SCORE_UPDATE, GAME_OVER, DISCONNECT. Port mặc định `Protocol.DEFAULT_PORT = 5000`.
+
+- Server quyết định đáp án đúng, score, winner; Client chỉ hiển thị.
+- Controller **không** `new Socket(...)` — chỉ gọi `GameClient`.
+- `ServerListener` chạy thread riêng, không block UI JavaFX.
+- Không thêm WebSocket / UDP / P2P / DB / login / rank / shop / chat trừ khi được yêu cầu rõ.
+
+## Package — không viết sai chỗ
+
+```text
+com.nihongoquest.client          # ClientApp, controller, network, model
+com.nihongoquest.server          # GameServer, ClientHandler, MatchmakingManager, GameRoom, QuestionManager
+com.nihongoquest.common          # Message, MessageType, Protocol — thống nhất trước khi sửa
+```
+
+Không tạo class mới nếu chưa cần; ưu tiên skeleton/package đã có trong README.
+
+## Code gọn — đủ là được
+
+- Ưu tiên TCP gameplay chạy đúng hơn abstraction/framework.
+- Không over-engineer: không interface/DI/pattern thừa, không class “cho đẹp kiến trúc”.
+- Mỗi class một trách nhiệm rõ; method ngắn, đọc được.
+- TODO rõ ràng hơn code giả phức tạp.
+
+```java
+// ❌ BAD — TCP trong controller
+new Socket("localhost", 5000);
+
+// ✅ GOOD — controller gọi network layer
+gameClient.findMatch();
+```
+
+## Frontend — đơn giản, polish sau
+
+UI chỉ cần dùng được: label, button, scene chuyển đúng. CSS tối thiểu.
+
+**Chưa làm** (để sau): ảnh, animation, sound, hiệu ứng nút, theme đẹp. Đừng thêm asset/effect “cho sẵn” nếu chưa được hỏi.
+
+| Thành phần | Nhiệm vụ |
+|---|---|
+| FXML | Layout |
+| Controller | Sự kiện UI → gọi GameClient / cập nhật view |
+| GameClient / ServerListener | TCP phía client |
+| Server | Matchmaking + logic trận |
+
+## Out of scope hiện tại
+
+Login/register, database, rank/coin/shop, AI opponent, chat/friend, polish visual/audio.
