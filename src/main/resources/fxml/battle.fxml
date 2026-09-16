@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox alignment="CENTER" spacing="16" styleClass="root"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.nihongoquest.client.controller.BattleController">
+
+    <padding>
+        <Insets top="24" right="24" bottom="24" left="24"/>
+    </padding>
+
+    <HBox alignment="CENTER" spacing="80">
+        <Label fx:id="player1Label" text="Player A" styleClass="title"/>
+        <Label fx:id="player2Label" text="Player B" styleClass="title"/>
+    </HBox>
+
+    <Label fx:id="scoreLabel" text="Score: 0 - 0"/>
+
+    <Label fx:id="questionLabel" text="CÂU HỎI" styleClass="title" wrapText="true"/>
+
+    <HBox alignment="CENTER" spacing="12">
+        <Button fx:id="answerAButton" text="Answer A" onAction="#onAnswerSelected" prefWidth="180"/>
+        <Button fx:id="answerBButton" text="Answer B" onAction="#onAnswerSelected" prefWidth="180"/>
+    </HBox>
+
+    <HBox alignment="CENTER" spacing="12">
+        <Button fx:id="answerCButton" text="Answer C" onAction="#onAnswerSelected" prefWidth="180"/>
+        <Button fx:id="answerDButton" text="Answer D" onAction="#onAnswerSelected" prefWidth="180"/>
+    </HBox>
+
+</VBox>
