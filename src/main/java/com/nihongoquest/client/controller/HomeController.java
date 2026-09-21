@@ -18,6 +18,12 @@ public class HomeController {
     @FXML
     private Label usernameLabel;
     @FXML
+    private Label profileAvatarLabel;
+    @FXML
+    private Label profileUsernameLabel;
+    @FXML
+    private Label profileStatsLabel;
+    @FXML
     private Label winsLabel;
     @FXML
     private Label lossesLabel;
@@ -37,16 +43,17 @@ public class HomeController {
         this.gameClient = gameClient;
         this.player = player;
         gameClient.setMessageHandler(message -> { });
-        usernameLabel.setText("Người chơi: " + player.getUsername());
-        winsLabel.setText("Số trận thắng: " + player.getWins());
-        lossesLabel.setText("Số trận thua: " + player.getLosses());
-        questionsLabel.setText("Số câu đã trả lời: " + player.getQuestionsAnswered());
-        correctAnswersLabel.setText("Số câu trả lời đúng: " + player.getCorrectAnswers());
+        ProfilePresenter.populate(player, profileAvatarLabel,
+                profileUsernameLabel, profileStatsLabel);
+        usernameLabel.setText("Xin chào, " + player.getUsername() + "!");
+        winsLabel.setText(Integer.toString(player.getWins()));
+        lossesLabel.setText(Integer.toString(player.getLosses()));
+        questionsLabel.setText(Integer.toString(player.getQuestionsAnswered()));
+        correctAnswersLabel.setText(Integer.toString(player.getCorrectAnswers()));
     }
 
     /**
      * Xử lý khi người dùng bấm "TÌM TRẬN".
-     * TODO: Lấy username, gọi GameClient gửi yêu cầu tìm trận, chuyển sang matchmaking.fxml.
      */
     @FXML
     private void onFindMatch(ActionEvent event) {

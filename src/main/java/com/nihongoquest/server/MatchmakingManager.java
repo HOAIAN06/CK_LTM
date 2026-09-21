@@ -2,11 +2,13 @@ package com.nihongoquest.server;
 
 import com.nihongoquest.common.Message;
 import com.nihongoquest.common.MessageType;
+import com.nihongoquest.server.db.PlayerRepository;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 /**
  * MatchmakingManager quản lý hàng chờ tìm trận.
@@ -19,21 +21,20 @@ import java.util.UUID;
  */
 public class MatchmakingManager {
 
+    private static final Logger LOGGER = Logger.getLogger(MatchmakingManager.class.getName());
+
     private final Deque<ClientHandler> waitingQueue;
     private final QuestionManager questionManager;
+    private final PlayerRepository playerRepository;
 
-    public MatchmakingManager() {
-        this(createLoadedQuestionManager());
-    }
-
-    public MatchmakingManager(QuestionManager questionManager) {
+    public MatchmakingManager(QuestionManager questionManager, PlayerRepository playerRepository) {
         this.waitingQueue = new ArrayDeque<>();
         this.questionManager = Objects.requireNonNull(questionManager);
+        this.playerRepository = playerRepository;
     }
 
     /**
-     * Thêm Client vào hàng chờ tìm trận.
-     * TODO: Nếu đủ 2 người thì tạo GameRoom và thông báo MATCH_FOUND.
+     * Thêm client vào hàng chờ tìm trận.
      */
     public synchronized void enqueue(ClientHandler client) {
         if (!client.isAuthenticated()) {
@@ -52,7 +53,7 @@ public class MatchmakingManager {
         waitingQueue.offerLast(client);
         client.setQueued(true);
         client.send(new Message(MessageType.WAITING, ""));
-        System.out.println(client.getUsername() + " đã vào hàng chờ. Hiện có: "
+        LOGGER.info(client.getUsername() + " đã vào hàng chờ. Hiện có: "
                 + waitingQueue.size());
         tryCreateMatch();
     }
@@ -70,8 +71,7 @@ public class MatchmakingManager {
     }
 
     /**
-     * Thử ghép cặp khi đủ 2 Client trong hàng chờ.
-     * TODO: Lấy 2 Client, tạo GameRoom, gửi MATCH_FOUND.
+     * Thử ghép cặp khi đủ 2 client trong hàng chờ.
      */
     public synchronized void tryCreateMatch() {
         while (true) {
@@ -89,8 +89,8 @@ public class MatchmakingManager {
             player2.setQueued(false);
             GameRoom room = new GameRoom(
                     UUID.randomUUID().toString(), player1, player2,
-                    questionManager.getQuestions());
-            System.out.println("Đã tạo room " + room.getRoomId() + ": "
+                    questionManager.getQuestions(), playerRepository);
+            LOGGER.info("Đã tạo room " + room.getRoomId() + ": "
                     + player1.getUsername() + " vs " + player2.getUsername());
             room.start();
         }
@@ -115,18 +115,12 @@ public class MatchmakingManager {
     private void removeFromQueue(ClientHandler client) {
         if (waitingQueue.remove(client)) {
             client.setQueued(false);
-            System.out.println(client.getUsername()
+            LOGGER.info(client.getUsername()
                     + " đã rời hàng chờ. Còn lại: " + waitingQueue.size());
         }
     }
 
     public synchronized int getWaitingCount() {
         return waitingQueue.size();
-    }
-
-    private static QuestionManager createLoadedQuestionManager() {
-        QuestionManager manager = new QuestionManager();
-        manager.loadQuestions();
-        return manager;
     }
 }

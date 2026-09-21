@@ -2,6 +2,7 @@ package com.nihongoquest.server;
 
 import com.nihongoquest.common.Message;
 import com.nihongoquest.common.MessageType;
+import com.nihongoquest.common.Payloads;
 import com.nihongoquest.common.Protocol;
 import com.nihongoquest.server.db.PlayerRepository;
 import com.nihongoquest.server.db.PlayerRepository.AuthResult;
@@ -14,8 +15,11 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.nio.charset.Charset;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
+import java.util.logging.Logger;
 
 /**
  * ClientHandler đại diện một Client đang kết nối tới Server.
@@ -29,6 +33,8 @@ import java.util.regex.Pattern;
  */
 public class ClientHandler implements Runnable {
 
+    private static final Logger LOGGER = Logger.getLogger(ClientHandler.class.getName());
+
     private static final Pattern USERNAME_PATTERN = Pattern.compile("[a-zA-Z0-9_]{3,20}");
     private final Socket socket;
     private final MatchmakingManager matchmakingManager;
@@ -41,15 +47,27 @@ public class ClientHandler implements Runnable {
     private volatile boolean queued;
     private volatile GameRoom currentRoom;
     private final AtomicBoolean closed;
+    private volatile Instant lastActivity;
+    private final Instant connectedAt;
+    private final Consumer<String> activityListener;
+    private final Consumer<TrafficEvent> trafficListener;
+    private final Consumer<ClientHandler> closeListener;
 
     public ClientHandler(Socket socket, MatchmakingManager matchmakingManager,
-                         PlayerRepository playerRepository) {
+                         PlayerRepository playerRepository, Consumer<String> activityListener,
+                         Consumer<TrafficEvent> trafficListener,
+                         Consumer<ClientHandler> closeListener) {
         this.socket = socket;
         this.matchmakingManager = matchmakingManager;
         this.playerRepository = playerRepository;
         this.connected = false;
         this.queued = false;
         this.closed = new AtomicBoolean(false);
+        this.lastActivity = Instant.now();
+        this.connectedAt = Instant.now();
+        this.activityListener = activityListener;
+        this.trafficListener = trafficListener;
+        this.closeListener = closeListener;
     }
 
     @Override
@@ -59,16 +77,23 @@ public class ClientHandler implements Runnable {
         try {
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), charset));
             writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), charset), true);
-
             String line;
-            while (connected && (line = reader.readLine()) != null) {
+            while (connected) {
+                line = reader.readLine();
+                if (line == null) {
+                    break;
+                }
+                lastActivity = Instant.now();
+                reportTraffic(TrafficEvent.Direction.RECEIVED, line);
                 handleMessage(Message.fromWire(line));
             }
         } catch (IllegalArgumentException e) {
-            System.err.println("Client gửi message không hợp lệ: " + e.getMessage());
+            LOGGER.warning("Client " + socket.getRemoteSocketAddress()
+                    + " gửi message không hợp lệ: " + e.getMessage());
         } catch (IOException e) {
             if (connected) {
-                System.err.println("Mất kết nối client: " + e.getMessage());
+                LOGGER.warning("Mất kết nối client=" + socket.getRemoteSocketAddress()
+                        + ": " + e.getMessage());
             }
         } finally {
             close();
@@ -79,11 +104,19 @@ public class ClientHandler implements Runnable {
         switch (message.getType()) {
             case REGISTER -> authenticate(message, true);
             case LOGIN -> authenticate(message, false);
-            case FIND_MATCH -> matchmakingManager.enqueue(this);
-            case CANCEL_MATCH -> matchmakingManager.dequeue(this);
+            case FIND_MATCH -> {
+                reportActivity(getDisplayName() + " bắt đầu tìm trận");
+                matchmakingManager.enqueue(this);
+            }
+            case CANCEL_MATCH -> {
+                reportActivity(getDisplayName() + " hủy tìm trận");
+                matchmakingManager.dequeue(this);
+            }
             case ANSWER -> handleAnswer(message.getPayload());
             case DISCONNECT -> close();
-            default -> System.out.println("Chưa xử lý message: " + message.getType());
+            case CONNECT -> reportActivity("TCP client sẵn sàng: " + getRemoteAddress());
+            default -> LOGGER.fine("Chưa xử lý message type=" + message.getType()
+                    + " user=" + username);
         }
     }
 
@@ -93,34 +126,47 @@ public class ClientHandler implements Runnable {
             return;
         }
         try {
-            room.handleAnswer(this, Integer.parseInt(payload));
+            int answerIndex = Integer.parseInt(payload);
+            reportActivity(getDisplayName() + " gửi đáp án trong trận " + room.getRoomId());
+            room.handleAnswer(this, answerIndex);
         } catch (NumberFormatException e) {
-            System.err.println("Đáp án không hợp lệ từ " + username + ": " + payload);
+            LOGGER.warning("Đáp án không hợp lệ từ " + username + ": " + payload);
         }
     }
 
     private void authenticate(Message message, boolean registering) {
         MessageType okType = registering ? MessageType.REGISTER_OK : MessageType.LOGIN_OK;
         MessageType failType = registering ? MessageType.REGISTER_FAIL : MessageType.LOGIN_FAIL;
-        String[] credentials = message.getPayload().split("\\|", 2);
-        if (credentials.length != 2 || !isValid(credentials[0], credentials[1])) {
+        Payloads.Credentials credentials;
+        try {
+            credentials = Payloads.parseCredentials(message.getPayload());
+        } catch (IllegalArgumentException e) {
+            send(new Message(failType, "BAD_REQUEST"));
+            return;
+        }
+        if (!isValid(credentials.username(), credentials.password())) {
             send(new Message(failType, "BAD_REQUEST"));
             return;
         }
 
         try {
             AuthResult result = registering
-                    ? playerRepository.register(credentials[0], credentials[1])
-                    : playerRepository.login(credentials[0], credentials[1]);
+                    ? playerRepository.register(credentials.username(), credentials.password())
+                    : playerRepository.login(credentials.username(), credentials.password());
             if (result.success()) {
-                playerId = result.player().id();
-                username = result.player().username();
+                if (!registering) {
+                    playerId = result.player().id();
+                    username = result.player().username();
+                }
                 send(new Message(okType, result.player().toPayload()));
+                reportActivity(result.player().username()
+                        + (registering ? " đăng ký thành công" : " đăng nhập thành công"));
             } else {
                 send(new Message(failType, result.reason()));
+                reportActivity("Đăng nhập thất bại từ " + getRemoteAddress());
             }
         } catch (SQLException e) {
-            System.err.println("Lỗi database khi xác thực: " + e.getMessage());
+            LOGGER.warning("Lỗi database khi xác thực user=" + username + ": " + e.getMessage());
             send(new Message(failType, "DATABASE_ERROR"));
         }
     }
@@ -129,20 +175,16 @@ public class ClientHandler implements Runnable {
         return USERNAME_PATTERN.matcher(candidateUsername).matches() && password.length() >= 4;
     }
 
-    /**
-     * Gửi dữ liệu về Client.
-     * TODO: Ghi xuống OutputStream của Socket.
-     */
+    /** Gửi một JSON frame về client. */
     public synchronized void send(Message message) {
         if (writer != null) {
-            writer.println(message.toWire());
+            String json = message.toWire();
+            writer.println(json);
+            reportTraffic(TrafficEvent.Direction.SENT, json);
         }
     }
 
-    /**
-     * Đóng kết nối với Client này.
-     * TODO: Đóng Socket an toàn.
-     */
+    /** Đóng kết nối và giải phóng tất cả tài nguyên liên quan. */
     public void close() {
         if (!closed.compareAndSet(false, true)) {
             return;
@@ -159,14 +201,11 @@ public class ClientHandler implements Runnable {
         } catch (IOException ignored) {
             // Socket đã đóng.
         }
+        closeListener.accept(this);
     }
 
     public String getUsername() {
         return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
     }
 
     public Long getPlayerId() {
@@ -203,7 +242,44 @@ public class ClientHandler implements Runnable {
         return connected;
     }
 
-    public MatchmakingManager getMatchmakingManager() {
-        return matchmakingManager;
+    public String getRemoteAddress() {
+        return String.valueOf(socket.getRemoteSocketAddress());
+    }
+
+    public Instant getConnectedAt() {
+        return connectedAt;
+    }
+
+    public Instant getLastActivity() {
+        return lastActivity;
+    }
+
+    public String getDisplayName() {
+        return username == null ? getRemoteAddress() : username;
+    }
+
+    public String getStatusText() {
+        if (!connected) {
+            return "Đã ngắt kết nối";
+        }
+        if (currentRoom != null) {
+            return "Đang thi đấu";
+        }
+        if (queued) {
+            return "Đang chờ ghép trận";
+        }
+        if (isAuthenticated()) {
+            return "Trực tuyến";
+        }
+        return "Chưa đăng nhập";
+    }
+
+    void reportActivity(String message) {
+        activityListener.accept(message);
+    }
+
+    private void reportTraffic(TrafficEvent.Direction direction, String json) {
+        trafficListener.accept(new TrafficEvent(
+                Instant.now(), direction, getDisplayName(), json));
     }
 }

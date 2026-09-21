@@ -24,9 +24,9 @@ public class ServerListener implements Runnable {
     @Override
     public void run() {
         running = true;
-        try {
-            while (running) {
-                Message message = gameClient.readMessage();
+        while (running) {
+            try {
+                Message message = gameClient.read();
                 if (message == null) {
                     if (running) {
                         gameClient.connectionLost("Server đã đóng kết nối");
@@ -34,28 +34,17 @@ public class ServerListener implements Runnable {
                     break;
                 }
                 gameClient.receive(message);
+            } catch (IOException | IllegalArgumentException e) {
+                if (running) {
+                    gameClient.connectionLost("Mất kết nối: " + e.getMessage());
+                }
+                break;
             }
-        } catch (IOException | IllegalArgumentException e) {
-            if (running) {
-                gameClient.connectionLost("Mất kết nối: " + e.getMessage());
-            }
-        } finally {
-            running = false;
         }
-    }
-
-    /**
-     * Dừng vòng lặp lắng nghe.
-     */
-    public void stop() {
         running = false;
     }
 
-    public boolean isRunning() {
-        return running;
-    }
-
-    public GameClient getGameClient() {
-        return gameClient;
+    public void stop() {
+        running = false;
     }
 }

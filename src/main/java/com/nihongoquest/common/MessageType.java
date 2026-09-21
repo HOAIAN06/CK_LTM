@@ -1,8 +1,7 @@
 package com.nihongoquest.common;
 
 /**
- * MessageType định nghĩa các loại message trao đổi giữa Client và Server.
- * Đây là protocol dự kiến; chưa cần triển khai đầy đủ ở giai đoạn skeleton.
+ * MessageType định nghĩa các loại message trao đổi giữa client và server.
  */
 public enum MessageType {
     CONNECT,
@@ -22,7 +21,6 @@ public enum MessageType {
     ANSWER,
     ANSWER_RESULT,
     SCORE_UPDATE,
-    PLAYER_FINISHED,
     GAME_OVER,
     DISCONNECT
 }

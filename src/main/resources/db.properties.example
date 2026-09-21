@@ -1,7 +1,7 @@
 # Sao chép thành db.properties và điền thông tin Database Settings của Supabase.
-db.host=aws-0-ap-northeast-2.pooler.supabase.com
+db.host=your-database-host
 db.port=5432
 db.name=postgres
-db.user=postgres.xgigzcxzvzxemxlcwlgf
-db.password=123
+db.user=your-database-user
+db.password=your-database-password
 db.ssl=true

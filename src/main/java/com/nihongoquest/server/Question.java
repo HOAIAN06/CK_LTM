@@ -1,5 +1,8 @@
 package com.nihongoquest.server;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 
 /**
@@ -12,8 +15,11 @@ public class Question {
     private final List<String> answers;
     private final int correctAnswer;
 
-    public Question(int id, String questionText, List<String> answers,
-                    int correctAnswer) {
+    @JsonCreator
+    public Question(@JsonProperty("id") int id,
+                    @JsonProperty("questionText") String questionText,
+                    @JsonProperty("answers") List<String> answers,
+                    @JsonProperty("correctAnswer") int correctAnswer) {
         this.id = id;
         this.questionText = questionText;
         this.answers = List.copyOf(answers);

@@ -4,6 +4,7 @@ import com.nihongoquest.client.ClientApp;
 import com.nihongoquest.client.model.Player;
 import com.nihongoquest.client.network.GameClient;
 import com.nihongoquest.common.Message;
+import com.nihongoquest.common.Payloads;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -23,6 +24,12 @@ public class MatchmakingController {
     @FXML
     private Label usernameLabel;
     @FXML
+    private Label profileAvatarLabel;
+    @FXML
+    private Label profileUsernameLabel;
+    @FXML
+    private Label profileStatsLabel;
+    @FXML
     private ProgressIndicator searchSpinner;
 
     private ClientApp app;
@@ -31,6 +38,8 @@ public class MatchmakingController {
     public void setSession(ClientApp app, GameClient gameClient, Player player) {
         this.app = app;
         this.gameClient = gameClient;
+        ProfilePresenter.populate(player, profileAvatarLabel,
+                profileUsernameLabel, profileStatsLabel);
         usernameLabel.setText("Đang tìm cho: " + player.getUsername());
         gameClient.setMessageHandler(message ->
                 Platform.runLater(() -> handleMessage(message)));
@@ -54,7 +63,6 @@ public class MatchmakingController {
 
     /**
      * Xử lý nút hủy tìm trận.
-     * TODO: Gửi CANCEL_MATCH qua GameClient và quay về Home.
      */
     @FXML
     private void onCancel() {
@@ -76,7 +84,7 @@ public class MatchmakingController {
             }
             case MATCH_FOUND -> handleMatchFound(message.getPayload());
             case MATCH_ERROR -> handleMatchError(message.getPayload());
-            case QUESTION, ANSWER_RESULT, SCORE_UPDATE, PLAYER_FINISHED, GAME_OVER ->
+            case QUESTION, ANSWER_RESULT, SCORE_UPDATE, GAME_OVER ->
                     gameClient.redispatch(message);
             default -> {
                 // Màn tìm trận chỉ xử lý các message matchmaking.
@@ -85,15 +93,18 @@ public class MatchmakingController {
     }
 
     private void handleMatchFound(String payload) {
-        String[] values = payload.split("\\|", 2);
-        if (values.length != 2 || values[0].isBlank() || values[1].isBlank()) {
+        try {
+            Payloads.MatchFound match = Payloads.parseMatchFound(payload);
+            if (match.roomId().isBlank() || match.opponent().isBlank()) {
+                throw new IllegalArgumentException("Empty match");
+            }
+            searchSpinner.setVisible(false);
+            statusLabel.setText("Đã tìm thấy " + match.opponent());
+            app.showBattle(match.roomId(), match.opponent());
+        } catch (RuntimeException e) {
             showError("Dữ liệu trận đấu không hợp lệ");
             cancelButton.setDisable(false);
-            return;
         }
-        searchSpinner.setVisible(false);
-        statusLabel.setText("Đã tìm thấy " + values[1]);
-        app.showBattle(values[0], values[1]);
     }
 
     private void handleMatchError(String reason) {

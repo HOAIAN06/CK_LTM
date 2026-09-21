@@ -1,5 +1,7 @@
 package com.nihongoquest.client;
 
+import java.io.IOException;
+
 import com.nihongoquest.client.controller.BattleController;
 import com.nihongoquest.client.controller.HomeController;
 import com.nihongoquest.client.controller.LoginController;
@@ -7,13 +9,12 @@ import com.nihongoquest.client.controller.MatchmakingController;
 import com.nihongoquest.client.controller.ResultController;
 import com.nihongoquest.client.model.Player;
 import com.nihongoquest.client.network.GameClient;
+
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-
-import java.io.IOException;
 
 /**
  * ClientApp là entry point của ứng dụng JavaFX phía Client.
@@ -39,7 +40,7 @@ public class ClientApp extends Application {
         Parent root = loader.load();
         LoginController controller = loader.getController();
         controller.setApp(this, gameClient);
-        setScene(root);
+        setScene(root, 980, 650);
     }
 
     public void showHome(Player player) {
@@ -95,7 +96,7 @@ public class ClientApp extends Application {
             Parent root = loader.load();
             ResultController controller = loader.getController();
             controller.setResult(
-                    this, result, myScore, opponentScore, opponentUsername);
+                    this, currentPlayer, result, myScore, opponentScore, opponentUsername);
             setScene(root);
         } catch (IOException e) {
             throw new IllegalStateException("Không thể mở màn hình Result", e);
@@ -103,7 +104,11 @@ public class ClientApp extends Application {
     }
 
     private void setScene(Parent root) {
-        Scene scene = new Scene(root, 800, 600);
+        setScene(root, 980, 680);
+    }
+
+    private void setScene(Parent root, double width, double height) {
+        Scene scene = new Scene(root, width, height);
         scene.getStylesheets().add(
                 getClass().getResource("/css/style.css").toExternalForm()
         );

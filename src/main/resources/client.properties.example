@@ -1,0 +1,3 @@
+# Đổi thành địa chỉ LAN của máy chạy GameServer khi demo hai máy.
+server.host=192.168.1.100
+server.port=5000

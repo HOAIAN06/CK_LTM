@@ -2,121 +2,165 @@ package com.nihongoquest.server;
 
 import com.nihongoquest.common.Message;
 import com.nihongoquest.common.MessageType;
+import com.nihongoquest.common.Payloads;
+import com.nihongoquest.server.db.PlayerRepository;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
-/**
- * GameRoom đại diện một trận đấu 1v1 trên Server.
- * Quản lý Player 1, Player 2, câu hỏi, điểm, vòng hiện tại và kết quả trận.
- *
- * Server là bên quyết định câu hỏi, đáp án đúng, điểm và người thắng.
- * Client chỉ nhận dữ liệu và hiển thị.
- */
+/** Một phòng đấu 1v1; toàn bộ chấm điểm diễn ra trên server. */
 public class GameRoom {
 
-    private static final int QUESTION_DURATION_SECONDS = 30;
-    private static final long RESULT_DISPLAY_MILLIS = 1_500;
+    private static final Logger LOGGER = Logger.getLogger(GameRoom.class.getName());
+    private static final int QUESTION_SECONDS = 30;
+    private static final int NEXT_QUESTION_DELAY_MILLIS = 1_500;
 
     private final String roomId;
-    private final ClientHandler player1;
-    private final ClientHandler player2;
+    private final ClientHandler[] players;
     private final List<Question> questions;
-    private final PlayerState player1State;
-    private final PlayerState player2State;
+    private final PlayerRepository repository;
     private final ScheduledExecutorService scheduler;
-    private boolean finished;
+    private final int[] scores = new int[2];
+    private final int[] answeredCount = new int[2];
+    private final int[] correctCount = new int[2];
+    private final boolean[] answered = new boolean[2];
 
-    public GameRoom(String roomId, ClientHandler player1, ClientHandler player2) {
-        this(roomId, player1, player2, List.of());
-    }
+    private int round;
+    private long deadlineNanos;
+    private boolean advancing;
+    private boolean finished;
+    private ScheduledFuture<?> timeoutTask;
 
     public GameRoom(String roomId, ClientHandler player1, ClientHandler player2,
-                    List<Question> questions) {
+                    List<Question> questions, PlayerRepository repository) {
         this.roomId = roomId;
-        this.player1 = player1;
-        this.player2 = player2;
+        this.players = new ClientHandler[] {player1, player2};
         this.questions = List.copyOf(questions);
-        this.player1State = new PlayerState(player1);
-        this.player2State = new PlayerState(player2);
+        this.repository = repository;
         this.scheduler = Executors.newSingleThreadScheduledExecutor(task -> {
             Thread thread = new Thread(task, "game-room-" + roomId);
             thread.setDaemon(true);
             return thread;
         });
-        this.finished = false;
         player1.setCurrentRoom(this);
         player2.setCurrentRoom(this);
     }
 
     public synchronized void start() {
-        player1.send(new Message(
-                MessageType.MATCH_FOUND, roomId + "|" + player2.getUsername()));
-        player2.send(new Message(
-                MessageType.MATCH_FOUND, roomId + "|" + player1.getUsername()));
+        log("Bắt đầu trận " + roomId + ": " + players[0].getDisplayName()
+                + " vs " + players[1].getDisplayName());
+        players[0].send(new Message(MessageType.MATCH_FOUND,
+                Payloads.matchFound(roomId, players[1].getUsername())));
+        players[1].send(new Message(MessageType.MATCH_FOUND,
+                Payloads.matchFound(roomId, players[0].getUsername())));
         if (questions.isEmpty()) {
             endGame();
-            return;
+        } else {
+            sendQuestion();
         }
-        sendQuestion(player1State);
-        sendQuestion(player2State);
     }
 
-    public synchronized void playerDisconnected(ClientHandler disconnectedPlayer) {
+    public synchronized void handleAnswer(ClientHandler player, int answerIndex) {
+        int index = indexOf(player);
+        if (finished || index < 0 || answered[index] || answerIndex < 0 || answerIndex > 3) {
+            return;
+        }
+        if (System.nanoTime() >= deadlineNanos) {
+            resolveMissingAnswers();
+            scheduleNextQuestion();
+            return;
+        }
+        resolveAnswer(index, answerIndex);
+        if (answered[0] && answered[1]) {
+            timeoutTask.cancel(false);
+            scheduleNextQuestion();
+        }
+    }
+
+    public synchronized void playerDisconnected(ClientHandler disconnected) {
         if (finished) {
             return;
         }
         finished = true;
-        ClientHandler opponent = disconnectedPlayer == player1 ? player2 : player1;
-        disconnectedPlayer.clearCurrentRoom(this);
-        opponent.clearCurrentRoom(this);
+        int disconnectedIndex = indexOf(disconnected);
+        int opponentIndex = 1 - disconnectedIndex;
+        clearRoom();
         scheduler.shutdownNow();
-        if (opponent.isConnected()) {
-            opponent.send(new Message(MessageType.MATCH_ERROR, "OPPONENT_DISCONNECTED"));
+        if (players[opponentIndex].isConnected()) {
+            players[opponentIndex].send(new Message(
+                    MessageType.MATCH_ERROR, "OPPONENT_DISCONNECTED"));
+        }
+        log("Trận " + roomId + " kết thúc do "
+                + disconnected.getDisplayName() + " mất kết nối");
+        saveStats(disconnectedIndex);
+    }
+
+    private void sendQuestion() {
+        answered[0] = false;
+        answered[1] = false;
+        Question question = questions.get(round);
+        String payload = Payloads.question(round, questions.size(), QUESTION_SECONDS,
+                question.getQuestionText(), question.getAnswers());
+        sendBoth(MessageType.QUESTION, payload);
+        deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(QUESTION_SECONDS);
+        timeoutTask = scheduler.schedule(this::onTimeout, QUESTION_SECONDS, TimeUnit.SECONDS);
+    }
+
+    private synchronized void onTimeout() {
+        if (finished) {
+            return;
+        }
+        resolveMissingAnswers();
+        scheduleNextQuestion();
+    }
+
+    private void resolveMissingAnswers() {
+        for (int i = 0; i < players.length; i++) {
+            if (!answered[i]) {
+                resolveAnswer(i, -1);
+            }
         }
     }
 
-    public synchronized void handleAnswer(ClientHandler from, int answerIndex) {
-        if (finished || answerIndex < 0 || answerIndex > 3) {
-            return;
-        }
-
-        PlayerState state = stateFor(from);
-        if (state == null || !state.acceptingAnswer || state.completed) {
-            return;
-        }
-
-        if (System.nanoTime() >= state.deadlineNanos) {
-            resolveAnswer(state, -1);
-            return;
-        }
-        resolveAnswer(state, answerIndex);
-    }
-
-    private void resolveAnswer(PlayerState state, int answerIndex) {
-        if (!state.acceptingAnswer || state.completed || finished) {
-            return;
-        }
-        state.acceptingAnswer = false;
-        if (state.timeoutTask != null) {
-            state.timeoutTask.cancel(false);
-        }
-
-        Question question = questions.get(state.round);
-        boolean correct = answerIndex == question.getCorrectAnswer();
+    private void resolveAnswer(int index, int choice) {
+        Question question = questions.get(round);
+        boolean correct = choice == question.getCorrectAnswer();
+        answered[index] = true;
+        answeredCount[index]++;
         if (correct) {
-            state.score++;
+            scores[index]++;
+            correctCount[index]++;
         }
-        state.player.send(new Message(MessageType.ANSWER_RESULT,
-                correct + "|" + answerIndex + "|" + question.getCorrectAnswer()));
+        players[index].send(new Message(MessageType.ANSWER_RESULT,
+                Payloads.answerResult(correct, choice, question.getCorrectAnswer())));
         sendScores();
+    }
 
-        int answeredRound = state.round;
-        scheduler.schedule(() -> advancePlayer(state, answeredRound),
-                RESULT_DISPLAY_MILLIS, TimeUnit.MILLISECONDS);
+    private void scheduleNextQuestion() {
+        if (advancing || finished) {
+            return;
+        }
+        advancing = true;
+        scheduler.schedule(this::advanceRound,
+                NEXT_QUESTION_DELAY_MILLIS, TimeUnit.MILLISECONDS);
+    }
+
+    private synchronized void advanceRound() {
+        advancing = false;
+        if (finished) {
+            return;
+        }
+        round++;
+        if (round == questions.size()) {
+            endGame();
+        } else {
+            sendQuestion();
+        }
     }
 
     public synchronized void endGame() {
@@ -124,117 +168,65 @@ public class GameRoom {
             return;
         }
         finished = true;
-        sendGameOver(player1, player1State.score, player2State.score);
-        sendGameOver(player2, player2State.score, player1State.score);
-        player1.clearCurrentRoom(this);
-        player2.clearCurrentRoom(this);
+        sendGameOver(0);
+        sendGameOver(1);
+        clearRoom();
+        log("Trận " + roomId + " kết thúc: " + players[0].getDisplayName() + " "
+                + scores[0] + " - " + scores[1] + " " + players[1].getDisplayName());
+        saveStats(-1);
         scheduler.shutdownNow();
     }
 
-    private void sendQuestion(PlayerState state) {
-        Question question = questions.get(state.round);
-        state.acceptingAnswer = true;
-        state.deadlineNanos = System.nanoTime()
-                + TimeUnit.SECONDS.toNanos(QUESTION_DURATION_SECONDS);
-        String payload = state.round + "|" + questions.size()
-                + "|" + QUESTION_DURATION_SECONDS + "|" + question.getQuestionText()
-                + "|" + String.join("|", question.getAnswers());
-        state.player.send(new Message(MessageType.QUESTION, payload));
-
-        int expectedRound = state.round;
-        state.timeoutTask = scheduler.schedule(
-                () -> handleTimeout(state, expectedRound),
-                QUESTION_DURATION_SECONDS, TimeUnit.SECONDS);
-    }
-
     private void sendScores() {
-        player1.send(new Message(MessageType.SCORE_UPDATE,
-                player1State.score + "|" + player2State.score));
-        player2.send(new Message(MessageType.SCORE_UPDATE,
-                player2State.score + "|" + player1State.score));
+        players[0].send(new Message(MessageType.SCORE_UPDATE,
+                Payloads.scores(scores[0], scores[1])));
+        players[1].send(new Message(MessageType.SCORE_UPDATE,
+                Payloads.scores(scores[1], scores[0])));
     }
 
-    private synchronized void handleTimeout(PlayerState state, int expectedRound) {
-        if (!finished && state.round == expectedRound && state.acceptingAnswer) {
-            resolveAnswer(state, -1);
-        }
+    private void sendGameOver(int index) {
+        int opponent = 1 - index;
+        String result = scores[index] > scores[opponent] ? "WIN"
+                : scores[index] < scores[opponent] ? "LOSE" : "DRAW";
+        players[index].send(new Message(MessageType.GAME_OVER,
+                Payloads.gameOver(result, scores[index], scores[opponent])));
     }
 
-    private synchronized void advancePlayer(PlayerState state, int answeredRound) {
-        if (finished || state.completed || state.round != answeredRound) {
-            return;
-        }
-        state.round++;
-        if (state.round >= questions.size()) {
-            state.completed = true;
-            state.player.send(new Message(MessageType.PLAYER_FINISHED, ""));
-            if (player1State.completed && player2State.completed) {
-                endGame();
+    private void saveStats(int disconnectedIndex) {
+        try {
+            for (int i = 0; i < players.length; i++) {
+                boolean won = disconnectedIndex >= 0 ? i != disconnectedIndex
+                        : scores[i] > scores[1 - i];
+                boolean lost = disconnectedIndex >= 0 ? i == disconnectedIndex
+                        : scores[i] < scores[1 - i];
+                repository.recordMatchResult(players[i].getPlayerId(), won, lost,
+                        answeredCount[i], correctCount[i]);
             }
-        } else {
-            sendQuestion(state);
+        } catch (SQLException e) {
+            LOGGER.warning("Không thể lưu thống kê room=" + roomId + ": " + e.getMessage());
         }
     }
 
-    private PlayerState stateFor(ClientHandler player) {
-        if (player == player1) {
-            return player1State;
-        }
-        if (player == player2) {
-            return player2State;
-        }
-        return null;
+    private int indexOf(ClientHandler player) {
+        return player == players[0] ? 0 : player == players[1] ? 1 : -1;
     }
 
-    private static final class PlayerState {
-        private final ClientHandler player;
-        private int round;
-        private int score;
-        private long deadlineNanos;
-        private boolean acceptingAnswer;
-        private boolean completed;
-        private ScheduledFuture<?> timeoutTask;
-
-        private PlayerState(ClientHandler player) {
-            this.player = player;
-        }
+    private void clearRoom() {
+        players[0].clearCurrentRoom(this);
+        players[1].clearCurrentRoom(this);
     }
 
-    private void sendGameOver(ClientHandler player, int myScore, int opponentScore) {
-        String result;
-        if (myScore > opponentScore) {
-            result = "WIN";
-        } else if (myScore < opponentScore) {
-            result = "LOSE";
-        } else {
-            result = "DRAW";
-        }
-        player.send(new Message(MessageType.GAME_OVER,
-                result + "|" + myScore + "|" + opponentScore));
+    private void sendBoth(MessageType type, String payload) {
+        players[0].send(new Message(type, payload));
+        players[1].send(new Message(type, payload));
+    }
+
+    private void log(String message) {
+        players[0].reportActivity(message);
     }
 
     public String getRoomId() {
         return roomId;
-    }
-
-    public ClientHandler getPlayer1() {
-        return player1;
-    }
-
-    public ClientHandler getPlayer2() {
-        return player2;
-    }
-
-    public int getPlayer1Score() {
-        return player1State.score;
-    }
-
-    public int getPlayer2Score() {
-        return player2State.score;
-    }
-
-    public int getCurrentRound() {
-        return Math.min(player1State.round, player2State.round);
     }
 
     public boolean isFinished() {

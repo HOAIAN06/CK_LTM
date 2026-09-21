@@ -1,25 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 
-<VBox alignment="CENTER" spacing="20" styleClass="root"
-      xmlns="http://javafx.com/javafx/21"
-      xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.nihongoquest.client.controller.ResultController">
-
-    <padding>
-        <Insets top="40" right="40" bottom="40" left="40"/>
-    </padding>
-
-    <Label fx:id="resultLabel" text="CHIẾN THẮNG / THẤT BẠI" styleClass="title"/>
-
-    <Label fx:id="scoreLabel" text="500 - 300"/>
-
-    <Label fx:id="opponentLabel" text="Đối thủ"/>
-
-    <Button fx:id="homeButton" text="VỀ TRANG CHỦ" onAction="#onBackHome" prefWidth="200"/>
-
-</VBox>
+<BorderPane styleClass="root,app-shell"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.nihongoquest.client.controller.ResultController">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="20" styleClass="app-header">
+            <VBox spacing="2" HBox.hgrow="ALWAYS">
+                <Label text="NIHONGO QUEST" styleClass="app-brand"/>
+                <Label text="Kết quả trận đấu" styleClass="header-page-title"/>
+            </VBox>
+            <HBox alignment="CENTER_LEFT" spacing="10" styleClass="profile-card">
+                <StackPane styleClass="profile-avatar">
+                    <Label fx:id="profileAvatarLabel" text="N" styleClass="profile-avatar-text"/>
+                </StackPane>
+                <VBox spacing="2">
+                    <Label fx:id="profileUsernameLabel" text="Người chơi"
+                           styleClass="profile-username"/>
+                    <Label fx:id="profileStatsLabel" text="0 thắng  •  0 thua  •  0% đúng"
+                           styleClass="profile-summary"/>
+                </VBox>
+            </HBox>
+        </HBox>
+    </top>
+    <center>
+        <VBox alignment="CENTER" spacing="20" styleClass="page-content">
+            <VBox alignment="CENTER" spacing="14" styleClass="result-card">
+                <Label text="KẾT QUẢ TRẬN ĐẤU" styleClass="result-eyebrow"/>
+                <Label fx:id="resultLabel" text="CHIẾN THẮNG" styleClass="result-title"/>
+                <Label text="TỶ SỐ CHUNG CUỘC" styleClass="score-caption"/>
+                <Label fx:id="scoreLabel" text="0  -  0" styleClass="result-score"/>
+                <Label fx:id="opponentLabel" text="Đối thủ" styleClass="result-opponent"/>
+                <Button fx:id="homeButton" text="VỀ TRANG CHỦ" onAction="#onBackHome"
+                        prefWidth="230" styleClass="primary-button,large-button"/>
+            </VBox>
+        </VBox>
+    </center>
+</BorderPane>

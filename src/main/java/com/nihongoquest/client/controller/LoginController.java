@@ -4,7 +4,7 @@ import com.nihongoquest.client.ClientApp;
 import com.nihongoquest.client.model.Player;
 import com.nihongoquest.client.network.GameClient;
 import com.nihongoquest.common.Message;
-import com.nihongoquest.common.Protocol;
+import com.nihongoquest.common.Payloads;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -21,6 +21,14 @@ public class LoginController {
     private Label authTitle;
     @FXML
     private Label authSubtitle;
+    @FXML
+    private TextField serverHostField;
+    @FXML
+    private TextField serverPortField;
+    @FXML
+    private Button connectButton;
+    @FXML
+    private Label connectionStatusLabel;
     @FXML
     private TextField usernameField;
     @FXML
@@ -47,25 +55,60 @@ public class LoginController {
                 Platform.runLater(() -> handleServerMessage(message)));
         gameClient.setConnectionErrorHandler(error ->
                 Platform.runLater(() -> {
-                    showError(error);
+                    showConnectionError(error);
+                    setConnectionControlsDisabled(false);
+                    connectButton.setText("KẾT NỐI");
                     setSubmitDisabled(true);
                 }));
-        connectToServer();
+        serverHostField.setText(ClientConfig.serverHost());
+        serverPortField.setText(Integer.toString(ClientConfig.serverPort()));
+        showConnectionStatus("Chưa kết nối tới server", null);
+        showStatus("Hãy kết nối server trước khi đăng nhập");
+        setSubmitDisabled(true);
     }
 
-    private void connectToServer() {
-        showStatus("Đang kết nối tới server...");
+    @FXML
+    private void onConnect() {
+        String host = serverHostField.getText().trim();
+        int port;
+        if (host.isEmpty()) {
+            showConnectionError("Địa chỉ server không được để trống");
+            serverHostField.requestFocus();
+            return;
+        }
+        try {
+            port = Integer.parseInt(serverPortField.getText().trim());
+            if (port < 1 || port > 65_535) {
+                throw new NumberFormatException();
+            }
+        } catch (NumberFormatException e) {
+            showConnectionError("Cổng phải là số từ 1 đến 65535");
+            serverPortField.requestFocus();
+            return;
+        }
+
+        showConnectionStatus("Đang kết nối tới " + host + ":" + port + "...", null);
+        setConnectionControlsDisabled(true);
         setSubmitDisabled(true);
         Thread connector = new Thread(() -> {
             try {
-                gameClient.connect("localhost", Protocol.DEFAULT_PORT);
+                if (gameClient.isConnected()) {
+                    gameClient.disconnect();
+                }
+                gameClient.connect(host, port);
                 Platform.runLater(() -> {
-                    showSuccess("Đã kết nối tới server");
+                    showConnectionSuccess("Đã kết nối tới " + host + ":" + port);
+                    showStatus("Bạn có thể đăng nhập hoặc đăng ký");
+                    setConnectionControlsDisabled(false);
+                    connectButton.setText("KẾT NỐI LẠI");
                     setSubmitDisabled(false);
                 });
-            } catch (IOException e) {
-                Platform.runLater(() -> showError(
-                        "Không thể kết nối server tại cổng " + Protocol.DEFAULT_PORT));
+            } catch (IOException | RuntimeException e) {
+                Platform.runLater(() -> {
+                    showConnectionError("Không thể kết nối tới " + host + ":" + port);
+                    setConnectionControlsDisabled(false);
+                    connectButton.setText("KẾT NỐI");
+                });
             }
         }, "server-connector");
         connector.setDaemon(true);
@@ -74,6 +117,10 @@ public class LoginController {
 
     @FXML
     private void onSubmit() {
+        if (!gameClient.isConnected()) {
+            showError("Hãy kết nối tới server trước");
+            return;
+        }
         if (!validateInput()) {
             return;
         }
@@ -92,7 +139,9 @@ public class LoginController {
         setMode(!loginMode);
         passwordField.clear();
         confirmPasswordField.clear();
-        showStatus(gameClient.isConnected() ? "Đã kết nối tới server" : "Chưa kết nối tới server");
+        showStatus(gameClient.isConnected()
+                ? "Bạn có thể đăng nhập hoặc đăng ký"
+                : "Hãy kết nối server trước khi đăng nhập");
     }
 
     private boolean validateInput() {
@@ -134,17 +183,10 @@ public class LoginController {
     }
 
     private Player parsePlayer(String payload) {
-        String[] values = payload.split("\\|");
-        if (values.length != 6) {
-            throw new IllegalArgumentException("Dữ liệu người chơi không hợp lệ");
-        }
+        Payloads.PlayerStats values = Payloads.parsePlayer(payload);
         return new Player(
-                Long.parseLong(values[0]),
-                values[1],
-                Integer.parseInt(values[2]),
-                Integer.parseInt(values[3]),
-                Integer.parseInt(values[4]),
-                Integer.parseInt(values[5])
+                values.id(), values.username(), values.wins(), values.losses(),
+                values.questionsAnswered(), values.correctAnswers()
         );
     }
 
@@ -178,6 +220,28 @@ public class LoginController {
 
     private void setSubmitDisabled(boolean disabled) {
         submitButton.setDisable(disabled);
+    }
+
+    private void setConnectionControlsDisabled(boolean disabled) {
+        serverHostField.setDisable(disabled);
+        serverPortField.setDisable(disabled);
+        connectButton.setDisable(disabled);
+    }
+
+    private void showConnectionSuccess(String message) {
+        showConnectionStatus(message, "status-success");
+    }
+
+    private void showConnectionError(String message) {
+        showConnectionStatus(message, "status-error");
+    }
+
+    private void showConnectionStatus(String message, String styleClass) {
+        connectionStatusLabel.setText(message);
+        connectionStatusLabel.getStyleClass().removeAll("status-success", "status-error");
+        if (styleClass != null) {
+            connectionStatusLabel.getStyleClass().add(styleClass);
+        }
     }
 
     private void showStatus(String message) {

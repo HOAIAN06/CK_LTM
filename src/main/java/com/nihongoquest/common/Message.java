@@ -1,11 +1,15 @@
 package com.nihongoquest.common;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * Message là model đại diện một gói tin trao đổi giữa Client và Server.
- * Sau này có thể chứa loại message (MessageType) và nội dung (payload).
- * Hiện tại chỉ là skeleton để hai thành viên thống nhất giao diện chung.
+ * Một application frame JSON trao đổi giữa client và server.
  */
 public class Message {
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private MessageType type;
     private String payload;
@@ -35,7 +39,11 @@ public class Message {
     }
 
     public String toWire() {
-        return type.name() + Protocol.SEPARATOR + (payload == null ? "" : payload);
+        try {
+            return MAPPER.writeValueAsString(this);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Không thể mã hóa message JSON", e);
+        }
     }
 
     public static Message fromWire(String line) {
@@ -43,9 +51,17 @@ public class Message {
             throw new IllegalArgumentException("Message rỗng");
         }
 
-        String[] parts = line.split("\\" + Protocol.SEPARATOR, 2);
-        MessageType type = MessageType.valueOf(parts[0]);
-        String payload = parts.length == 2 ? parts[1] : "";
-        return new Message(type, payload);
+        try {
+            Message message = MAPPER.readValue(line, Message.class);
+            if (message.type == null) {
+                throw new IllegalArgumentException("Message thiếu type");
+            }
+            if (message.payload == null) {
+                message.payload = "";
+            }
+            return message;
+        } catch (JsonProcessingException | IllegalArgumentException e) {
+            throw new IllegalArgumentException("Message JSON không hợp lệ", e);
+        }
     }
 }

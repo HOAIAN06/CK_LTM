@@ -4,6 +4,7 @@ import com.nihongoquest.client.ClientApp;
 import com.nihongoquest.client.model.Player;
 import com.nihongoquest.client.network.GameClient;
 import com.nihongoquest.common.Message;
+import com.nihongoquest.common.Payloads;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -25,6 +26,15 @@ public class BattleController {
 
     @FXML
     private Label player1Label;
+
+    @FXML
+    private Label profileAvatarLabel;
+
+    @FXML
+    private Label profileUsernameLabel;
+
+    @FXML
+    private Label profileStatsLabel;
 
     @FXML
     private Label player2Label;
@@ -66,11 +76,13 @@ public class BattleController {
         this.app = app;
         this.gameClient = gameClient;
         this.opponentUsername = opponentUsername;
+        ProfilePresenter.populate(player, profileAvatarLabel,
+                profileUsernameLabel, profileStatsLabel);
         this.answerButtons = List.of(
                 answerAButton, answerBButton, answerCButton, answerDButton);
         player1Label.setText(player.getUsername());
         player2Label.setText(opponentUsername);
-        scoreLabel.setText("Score: 0 - 0");
+        scoreLabel.setText("0  :  0");
         questionLabel.setText("Đã ghép trận thành công - đang chuẩn bị câu hỏi");
         timeProgressBar.setProgress(0);
         timeLabel.setText("--");
@@ -114,7 +126,6 @@ public class BattleController {
             case QUESTION -> showQuestion(message.getPayload());
             case ANSWER_RESULT -> showAnswerResult(message.getPayload());
             case SCORE_UPDATE -> showScore(message.getPayload());
-            case PLAYER_FINISHED -> showPlayerFinished();
             case GAME_OVER -> showGameOver(message.getPayload());
             case MATCH_ERROR -> {
                 stopCountdown();
@@ -130,47 +141,35 @@ public class BattleController {
     }
 
     private void showQuestion(String payload) {
-        String[] values = payload.split("\\|", -1);
-        if (values.length != 8) {
-            showProtocolError();
-            return;
-        }
         try {
-            int round = Integer.parseInt(values[0]);
-            int totalQuestions = Integer.parseInt(values[1]);
-            int durationSeconds = Integer.parseInt(values[2]);
+            Payloads.QuestionData question = Payloads.parseQuestion(payload);
+            int round = question.round();
+            int totalQuestions = question.totalQuestions();
+            int durationSeconds = question.durationSeconds();
             if (round < 0 || totalQuestions <= 0 || round >= totalQuestions
                     || durationSeconds <= 0) {
                 showProtocolError();
                 return;
             }
             questionLabel.setText("Câu " + (round + 1) + "/" + totalQuestions
-                    + ": " + values[3]);
+                    + ": " + question.questionText());
             for (int i = 0; i < answerButtons.size(); i++) {
-                answerButtons.get(i).setText(values[i + 4]);
+                answerButtons.get(i).setText(question.answers().get(i));
             }
             clearAnswerStyles();
             setAnswersDisabled(false);
             startCountdown(durationSeconds);
-        } catch (NumberFormatException e) {
+        } catch (RuntimeException e) {
             showProtocolError();
         }
     }
 
     private void showAnswerResult(String payload) {
-        String[] values = payload.split("\\|", -1);
-        if (values.length != 3) {
-            showProtocolError();
-            return;
-        }
         try {
-            if (!"true".equals(values[0]) && !"false".equals(values[0])) {
-                showProtocolError();
-                return;
-            }
-            boolean correct = Boolean.parseBoolean(values[0]);
-            int chosenIndex = Integer.parseInt(values[1]);
-            int correctIndex = Integer.parseInt(values[2]);
+            Payloads.AnswerResult result = Payloads.parseAnswerResult(payload);
+            boolean correct = result.correct();
+            int chosenIndex = result.chosenIndex();
+            int correctIndex = result.correctIndex();
             if ((chosenIndex != -1 && !isAnswerIndex(chosenIndex))
                     || !isAnswerIndex(correctIndex)) {
                 showProtocolError();
@@ -188,49 +187,29 @@ public class BattleController {
                 timeLabel.setText("Đúng");
             }
             answerButtons.get(correctIndex).getStyleClass().add("answer-correct");
-        } catch (NumberFormatException e) {
+        } catch (RuntimeException e) {
             showProtocolError();
         }
     }
 
     private void showScore(String payload) {
-        String[] values = payload.split("\\|", -1);
-        if (values.length != 2) {
-            showProtocolError();
-            return;
-        }
         try {
-            int myScore = Integer.parseInt(values[0]);
-            int opponentScore = Integer.parseInt(values[1]);
-            scoreLabel.setText("Score: " + myScore + " - " + opponentScore);
-        } catch (NumberFormatException e) {
+            Payloads.Scores scores = Payloads.parseScores(payload);
+            scoreLabel.setText(scores.myScore() + "  :  " + scores.opponentScore());
+        } catch (RuntimeException e) {
             showProtocolError();
         }
     }
 
     private void showGameOver(String payload) {
-        String[] values = payload.split("\\|", -1);
-        if (values.length != 3) {
-            showProtocolError();
-            return;
-        }
         try {
             stopCountdown();
-            int myScore = Integer.parseInt(values[1]);
-            int opponentScore = Integer.parseInt(values[2]);
-            app.showResult(values[0], myScore, opponentScore, opponentUsername);
-        } catch (NumberFormatException e) {
+            Payloads.GameOver result = Payloads.parseGameOver(payload);
+            app.showResult(result.result(), result.myScore(), result.opponentScore(),
+                    opponentUsername);
+        } catch (RuntimeException e) {
             showProtocolError();
         }
-    }
-
-    private void showPlayerFinished() {
-        stopCountdown();
-        clearAnswerStyles();
-        setAnswersDisabled(true);
-        timeProgressBar.setProgress(0);
-        timeLabel.setText("Hoàn thành");
-        questionLabel.setText("Đang chờ đối thủ hoàn thành");
     }
 
     private void startCountdown(int durationSeconds) {

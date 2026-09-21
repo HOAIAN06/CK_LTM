@@ -58,6 +58,26 @@ public class PlayerRepository {
         }
     }
 
+    public void recordMatchResult(long playerId, boolean won, boolean lost,
+                                  int questionsAnswered, int correctAnswers) throws SQLException {
+        String sql = """
+                UPDATE players
+                SET wins = wins + ?, losses = losses + ?,
+                    questions_answered = questions_answered + ?,
+                    correct_answers = correct_answers + ?
+                WHERE id = ?
+                """;
+        try (Connection connection = database.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, won ? 1 : 0);
+            statement.setInt(2, lost ? 1 : 0);
+            statement.setInt(3, questionsAnswered);
+            statement.setInt(4, correctAnswers);
+            statement.setLong(5, playerId);
+            statement.executeUpdate();
+        }
+    }
+
     private PlayerData readPlayer(ResultSet result) throws SQLException {
         return new PlayerData(
                 result.getLong("id"),
@@ -72,8 +92,8 @@ public class PlayerRepository {
     public record PlayerData(long id, String username, int wins, int losses,
                              int questionsAnswered, int correctAnswers) {
         public String toPayload() {
-            return id + "|" + username + "|" + wins + "|" + losses + "|"
-                    + questionsAnswered + "|" + correctAnswers;
+            return com.nihongoquest.common.Payloads.player(id, username, wins, losses,
+                    questionsAnswered, correctAnswers);
         }
     }
 

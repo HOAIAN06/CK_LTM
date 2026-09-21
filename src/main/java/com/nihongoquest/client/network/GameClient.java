@@ -9,58 +9,122 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.Charset;
 import java.util.function.Consumer;
 
-/**
- * GameClient quản lý kết nối TCP phía Client tới Game Server.
- * Controller không được tự tạo Socket; mọi thao tác mạng phải đi qua class này.
- *
- * Luồng dự kiến:
- * Client → TCP Socket → Server
- */
+/** Quản lý duy nhất một kết nối TCP từ client tới server. */
 public class GameClient {
 
     private Socket socket;
     private BufferedReader reader;
     private PrintWriter writer;
-    private ServerListener serverListener;
-    private Thread listenerThread;
+    private ServerListener listener;
     private volatile boolean connected;
     private Consumer<Message> messageHandler = message -> { };
-    private Consumer<String> connectionErrorHandler = error -> { };
+    private Consumer<String> errorHandler = error -> { };
 
-    /**
-     * Kết nối tới Server theo host và port.
-     * TODO: Triển khai tạo Socket, InputStream, OutputStream.
-     */
     public synchronized void connect(String host, int port) throws IOException {
         if (connected) {
             return;
         }
         Charset charset = Charset.forName(Protocol.ENCODING);
-        socket = new Socket(host, port);
-        reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), charset));
-        writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), charset), true);
+        Socket newSocket = new Socket();
+        try {
+            newSocket.connect(new InetSocketAddress(host, port), 5_000);
+            reader = new BufferedReader(new InputStreamReader(newSocket.getInputStream(), charset));
+            writer = new PrintWriter(new OutputStreamWriter(newSocket.getOutputStream(), charset), true);
+            socket = newSocket;
+        } catch (IOException e) {
+            try {
+                newSocket.close();
+            } catch (IOException ignored) {
+                // Giữ lại lỗi kết nối ban đầu.
+            }
+            throw e;
+        }
         connected = true;
-        serverListener = new ServerListener(this);
-        listenerThread = new Thread(serverListener, "server-listener");
-        listenerThread.setDaemon(true);
-        listenerThread.start();
+
+        listener = new ServerListener(this);
+        Thread thread = new Thread(listener, "tcp-server-listener");
+        thread.setDaemon(true);
+        thread.start();
+        send(MessageType.CONNECT, "");
     }
 
-    /**
-     * Ngắt kết nối với Server.
-     * TODO: Đóng Socket và dừng ServerListener.
-     */
     public synchronized void disconnect() {
-        if (connected && writer != null) {
-            writer.println(new Message(MessageType.DISCONNECT, "").toWire());
+        try {
+            if (connected) {
+                send(MessageType.DISCONNECT, "");
+            }
+        } catch (IllegalStateException ignored) {
+            // Kết nối đã lỗi; vẫn đóng socket cục bộ.
+        } finally {
+            closeSocket();
         }
-        this.connected = false;
-        if (serverListener != null) {
-            serverListener.stop();
+    }
+
+    public void findMatch() {
+        send(MessageType.FIND_MATCH, "");
+    }
+
+    public void register(String username, String password) {
+        send(MessageType.REGISTER,
+                com.nihongoquest.common.Payloads.credentials(username, password));
+    }
+
+    public void login(String username, String password) {
+        send(MessageType.LOGIN,
+                com.nihongoquest.common.Payloads.credentials(username, password));
+    }
+
+    public void cancelMatch() {
+        send(MessageType.CANCEL_MATCH, "");
+    }
+
+    public void sendAnswer(int answerIndex) {
+        if (answerIndex < 0 || answerIndex > 3) {
+            throw new IllegalArgumentException("Chỉ số đáp án phải từ 0 đến 3");
+        }
+        send(MessageType.ANSWER, Integer.toString(answerIndex));
+    }
+
+    public void redispatch(Message message) {
+        messageHandler.accept(message);
+    }
+
+    Message read() throws IOException {
+        String line = reader.readLine();
+        return line == null ? null : Message.fromWire(line);
+    }
+
+    void receive(Message message) {
+        messageHandler.accept(message);
+    }
+
+    void connectionLost(String reason) {
+        if (!connected) {
+            return;
+        }
+        closeSocket();
+        errorHandler.accept(reason);
+    }
+
+    private synchronized void send(MessageType type, String payload) {
+        if (!connected || writer == null) {
+            throw new IllegalStateException("Chưa kết nối tới server");
+        }
+        writer.println(new Message(type, payload).toWire());
+        if (writer.checkError()) {
+            throw new IllegalStateException("Không thể gửi dữ liệu tới server");
+        }
+    }
+
+    private synchronized void closeSocket() {
+        connected = false;
+        if (listener != null) {
+            listener.stop();
         }
         try {
             if (socket != null) {
@@ -71,81 +135,15 @@ public class GameClient {
         }
     }
 
-    /**
-     * Gửi một Message tới Server.
-     * TODO: Serialize Message và ghi xuống OutputStream.
-     */
-    public synchronized void sendMessage(Message message) {
-        if (!connected || writer == null) {
-            throw new IllegalStateException("Chưa kết nối tới server");
-        }
-        writer.println(message.toWire());
-        if (writer.checkError()) {
-            throw new IllegalStateException("Không thể gửi message tới server");
-        }
-    }
-
-    public void register(String username, String password) {
-        sendMessage(new Message(MessageType.REGISTER, username + "|" + password));
-    }
-
-    public void login(String username, String password) {
-        sendMessage(new Message(MessageType.LOGIN, username + "|" + password));
-    }
-
-    public void findMatch() {
-        sendMessage(new Message(MessageType.FIND_MATCH, ""));
-    }
-
-    public void cancelMatch() {
-        sendMessage(new Message(MessageType.CANCEL_MATCH, ""));
-    }
-
-    public void sendAnswer(int answerIndex) {
-        if (answerIndex < 0 || answerIndex > 3) {
-            throw new IllegalArgumentException("Chỉ số đáp án phải từ 0 đến 3");
-        }
-        sendMessage(new Message(MessageType.ANSWER, Integer.toString(answerIndex)));
-    }
-
-    /**
-     * Chuyển tiếp message tới handler hiện tại sau khi một scene vừa thay đổi.
-     */
-    public void redispatch(Message message) {
-        messageHandler.accept(message);
-    }
-
-    Message readMessage() throws IOException {
-        String line = reader.readLine();
-        return line == null ? null : Message.fromWire(line);
-    }
-
-    void receive(Message message) {
-        messageHandler.accept(message);
-    }
-
-    void connectionLost(String error) {
-        connected = false;
-        connectionErrorHandler.accept(error);
-    }
-
-    public void setMessageHandler(Consumer<Message> messageHandler) {
-        this.messageHandler = messageHandler != null ? messageHandler : message -> { };
+    public void setMessageHandler(Consumer<Message> handler) {
+        messageHandler = handler != null ? handler : message -> { };
     }
 
     public void setConnectionErrorHandler(Consumer<String> handler) {
-        this.connectionErrorHandler = handler != null ? handler : error -> { };
+        errorHandler = handler != null ? handler : error -> { };
     }
 
     public boolean isConnected() {
         return connected;
-    }
-
-    public ServerListener getServerListener() {
-        return serverListener;
-    }
-
-    public void setServerListener(ServerListener serverListener) {
-        this.serverListener = serverListener;
     }
 }
