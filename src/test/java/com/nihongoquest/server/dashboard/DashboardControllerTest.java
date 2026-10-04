@@ -2,10 +2,10 @@ package com.nihongoquest.server.dashboard;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nihongoquest.common.Message;
-import com.nihongoquest.common.MessageType;
-import com.nihongoquest.common.Payloads;
-import com.nihongoquest.server.TrafficEvent;
+import com.nihongoquest.common.protocol.Message;
+import com.nihongoquest.common.protocol.MessageType;
+import com.nihongoquest.common.protocol.Payloads;
+import com.nihongoquest.server.network.TrafficEvent;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;

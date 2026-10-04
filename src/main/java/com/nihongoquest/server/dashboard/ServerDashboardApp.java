@@ -16,13 +16,13 @@ public class ServerDashboardApp extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         FXMLLoader loader = new FXMLLoader(
-                getClass().getResource("/fxml/server-dashboard.fxml"));
+                getClass().getResource("/server/dashboard/server-dashboard.fxml"));
         Parent root = loader.load();
         controller = loader.getController();
 
         Scene scene = new Scene(root, 1180, 760);
         scene.getStylesheets().add(
-                getClass().getResource("/css/server-dashboard.css").toExternalForm());
+                getClass().getResource("/server/dashboard/server-dashboard.css").toExternalForm());
         stage.setTitle("NihongoQuest — Server Dashboard");
         stage.setMinWidth(980);
         stage.setMinHeight(680);

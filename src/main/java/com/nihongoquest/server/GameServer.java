@@ -1,8 +1,14 @@
 package com.nihongoquest.server;
 
-import com.nihongoquest.common.Protocol;
-import com.nihongoquest.server.db.Database;
-import com.nihongoquest.server.db.PlayerRepository;
+import com.nihongoquest.server.ranked.MatchmakingManager;
+import com.nihongoquest.server.network.ClientHandler;
+import com.nihongoquest.server.network.TrafficEvent;
+import com.nihongoquest.server.question.QuestionRepository;
+import com.nihongoquest.server.question.QuestionService;
+
+import com.nihongoquest.common.protocol.Protocol;
+import com.nihongoquest.server.infrastructure.persistence.Database;
+import com.nihongoquest.server.player.PlayerRepository;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -30,7 +36,7 @@ public class GameServer {
     private static final Logger LOGGER = Logger.getLogger(GameServer.class.getName());
 
     private MatchmakingManager matchmakingManager;
-    private QuestionManager questionManager;
+    private final QuestionService questionService;
     private final PlayerRepository playerRepository;
     private volatile boolean running;
     private ServerSocket serverSocket;
@@ -40,9 +46,10 @@ public class GameServer {
     private final List<Consumer<TrafficEvent>> trafficListeners = new CopyOnWriteArrayList<>();
 
     public GameServer() {
-        this.questionManager = new QuestionManager();
-        this.playerRepository = new PlayerRepository(new Database());
-        this.matchmakingManager = new MatchmakingManager(questionManager, playerRepository);
+        Database database = new Database();
+        this.questionService = new QuestionService(new QuestionRepository(database));
+        this.playerRepository = new PlayerRepository(database);
+        this.matchmakingManager = new MatchmakingManager(questionService, playerRepository);
         this.running = false;
     }
 
@@ -50,7 +57,6 @@ public class GameServer {
      * Khởi động server trên cổng chỉ định.
      */
     public void start(int port) {
-        questionManager.loadQuestions();
         running = true;
         try {
             serverSocket = new ServerSocket(port);
@@ -108,8 +114,8 @@ public class GameServer {
         return matchmakingManager;
     }
 
-    public QuestionManager getQuestionManager() {
-        return questionManager;
+    public QuestionService getQuestionService() {
+        return questionService;
     }
 
     public boolean isRunning() {

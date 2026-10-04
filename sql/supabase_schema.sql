@@ -1,4 +1,6 @@
 -- NihongoQuest — schema Supabase (Postgres)
+-- LEGACY: chỉ tham khảo phiên bản cũ; không chạy để thiết lập bản JDBC hiện tại.
+-- Bản hiện tại dùng schema users/questions/choices đã có trên Supabase.
 -- Chạy trong Supabase Dashboard → SQL Editor
 -- Chỉ Game Server (JDBC) đọc/ghi; Client không nối thẳng DB.
 
@@ -22,7 +24,7 @@ CREATE TABLE IF NOT EXISTS players (
 CREATE TABLE IF NOT EXISTS questions (
   id              BIGSERIAL PRIMARY KEY,
   question_text   TEXT NOT NULL,
-  -- 4 đáp án theo thứ tự index 0..3 (giống questions.json)
+  -- 4 đáp án theo thứ tự index 0..3 của model legacy
   answers         JSONB NOT NULL,
   -- index đáp án đúng (0..3)
   correct_answer  INT NOT NULL CHECK (correct_answer BETWEEN 0 AND 3),
@@ -54,7 +56,7 @@ ALTER TABLE questions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE matches ENABLE ROW LEVEL SECURITY;
 
 -- ---------------------------------------------------------------------------
--- Seed câu hỏi demo (tương đương resources/questions/questions.json)
+-- Seed câu hỏi demo của schema legacy
 -- ---------------------------------------------------------------------------
 INSERT INTO questions (question_text, answers, correct_answer) VALUES
   (

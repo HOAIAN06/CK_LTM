@@ -1,8 +1,8 @@
 package com.nihongoquest.client.network;
 
-import com.nihongoquest.common.Message;
-import com.nihongoquest.common.MessageType;
-import com.nihongoquest.common.Protocol;
+import com.nihongoquest.common.protocol.Message;
+import com.nihongoquest.common.protocol.MessageType;
+import com.nihongoquest.common.protocol.Protocol;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -71,23 +71,20 @@ public class GameClient {
 
     public void register(String username, String password) {
         send(MessageType.REGISTER,
-                com.nihongoquest.common.Payloads.credentials(username, password));
+                com.nihongoquest.common.protocol.Payloads.credentials(username, password));
     }
 
     public void login(String username, String password) {
         send(MessageType.LOGIN,
-                com.nihongoquest.common.Payloads.credentials(username, password));
+                com.nihongoquest.common.protocol.Payloads.credentials(username, password));
     }
 
     public void cancelMatch() {
         send(MessageType.CANCEL_MATCH, "");
     }
 
-    public void sendAnswer(int answerIndex) {
-        if (answerIndex < 0 || answerIndex > 3) {
-            throw new IllegalArgumentException("Chỉ số đáp án phải từ 0 đến 3");
-        }
-        send(MessageType.ANSWER, Integer.toString(answerIndex));
+    public void sendAnswer(long questionId, long choiceId) {
+        send(MessageType.ANSWER, com.nihongoquest.common.protocol.Payloads.answer(questionId, choiceId));
     }
 
     public void redispatch(Message message) {

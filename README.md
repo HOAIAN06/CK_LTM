@@ -40,9 +40,9 @@ Chi tiết các bản tin nằm tại [docs/protocol.md](docs/protocol.md).
 Ngoài TCP Socket giữa Client và Game Server, dự án còn dùng:
 
 - **PostgreSQL qua JDBC và TLS**: Game Server kết nối Supabase để đăng ký,
-  đăng nhập và lưu thống kê. Đây là giao tiếp database riêng, không thay thế TCP
+  đăng nhập, nạp câu hỏi/lựa chọn và lưu thống kê. Đây là giao tiếp database riêng, không thay thế TCP
   Socket của trò chơi.
-- **JSON**: định dạng dữ liệu trong bản tin TCP và file câu hỏi; JSON không phải
+- **JSON**: định dạng dữ liệu trong bản tin TCP; JSON không phải
   giao thức mạng.
 - **JavaFX, FXML, CSS**: giao diện client và dashboard server.
 - **Luồng nền/Executor**: tránh thao tác socket làm treo giao diện và cho phép
@@ -62,26 +62,45 @@ yêu cầu hiện tại.
 src/main/java/com/nihongoquest/
 ├── client/
 │   ├── ClientApp.java
-│   ├── controller/        # Nhận sự kiện UI, gọi GameClient
-│   ├── model/Player.java  # Hồ sơ nhận từ server
+│   ├── auth/              # Đăng nhập, đăng ký
+│   ├── home/              # Màn hình chính
+│   ├── profile/           # Player và hiển thị hồ sơ dùng chung
+│   ├── ranked/
+│   │   ├── matchmaking/   # Tìm và hủy tìm trận 1v1
+│   │   └── battle/        # Thi đấu và kết quả 1v1
+│   ├── quiz/              # .gitkeep, dành cho Quiz Room sau này
+│   ├── config/            # Cấu hình kết nối client
 │   └── network/           # TCP phía client
-├── common/                # Message, MessageType, Payloads, Protocol
+├── common/protocol/       # Message, MessageType, Payloads, Protocol
 └── server/
     ├── GameServer.java    # ServerSocket và danh sách client
-    ├── ClientHandler.java # Một kết nối TCP
-    ├── MatchmakingManager.java
-    ├── GameRoom.java
-    ├── QuestionManager.java
+    ├── network/           # Kết nối client và sự kiện lưu lượng
+    ├── ranked/            # Ghép trận, phòng đấu và chấm điểm 1v1
+    ├── quiz/              # .gitkeep, dành cho Quiz Room sau này
+    ├── question/          # Câu hỏi và nạp ngân hàng câu hỏi
+    ├── player/            # Lưu và truy vấn tài khoản, thống kê
     ├── dashboard/         # Giao diện quản trị server
-    └── db/                # JDBC tới Supabase
+    └── infrastructure/persistence/ # Kết nối JDBC tới Supabase
 ```
+
+FXML và CSS nằm trong `src/main/resources/client/<chức năng>/` và
+`src/main/resources/server/<chức năng>/`. CSS chung của client nằm trong
+`client/shared/`. Câu hỏi và lựa chọn được nạp từ PostgreSQL khi tạo mỗi trận Ranked.
+Các test nghiệp vụ dùng package tương ứng với mã nguồn.
+
+Xem [quy ước tổ chức mã nguồn](docs/architecture.md) và
+[lộ trình mở rộng nền tảng quiz](docs/roadmap.md).
 
 ## Chuẩn bị Supabase
 
-1. Chạy `sql/supabase_schema.sql` trong Supabase SQL Editor.
+1. Dùng schema Supabase mới với `users`, `questions`, `choices` theo
+   [hợp đồng dữ liệu câu hỏi](docs/question-data.md). `sql/supabase_schema.sql` là
+   schema legacy, không dùng để khởi tạo hoặc cập nhật database cho phiên bản này.
 2. Sao chép `src/main/resources/db.properties.example` thành
    `src/main/resources/db.properties`.
 3. Điền host, user và password từ Database Settings của Supabase.
+4. Chuẩn bị ít nhất 3 câu hỏi active hợp lệ: mỗi câu có 4 lựa chọn, vị trí dương
+   không trùng và đúng 1 đáp án đúng. Database rỗng sẽ báo lỗi khi ghép trận.
 
 Không commit `db.properties` vì tệp này chứa mật khẩu database.
 
@@ -91,7 +110,8 @@ Không commit `db.properties` vì tệp này chứa mật khẩu database.
 
 ## Build và chạy
 
-Yêu cầu: JDK 21 và kết nối Internet tới Supabase.
+Yêu cầu: JDK 21. Chạy game cần kết nối Supabase; unit/FXML test dùng dữ liệu giả
+và không truy cập database thật.
 
 ```powershell
 .\mvnw.cmd clean test

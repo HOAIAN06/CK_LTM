@@ -1,11 +1,13 @@
 package com.nihongoquest.client;
 
+import com.nihongoquest.server.dashboard.DashboardController;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -33,21 +35,38 @@ class ClientFxmlTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
-            "/fxml/login.fxml",
-            "/fxml/home.fxml",
-            "/fxml/matchmaking.fxml",
-            "/fxml/battle.fxml",
-            "/fxml/result.fxml"
+            "/client/auth/login.fxml",
+            "/client/home/home.fxml",
+            "/client/ranked/matchmaking/matchmaking.fxml",
+            "/client/ranked/battle/battle.fxml",
+            "/client/ranked/battle/result.fxml"
     })
     void loadsClientScreen(String resource) throws Exception {
+        loadScreen(resource, "/client/shared/style.css");
+    }
+
+    @Test
+    void loadsServerDashboard() throws Exception {
+        loadScreen("/server/dashboard/server-dashboard.fxml",
+                "/server/dashboard/server-dashboard.css");
+    }
+
+    private void loadScreen(String resource, String stylesheet) throws Exception {
         FutureTask<Parent> load = new FutureTask<>(() -> {
-            Parent root = new FXMLLoader(ClientFxmlTest.class.getResource(resource)).load();
-            Scene scene = new Scene(root, 980, 680);
-            scene.getStylesheets().add(
-                    ClientFxmlTest.class.getResource("/css/style.css").toExternalForm());
-            root.applyCss();
-            root.layout();
-            return root;
+            FXMLLoader loader = new FXMLLoader(ClientFxmlTest.class.getResource(resource));
+            try {
+                Parent root = loader.load();
+                Scene scene = new Scene(root, 980, 680);
+                scene.getStylesheets().add(
+                        ClientFxmlTest.class.getResource(stylesheet).toExternalForm());
+                root.applyCss();
+                root.layout();
+                return root;
+            } finally {
+                if (loader.getController() instanceof DashboardController dashboard) {
+                    dashboard.shutdown();
+                }
+            }
         });
         Platform.runLater(load);
 

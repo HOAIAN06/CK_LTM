@@ -1,6 +1,6 @@
 package com.nihongoquest.client.network;
 
-import com.nihongoquest.common.Message;
+import com.nihongoquest.common.protocol.Message;
 
 import java.io.IOException;
 

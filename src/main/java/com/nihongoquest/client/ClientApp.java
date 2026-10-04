@@ -2,12 +2,12 @@ package com.nihongoquest.client;
 
 import java.io.IOException;
 
-import com.nihongoquest.client.controller.BattleController;
-import com.nihongoquest.client.controller.HomeController;
-import com.nihongoquest.client.controller.LoginController;
-import com.nihongoquest.client.controller.MatchmakingController;
-import com.nihongoquest.client.controller.ResultController;
-import com.nihongoquest.client.model.Player;
+import com.nihongoquest.client.ranked.battle.BattleController;
+import com.nihongoquest.client.home.HomeController;
+import com.nihongoquest.client.auth.LoginController;
+import com.nihongoquest.client.ranked.matchmaking.MatchmakingController;
+import com.nihongoquest.client.ranked.battle.ResultController;
+import com.nihongoquest.client.profile.Player;
 import com.nihongoquest.client.network.GameClient;
 
 import javafx.application.Application;
@@ -36,7 +36,7 @@ public class ClientApp extends Application {
     }
 
     public void showLogin() throws IOException {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/auth/login.fxml"));
         Parent root = loader.load();
         LoginController controller = loader.getController();
         controller.setApp(this, gameClient);
@@ -46,7 +46,7 @@ public class ClientApp extends Application {
     public void showHome(Player player) {
         currentPlayer = player;
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/home.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/home/home.fxml"));
             Parent root = loader.load();
             HomeController controller = loader.getController();
             controller.setSession(this, gameClient, player);
@@ -66,7 +66,7 @@ public class ClientApp extends Application {
     public void showMatchmaking() {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/fxml/matchmaking.fxml"));
+                    getClass().getResource("/client/ranked/matchmaking/matchmaking.fxml"));
             Parent root = loader.load();
             MatchmakingController controller = loader.getController();
             controller.setSession(this, gameClient, currentPlayer);
@@ -79,7 +79,7 @@ public class ClientApp extends Application {
 
     public void showBattle(String roomId, String opponentUsername) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/battle.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/ranked/battle/battle.fxml"));
             Parent root = loader.load();
             BattleController controller = loader.getController();
             controller.setSession(this, gameClient, currentPlayer, roomId, opponentUsername);
@@ -92,7 +92,7 @@ public class ClientApp extends Application {
     public void showResult(String result, int myScore, int opponentScore,
                            String opponentUsername) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/result.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/ranked/battle/result.fxml"));
             Parent root = loader.load();
             ResultController controller = loader.getController();
             controller.setResult(
@@ -110,7 +110,7 @@ public class ClientApp extends Application {
     private void setScene(Parent root, double width, double height) {
         Scene scene = new Scene(root, width, height);
         scene.getStylesheets().add(
-                getClass().getResource("/css/style.css").toExternalForm()
+                getClass().getResource("/client/shared/style.css").toExternalForm()
         );
         primaryStage.setScene(scene);
     }
