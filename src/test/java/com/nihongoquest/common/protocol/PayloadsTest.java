@@ -88,4 +88,22 @@ class PayloadsTest {
         assertTrue(json.get("questions").isArray());
         assertEquals(input, output);
     }
+
+    @Test
+    void quizRoomQuestionHidesAnswerAndLeaderboardRoundTrips() {
+        Payloads.QuizQuestionData question = new Payloads.QuizQuestionData(
+                "123456", "123456", 2, 10, "山 là gì?",
+                List.of(new Payloads.ChoiceData(101, "Núi", 1)), 30, 120);
+        var questionJson = Payloads.toJson(question);
+        assertTrue(questionJson.findValues("correct").isEmpty());
+        assertTrue(questionJson.findValues("correctChoiceId").isEmpty());
+        assertEquals(question, Payloads.fromJson(questionJson, Payloads.QuizQuestionData.class));
+
+        Payloads.QuizLeaderboardData board = new Payloads.QuizLeaderboardData(
+                "123456", false, List.of(
+                new Payloads.QuizLeaderboardEntry(1, 1, "an", 900, 1, true),
+                new Payloads.QuizLeaderboardEntry(1, 2, "dinh", 900, 1, false)));
+        assertEquals(board, Payloads.fromJson(
+                Payloads.toJson(board), Payloads.QuizLeaderboardData.class));
+    }
 }

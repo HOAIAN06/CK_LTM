@@ -10,6 +10,7 @@ import com.nihongoquest.server.question.QuestionRepository;
 import com.nihongoquest.server.question.QuestionService;
 import com.nihongoquest.server.quiz.QuizSetRepository;
 import com.nihongoquest.server.quiz.QuizSetService;
+import com.nihongoquest.server.quizroom.QuizRoomManager;
 
 import com.nihongoquest.common.protocol.Protocol;
 import com.nihongoquest.server.database.Database;
@@ -46,6 +47,7 @@ public class GameServer {
     private final PlayerRepository playerRepository;
     private final OnlineUserRegistry onlineUsers;
     private final ServerRequestRouter requestRouter;
+    private final QuizRoomManager quizRoomManager;
     private final ScheduledExecutorService scheduler;
     private volatile boolean running;
     private ServerSocket serverSocket;
@@ -66,9 +68,11 @@ public class GameServer {
         this.onlineUsers = new OnlineUserRegistry();
         this.matchmakingManager = new MatchmakingManager(
                 questionService, new MatchRepository(database), scheduler);
+        QuizSetService quizSetService = new QuizSetService(new QuizSetRepository(database));
+        this.quizRoomManager = new QuizRoomManager(quizSetService, scheduler);
         this.requestRouter = new ServerRequestRouter(
                 matchmakingManager, playerRepository, onlineUsers,
-                new QuizSetService(new QuizSetRepository(database)));
+                quizSetService, quizRoomManager);
         this.running = false;
     }
 
@@ -113,6 +117,7 @@ public class GameServer {
      */
     public void stop() {
         running = false;
+        quizRoomManager.shutdown();
         clients.forEach(ClientHandler::close);
         clients.clear();
         if (serverSocket != null) {
@@ -175,15 +180,18 @@ public class GameServer {
     }
 
     public int getPlayingCount() {
-        return (int) clients.stream().filter(client -> client.getCurrentRoom() != null).count();
+        return (int) clients.stream().filter(client -> client.getCurrentRoom() != null
+                || (client.getCurrentQuizRoom() != null
+                    && client.getCurrentQuizRoom().isRunning())).count();
     }
 
     public int getActiveRoomCount() {
-        return (int) clients.stream()
+        int rankedRooms = (int) clients.stream()
                 .map(ClientHandler::getCurrentRoom)
                 .filter(room -> room != null && !room.isFinished())
                 .distinct()
                 .count();
+        return rankedRooms + quizRoomManager.activeRoomCount();
     }
 
     public void disconnectClient(ClientHandler client) {

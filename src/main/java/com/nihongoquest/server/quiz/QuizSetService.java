@@ -59,6 +59,15 @@ public class QuizSetService {
         repository.delete(quizSetId, userId);
     }
 
+    /** Snapshot server-only dùng khi tạo phòng; mọi tài khoản được dùng bộ đề đã publish. */
+    public Payloads.QuizSetEdit getPublishedForRoom(long quizSetId) throws SQLException {
+        if (quizSetId <= 0) throw new QuizSetException("BAD_REQUEST");
+        QuizSetRepository.StoredQuizSet stored = repository.findById(quizSetId)
+                .orElseThrow(() -> new QuizSetException("NOT_FOUND"));
+        if (!stored.published()) throw new QuizSetException("QUIZ_NOT_PUBLISHED");
+        return validate(stored.data(), true);
+    }
+
     /** Draft có thể chưa có câu hỏi; câu đã thêm phải luôn đủ bốn lựa chọn. */
     static Payloads.QuizSetEdit validate(Payloads.QuizSetEdit input, boolean publishing) {
         if (input == null) throw new QuizSetException("BAD_REQUEST");

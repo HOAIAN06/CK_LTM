@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.nihongoquest.common.protocol.Message;
 import com.nihongoquest.common.protocol.MessageType;
 import com.nihongoquest.server.ranked.GameRoom;
+import com.nihongoquest.server.quizroom.QuizRoom;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -37,6 +38,7 @@ public class ClientHandler implements Runnable {
     private volatile Long playerId;
     private volatile String username;
     private volatile GameRoom currentRoom;
+    private volatile QuizRoom currentQuizRoom;
     private volatile Instant lastActivity = Instant.now();
 
     public ClientHandler(Socket socket, ServerRequestRouter router,
@@ -127,6 +129,11 @@ public class ClientHandler implements Runnable {
     public GameRoom getCurrentRoom() { return currentRoom; }
     public void setCurrentRoom(GameRoom room) { currentRoom = room; }
     public void clearCurrentRoom(GameRoom room) { if (currentRoom == room) currentRoom = null; }
+    public QuizRoom getCurrentQuizRoom() { return currentQuizRoom; }
+    public void setCurrentQuizRoom(QuizRoom room) { currentQuizRoom = room; }
+    public void clearCurrentQuizRoom(QuizRoom room) {
+        if (currentQuizRoom == room) currentQuizRoom = null;
+    }
     public boolean isConnected() { return connected; }
     public Instant getConnectedAt() { return connectedAt; }
     public Instant getLastActivity() { return lastActivity; }
@@ -136,6 +143,7 @@ public class ClientHandler implements Runnable {
     public String getStatusText() {
         if (!connected) return "Đã ngắt kết nối";
         if (currentRoom != null) return "Đang thi đấu";
+        if (currentQuizRoom != null) return "Đang ở phòng Quiz";
         if (queued) return "Đang chờ ghép trận";
         return isAuthenticated() ? "Trực tuyến" : "Chưa đăng nhập";
     }

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane styleClass="root,app-shell"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.nihongoquest.client.quiz.QuizBattleController">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="18" styleClass="app-header">
+            <VBox spacing="2" HBox.hgrow="ALWAYS">
+                <Label text="QUIZ ROOM" styleClass="app-brand"/>
+                <Label fx:id="titleLabel" text="Bộ đề" styleClass="header-page-title"/>
+            </VBox>
+            <VBox alignment="CENTER_RIGHT" spacing="2">
+                <Label fx:id="pinLabel" text="PIN ------" styleClass="field-caption"/>
+                <Label fx:id="roomTimeLabel" text="3:00" styleClass="quiz-room-time"/>
+            </VBox>
+        </HBox>
+    </top>
+    <center>
+        <HBox spacing="18" styleClass="battle-content">
+            <VBox spacing="14" HBox.hgrow="ALWAYS">
+                <HBox alignment="CENTER_LEFT" spacing="12">
+                    <Label fx:id="scoreLabel" text="0 điểm" styleClass="section-title"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Label text="THỜI GIAN CÂU" styleClass="timer-caption"/>
+                    <ProgressBar fx:id="questionProgress" progress="0"
+                                 prefWidth="220" styleClass="time-progress"/>
+                    <Label fx:id="questionTimeLabel" text="--" styleClass="time-label"/>
+                </HBox>
+                <VBox spacing="12" styleClass="question-card" VBox.vgrow="ALWAYS">
+                    <Label fx:id="questionLabel" text="Đang chuẩn bị câu hỏi"
+                           wrapText="true" styleClass="battle-question"/>
+                    <GridPane hgap="12" vgap="12">
+                        <columnConstraints>
+                            <ColumnConstraints percentWidth="50" hgrow="ALWAYS"/>
+                            <ColumnConstraints percentWidth="50" hgrow="ALWAYS"/>
+                        </columnConstraints>
+                        <Button fx:id="answerAButton" text="A" onAction="#onAnswer"
+                                maxWidth="Infinity" styleClass="answer-button"
+                                GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                        <Button fx:id="answerBButton" text="B" onAction="#onAnswer"
+                                maxWidth="Infinity" styleClass="answer-button"
+                                GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                        <Button fx:id="answerCButton" text="C" onAction="#onAnswer"
+                                maxWidth="Infinity" styleClass="answer-button"
+                                GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                        <Button fx:id="answerDButton" text="D" onAction="#onAnswer"
+                                maxWidth="Infinity" styleClass="answer-button"
+                                GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                    </GridPane>
+                    <Label fx:id="statusLabel" text="" styleClass="status-label"/>
+                </VBox>
+                <Button fx:id="leaveButton" text="Rời phòng" onAction="#onLeave"
+                        styleClass="danger-outline-button"/>
+            </VBox>
+            <VBox spacing="10" prefWidth="350" styleClass="quiz-side-panel">
+                <Label text="BẢNG XẾP HẠNG TRỰC TIẾP" styleClass="section-title"/>
+                <ListView fx:id="leaderboardList" VBox.vgrow="ALWAYS"/>
+            </VBox>
+        </HBox>
+    </center>
+</BorderPane>

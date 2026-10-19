@@ -45,8 +45,19 @@ Server dùng `sessionId + attempt + questionId` để bỏ qua đáp án cũ ho�
 Mỗi trận lấy tối đa 10 câu hợp lệ từ các bộ đề đã publish và cần ít nhất 3 câu. Khi hết
 danh sách, câu hỏi lặp lại cho tới deadline chung. Ngắt kết nối vẫn xử thua ngay.
 
+## Quiz Room trong RAM
+
+`QuizRoomManager` sinh và quản lý PIN sáu số. Khi host tạo phòng, server lấy snapshot của
+bộ đề published; việc sửa/xóa bộ đề sau đó không ảnh hưởng phòng đang chạy. `QuizRoom`
+giữ lobby, deadline chung, tiến độ và timer câu riêng của tối đa 20 người chơi.
+
+Điểm, số câu đúng và leaderboard chỉ ở RAM. Slot được gắn với user ID thay vì socket nên
+mất TCP không xóa người chơi; đăng nhập lại trước deadline sẽ gắn kết nối mới và phát lại
+câu hiện tại. Rời chủ động sẽ khóa reconnect. Host mất TCP trong trận không hủy phòng,
+nhưng host bấm hủy/rời sẽ kết thúc phòng cho mọi người.
+
 ## Trạng thái triển khai
 
 Nền tảng đã có xác thực, dashboard, Ranked 1v1 3/5 phút, câu hỏi PostgreSQL, protocol
-payload object, session registry, persistence đơn giản và giao diện quản lý bộ đề.
-Quiz Room, history/leaderboard và friends được triển khai ở các nhánh kế tiếp.
+payload object, session registry, persistence đơn giản, quản lý bộ đề và Quiz Room.
+History/leaderboard hệ thống và friends được triển khai ở các nhánh kế tiếp.

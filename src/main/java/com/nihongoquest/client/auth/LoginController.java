@@ -179,6 +179,20 @@ public class LoginController {
                 showError(toVietnameseError(message.payloadText()));
                 setSubmitDisabled(false);
             }
+            case QUIZ_REJOINED -> {
+                Payloads.QuizRejoinData rejoin = Payloads.fromJson(
+                        message.getPayload(), Payloads.QuizRejoinData.class);
+                if (rejoin.running()) {
+                    app.showQuizBattle(new Payloads.QuizRoomStarted(
+                            rejoin.lobby().pin(), rejoin.lobby().title(),
+                            rejoin.remainingSeconds(), rejoin.playing(),
+                            rejoin.lobby().currentUserHost()));
+                } else {
+                    app.showQuizLobby(rejoin.lobby());
+                }
+            }
+            case QUIZ_QUESTION, QUIZ_LEADERBOARD, QUIZ_ROOM_FINISHED ->
+                    gameClient.redispatch(message);
             default -> {
                 // Auth screen không xử lý message gameplay.
             }

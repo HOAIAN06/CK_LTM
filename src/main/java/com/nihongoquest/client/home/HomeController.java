@@ -67,4 +67,9 @@ public class HomeController {
     private void onManageQuizSets(ActionEvent event) {
         app.showQuizSets();
     }
+
+    @FXML
+    private void onQuizRoom(ActionEvent event) {
+        app.showQuizRoomMenu();
+    }
 }

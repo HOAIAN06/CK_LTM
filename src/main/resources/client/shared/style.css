@@ -531,3 +531,33 @@
     -fx-border-color: #dbe5f1 transparent transparent transparent;
     -fx-padding: 12px 24px;
 }
+
+/* Multiplayer Quiz Room */
+.quiz-room-card {
+    -fx-background-color: white;
+    -fx-background-radius: 14px;
+    -fx-border-color: #dbe5f1;
+    -fx-border-radius: 14px;
+    -fx-padding: 26px;
+    -fx-min-width: 410px;
+    -fx-min-height: 300px;
+    -fx-effect: dropshadow(gaussian, rgba(26, 54, 93, 0.10), 14, 0, 0, 4);
+}
+
+.pin-input {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-alignment: center;
+}
+
+.lobby-pin {
+    -fx-font-size: 25px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2b6cb0;
+}
+
+.quiz-room-time {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #b7791f;
+}

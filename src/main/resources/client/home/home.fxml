@@ -64,6 +64,9 @@
                 <Button text="QUẢN LÝ BỘ ĐỀ"
                         onAction="#onManageQuizSets" prefWidth="250"
                         styleClass="secondary-button,large-button"/>
+                <Button text="PHÒNG QUIZ NHIỀU NGƯỜI"
+                        onAction="#onQuizRoom" prefWidth="250"
+                        styleClass="secondary-button,large-button"/>
             </VBox>
         </VBox>
     </center>
