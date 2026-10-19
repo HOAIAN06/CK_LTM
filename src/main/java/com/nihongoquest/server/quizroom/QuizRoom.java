@@ -388,6 +388,8 @@ public class QuizRoom {
     public String getPin() { return pin; }
     synchronized Payloads.QuizLobbyData lobbyFor(long viewerId) { return lobbyData(viewerId); }
     public synchronized boolean isRunning() { return state == State.RUNNING; }
+    public synchronized boolean isLobby() { return state == State.LOBBY; }
+    public boolean isHost(long userId) { return hostId == userId; }
     public synchronized boolean isFinished() { return state == State.FINISHED; }
     public synchronized List<Long> memberIds() { return List.copyOf(members.keySet()); }
 

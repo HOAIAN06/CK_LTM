@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane styleClass="root,app-shell"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.nihongoquest.client.friend.FriendsController">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="14" styleClass="app-header">
+            <Button text="← TRANG CHỦ" onAction="#onBack" styleClass="secondary-button"/>
+            <VBox spacing="2" HBox.hgrow="ALWAYS">
+                <Label text="BẠN BÈ VÀ LỜI MỜI" styleClass="header-page-title"/>
+                <Label text="Tìm người chơi, theo dõi trạng thái và mời thi đấu"
+                       styleClass="profile-summary"/>
+            </VBox>
+            <Button text="LÀM MỚI" onAction="#onRefresh" styleClass="primary-button"/>
+        </HBox>
+    </top>
+    <center>
+        <VBox spacing="12" styleClass="page-content">
+            <TabPane VBox.vgrow="ALWAYS" tabClosingPolicy="UNAVAILABLE">
+                <tabs>
+                    <Tab text="BẠN BÈ">
+                        <VBox spacing="12" style="-fx-padding: 18;">
+                            <ListView fx:id="friendList" VBox.vgrow="ALWAYS"/>
+                            <HBox alignment="CENTER_LEFT" spacing="10">
+                                <ComboBox fx:id="rankedDurationBox" prefWidth="120"/>
+                                <Button text="MỜI 1V1" onAction="#onInviteRanked"
+                                        styleClass="primary-button"/>
+                                <TextField fx:id="quizPinField" promptText="PIN Quiz 6 số"
+                                           prefWidth="150"/>
+                                <Button text="MỜI VÀO QUIZ" onAction="#onInviteQuiz"
+                                        styleClass="secondary-button"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Button text="XÓA BẠN" onAction="#onRemoveFriend"
+                                        styleClass="secondary-button"/>
+                            </HBox>
+                        </VBox>
+                    </Tab>
+                    <Tab text="LỜI MỜI KẾT BẠN">
+                        <VBox spacing="12" style="-fx-padding: 18;">
+                            <ListView fx:id="requestList" VBox.vgrow="ALWAYS"/>
+                            <HBox spacing="10">
+                                <Button text="CHẤP NHẬN" onAction="#onAccept"
+                                        styleClass="primary-button"/>
+                                <Button text="TỪ CHỐI" onAction="#onReject"
+                                        styleClass="secondary-button"/>
+                            </HBox>
+                        </VBox>
+                    </Tab>
+                    <Tab text="TÌM NGƯỜI CHƠI">
+                        <VBox spacing="12" style="-fx-padding: 18;">
+                            <HBox spacing="10">
+                                <TextField fx:id="searchField" promptText="Nhập một phần username"
+                                           HBox.hgrow="ALWAYS" onAction="#onSearch"/>
+                                <Button text="TÌM" onAction="#onSearch" styleClass="primary-button"/>
+                            </HBox>
+                            <ListView fx:id="searchResults" VBox.vgrow="ALWAYS"/>
+                            <Button text="GỬI LỜI MỜI KẾT BẠN" onAction="#onAddFriend"
+                                    styleClass="secondary-button"/>
+                        </VBox>
+                    </Tab>
+                </tabs>
+            </TabPane>
+            <Label fx:id="statusLabel" text="Đang tải..." styleClass="profile-summary"/>
+        </VBox>
+    </center>
+</BorderPane>

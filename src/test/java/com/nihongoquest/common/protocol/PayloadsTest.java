@@ -125,4 +125,17 @@ class PayloadsTest {
         assertEquals(history, Payloads.fromJson(
                 Payloads.toJson(history), Payloads.MatchHistoryData.class));
     }
+
+    @Test
+    void socialAndInviteRecordsRoundTrip() {
+        Payloads.FriendListData friends = new Payloads.FriendListData(List.of(
+                new Payloads.FriendItem(2, "tanaka", true, false)));
+        assertEquals(friends, Payloads.fromJson(
+                Payloads.toJson(friends), Payloads.FriendListData.class));
+
+        Payloads.GameInviteReceived invite = new Payloads.GameInviteReceived(
+                "invite-1", 2, "tanaka", "RANKED", 180, null, 123456789L);
+        assertEquals(invite, Payloads.fromJson(
+                Payloads.toJson(invite), Payloads.GameInviteReceived.class));
+    }
 }

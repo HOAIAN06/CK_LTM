@@ -228,6 +228,23 @@ public final class Payloads {
                                     int myScore, int opponentScore, String result,
                                     int durationSeconds, String endReason, String playedAt) { }
     public record MatchHistoryData(List<MatchHistoryEntry> matches) { }
+    public record UserSearchRequest(String query) { }
+    public record UserSearchItem(long userId, String username, boolean online, boolean busy) { }
+    public record UserSearchData(List<UserSearchItem> users) { }
+    public record FriendTarget(long userId) { }
+    public record FriendRequestReply(long userId, boolean accept) { }
+    public record FriendRequestItem(long userId, String username) { }
+    public record FriendRequestListData(List<FriendRequestItem> requests) { }
+    public record FriendItem(long userId, String username, boolean online, boolean busy) { }
+    public record FriendListData(List<FriendItem> friends) { }
+    public record PresenceData(long userId, boolean online, boolean busy) { }
+    public record GameInviteSend(long targetUserId, String type,
+                                 int durationSeconds, String roomPin) { }
+    public record GameInviteReceived(String inviteId, long fromUserId, String fromUsername,
+                                     String type, int durationSeconds, String roomPin,
+                                     long expiresAtEpochMillis) { }
+    public record GameInviteRespond(String inviteId, boolean accept) { }
+    public record GameInviteStatus(String inviteId, String status) { }
     public record FindMatchRequest(int durationSeconds) { }
     public record MatchFound(String roomId, String opponent, int durationSeconds) { }
     public record ChoiceData(long choiceId, String content, int position) { }

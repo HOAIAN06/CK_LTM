@@ -22,6 +22,16 @@ class OnlineUserRegistryTest {
         assertNull(registry.find(7));
     }
 
+    @Test
+    void reportsBusyForQueueOrActiveRoomState() {
+        OnlineUserRegistry registry = new OnlineUserRegistry();
+        StubClient client = new StubClient(8);
+        assertTrue(registry.login(8, client));
+        assertFalse(registry.isBusy(8));
+        client.setQueued(true);
+        assertTrue(registry.isBusy(8));
+    }
+
     private static final class StubClient extends ClientHandler {
         StubClient(long id) {
             super(new Socket());

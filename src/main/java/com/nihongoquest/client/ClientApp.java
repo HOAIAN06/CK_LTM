@@ -16,13 +16,21 @@ import com.nihongoquest.client.quiz.QuizLobbyController;
 import com.nihongoquest.client.quiz.QuizBattleController;
 import com.nihongoquest.client.leaderboard.LeaderboardController;
 import com.nihongoquest.client.history.MatchHistoryController;
+import com.nihongoquest.client.friend.FriendsController;
+import com.nihongoquest.common.protocol.Message;
+import com.nihongoquest.common.protocol.MessageType;
 import com.nihongoquest.common.protocol.Payloads;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.stage.Stage;
+
+import java.util.Optional;
 
 /**
  * ClientApp là entry point của ứng dụng JavaFX phía Client.
@@ -34,11 +42,13 @@ public class ClientApp extends Application {
     private Stage primaryStage;
     private final GameClient gameClient = new GameClient();
     private Player currentPlayer;
+    private volatile String acceptedInviteType;
 
     @Override
     public void start(Stage primaryStage) throws IOException {
         this.primaryStage = primaryStage;
         primaryStage.setTitle("NihongoQuest");
+        gameClient.setGlobalMessageHandler(this::handleGlobalMessage);
         showLogin();
         primaryStage.show();
     }
@@ -99,6 +109,72 @@ public class ClientApp extends Application {
         } catch (IOException e) {
             throw new IllegalStateException("Khong the mo lich su thi dau", e);
         }
+    }
+
+    public void showFriends() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/client/friend/friends.fxml"));
+            Parent root = loader.load();
+            FriendsController controller = loader.getController();
+            controller.setSession(this, gameClient);
+            setScene(root, 1080, 740);
+        } catch (IOException e) {
+            throw new IllegalStateException("Khong the mo man hinh ban be", e);
+        }
+    }
+
+    private void handleGlobalMessage(Message message) {
+        if (message.getType() == MessageType.GAME_INVITE_RECEIVED) {
+            Payloads.GameInviteReceived invite = Payloads.fromJson(
+                    message.getPayload(), Payloads.GameInviteReceived.class);
+            Platform.runLater(() -> showInvite(invite));
+            return;
+        }
+        String inviteType = acceptedInviteType;
+        if (inviteType != null && message.getType() == MessageType.SOCIAL_ERROR) {
+            acceptedInviteType = null;
+            Platform.runLater(() -> {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Không thể vào trận");
+                alert.setHeaderText("Lời mời không còn hợp lệ");
+                alert.setContentText(message.payloadText());
+                alert.showAndWait();
+            });
+            return;
+        }
+        if ("RANKED".equals(inviteType) && message.getType() == MessageType.MATCH_FOUND) {
+            Payloads.MatchFound match = Payloads.parseMatchFound(message.getPayload());
+            Platform.runLater(() -> {
+                showBattle(match.roomId(), match.opponent(), match.durationSeconds());
+                acceptedInviteType = null;
+            });
+        } else if ("RANKED".equals(inviteType)
+                && message.getType() == MessageType.QUESTION) {
+            Platform.runLater(() -> gameClient.redispatch(message));
+        } else if ("QUIZ".equals(inviteType)
+                && message.getType() == MessageType.QUIZ_LOBBY_UPDATE) {
+            Payloads.QuizLobbyData lobby = Payloads.fromJson(
+                    message.getPayload(), Payloads.QuizLobbyData.class);
+            Platform.runLater(() -> {
+                showQuizLobby(lobby);
+                acceptedInviteType = null;
+            });
+        }
+    }
+
+    private void showInvite(Payloads.GameInviteReceived invite) {
+        String detail = "RANKED".equals(invite.type())
+                ? "Ranked " + (invite.durationSeconds() / 60) + " phút"
+                : "phòng Quiz PIN " + invite.roomPin();
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Lời mời chơi");
+        alert.setHeaderText(invite.fromUsername() + " mời bạn vào " + detail);
+        alert.setContentText("Lời mời có hiệu lực trong 60 giây.");
+        Optional<ButtonType> choice = alert.showAndWait();
+        boolean accept = choice.isPresent() && choice.get() == ButtonType.OK;
+        if (accept) acceptedInviteType = invite.type();
+        gameClient.respondGameInvite(invite.inviteId(), accept);
     }
 
     public void showMatchmaking() {

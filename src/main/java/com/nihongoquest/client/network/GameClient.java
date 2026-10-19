@@ -25,6 +25,7 @@ public class GameClient {
     private ServerListener listener;
     private volatile boolean connected;
     private Consumer<Message> messageHandler = message -> { };
+    private Consumer<Message> globalMessageHandler = message -> { };
     private Consumer<String> errorHandler = error -> { };
 
     public synchronized void connect(String host, int port) throws IOException {
@@ -97,6 +98,49 @@ public class GameClient {
         send(MessageType.MATCH_HISTORY_GET, "");
     }
 
+    public void searchUsers(String query) {
+        send(MessageType.USER_SEARCH,
+                Payloads.toJson(new Payloads.UserSearchRequest(query)));
+    }
+
+    public void sendFriendRequest(long userId) {
+        send(MessageType.FRIEND_REQUEST_SEND,
+                Payloads.toJson(new Payloads.FriendTarget(userId)));
+    }
+
+    public void listFriendRequests() {
+        send(MessageType.FRIEND_REQUEST_LIST, "");
+    }
+
+    public void respondFriendRequest(long userId, boolean accept) {
+        send(MessageType.FRIEND_REQUEST_RESPOND,
+                Payloads.toJson(new Payloads.FriendRequestReply(userId, accept)));
+    }
+
+    public void listFriends() {
+        send(MessageType.FRIEND_LIST, "");
+    }
+
+    public void removeFriend(long userId) {
+        send(MessageType.FRIEND_REMOVE,
+                Payloads.toJson(new Payloads.FriendTarget(userId)));
+    }
+
+    public void inviteRanked(long userId, int durationSeconds) {
+        send(MessageType.GAME_INVITE_SEND, Payloads.toJson(
+                new Payloads.GameInviteSend(userId, "RANKED", durationSeconds, null)));
+    }
+
+    public void inviteQuiz(long userId, String roomPin) {
+        send(MessageType.GAME_INVITE_SEND, Payloads.toJson(
+                new Payloads.GameInviteSend(userId, "QUIZ", 0, roomPin)));
+    }
+
+    public void respondGameInvite(String inviteId, boolean accept) {
+        send(MessageType.GAME_INVITE_RESPOND,
+                Payloads.toJson(new Payloads.GameInviteRespond(inviteId, accept)));
+    }
+
     public void sendAnswer(String sessionId, int attempt, long questionId, long choiceId) {
         send(MessageType.ANSWER,
                 Payloads.answer(sessionId, attempt, questionId, choiceId));
@@ -162,6 +206,7 @@ public class GameClient {
     }
 
     void receive(Message message) {
+        globalMessageHandler.accept(message);
         messageHandler.accept(message);
     }
 
@@ -209,6 +254,10 @@ public class GameClient {
 
     public void setMessageHandler(Consumer<Message> handler) {
         messageHandler = handler != null ? handler : message -> { };
+    }
+
+    public void setGlobalMessageHandler(Consumer<Message> handler) {
+        globalMessageHandler = handler != null ? handler : message -> { };
     }
 
     public void setConnectionErrorHandler(Consumer<String> handler) {

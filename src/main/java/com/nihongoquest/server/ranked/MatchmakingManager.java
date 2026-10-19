@@ -106,6 +106,32 @@ public class MatchmakingManager {
         }
     }
 
+    /** Tạo ngay một trận do lời mời bạn bè, không đi qua hàng chờ. */
+    public synchronized void createDirectMatch(ClientHandler inviter, ClientHandler target,
+                                               int durationSeconds) {
+        if (!queues.containsKey(durationSeconds)) {
+            throw new IllegalStateException("INVALID_DURATION");
+        }
+        if (!isAvailable(inviter) || !isAvailable(target)) {
+            throw new IllegalStateException("TARGET_BUSY");
+        }
+        if (Objects.equals(inviter.getPlayerId(), target.getPlayerId())) {
+            throw new IllegalStateException("SAME_USER");
+        }
+        List<Question> questions;
+        try {
+            questions = questionService.getRankedQuestionsUpTo(null,
+                    GameRoom.MAX_QUESTION_POOL, GameRoom.MIN_QUESTION_POOL);
+        } catch (IllegalStateException e) {
+            throw new IllegalStateException("QUESTIONS_UNAVAILABLE", e);
+        }
+        GameRoom room = new GameRoom(UUID.randomUUID().toString(), inviter, target,
+                questions, durationSeconds, matchRepository, scheduler);
+        LOGGER.info("Tạo trận mời trực tiếp: " + inviter.getUsername()
+                + " vs " + target.getUsername());
+        room.start();
+    }
+
     public synchronized void disconnect(ClientHandler client) {
         removeFromQueue(client);
     }
@@ -114,12 +140,19 @@ public class MatchmakingManager {
         while (!queue.isEmpty()) {
             ClientHandler client = queue.pollFirst();
             if (client.isConnected() && client.isAuthenticated()
-                    && client.getCurrentRoom() == null) {
+                    && client.getCurrentRoom() == null
+                    && client.getCurrentQuizRoom() == null) {
                 return client;
             }
             client.setQueued(false);
         }
         return null;
+    }
+
+    private boolean isAvailable(ClientHandler client) {
+        return client != null && client.isConnected() && client.isAuthenticated()
+                && !client.isQueued() && client.getCurrentRoom() == null
+                && client.getCurrentQuizRoom() == null;
     }
 
     private void removeFromQueue(ClientHandler client) {

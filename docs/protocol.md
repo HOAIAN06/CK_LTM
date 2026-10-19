@@ -16,6 +16,9 @@ liệu dùng `null`.
 - Auth: `CONNECT`, `REGISTER`, `REGISTER_OK/FAIL`, `LOGIN`, `LOGIN_OK/FAIL`.
 - Truy vấn: `PROFILE_GET/DATA`, `LEADERBOARD_GET/DATA`,
   `MATCH_HISTORY_GET/DATA` và `QUERY_ERROR`.
+- Bạn bè: `USER_SEARCH/RESULT`, `FRIEND_REQUEST_SEND/SENT/LIST/RESPOND`,
+  `FRIEND_LIST`, `FRIEND_REMOVE/REMOVED`, `PRESENCE_UPDATE` và `SOCIAL_ERROR`.
+- Lời mời chơi: `GAME_INVITE_SEND/RECEIVED/RESPOND/STATUS`.
 - Ranked: `FIND_MATCH`, `CANCEL_MATCH`, `WAITING`, `MATCH_CANCELLED`,
   `MATCH_ERROR`, `MATCH_FOUND`, `QUESTION`, `ANSWER`, `ANSWER_RESULT`,
   `SCORE_UPDATE`, `GAME_OVER`.
@@ -70,4 +73,15 @@ Không dùng HTTP, WebSocket, UDP, TLS hay JWT trong bản demo LAN.
 
 `MATCH_HISTORY_GET` trả tối đa 100 trận mới nhất. Mỗi dòng chứa đối thủ, tỷ số theo góc nhìn
 người đang đăng nhập, kết quả `WIN/LOSS/DRAW`, chế độ 180/300 giây, lý do kết thúc và thời gian.
-Các message friends và invite sẽ được bổ sung cùng chức năng tương ứng.
+## Bạn bè và lời mời chơi
+
+`USER_SEARCH` nhận một phần username và trả tối đa 20 kết quả, không gồm chính người tìm.
+`FRIEND_REQUEST_SEND` tạo một dòng `PENDING`; cặp user được chuẩn hóa low/high nên lời mời
+ngược chiều không thể bị trùng. Accept đổi thành `ACCEPTED`; reject và remove xóa dòng.
+
+`FRIEND_LIST` kèm trạng thái online/busy lấy từ RAM server. Khi bạn bè đăng nhập hoặc ngắt
+kết nối, server phát `PRESENCE_UPDATE`. `GAME_INVITE_SEND` chỉ hợp lệ với bạn bè đang online
+và rảnh. Lời mời nằm trong RAM tối đa 60 giây:
+
+- `RANKED`: mang thời lượng 180/300 giây; accept tạo trận trực tiếp, không qua hàng chờ.
+- `QUIZ`: mang PIN; người gửi phải là host của lobby, accept sẽ join nếu phòng còn hợp lệ.

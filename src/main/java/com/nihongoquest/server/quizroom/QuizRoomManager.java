@@ -103,6 +103,22 @@ public class QuizRoomManager {
         return false;
     }
 
+    public boolean isHostOfLobby(ClientHandler client, String rawPin) {
+        String pin;
+        try {
+            pin = normalizePin(rawPin);
+        } catch (QuizRoomException e) {
+            return false;
+        }
+        QuizRoom room = rooms.get(pin);
+        return room != null && room == client.getCurrentQuizRoom()
+                && room.isLobby() && room.isHost(client.getPlayerId());
+    }
+
+    public void joinFromInvite(ClientHandler client, String pin) {
+        join(client, pin);
+    }
+
     private void requireAvailable(ClientHandler client) {
         if (!client.isAuthenticated()) throw new QuizRoomException("NOT_AUTHENTICATED");
         if (client.getCurrentRoom() != null || client.isQueued()
