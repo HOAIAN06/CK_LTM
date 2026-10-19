@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane styleClass="root,app-shell"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.nihongoquest.client.quiz.QuizSetListController">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="18" styleClass="app-header">
+            <VBox spacing="2" HBox.hgrow="ALWAYS">
+                <Label text="NIHONGO QUEST" styleClass="app-brand"/>
+                <Label text="Quản lý bộ đề" styleClass="header-page-title"/>
+            </VBox>
+            <Button text="Trang chủ" onAction="#onHome" styleClass="secondary-button"/>
+        </HBox>
+    </top>
+    <center>
+        <VBox spacing="14" styleClass="page-content">
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Button text="Bộ đề của tôi" onAction="#onOwned"/>
+                <Button text="Bộ đề công khai" onAction="#onPublished" styleClass="secondary-button"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Tạo bộ đề mới" onAction="#onCreate" styleClass="primary-button"/>
+            </HBox>
+            <ListView fx:id="quizSetList" VBox.vgrow="ALWAYS" styleClass="quiz-list"/>
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Button fx:id="viewButton" text="Xem" onAction="#onView" styleClass="secondary-button"/>
+                <Button fx:id="editButton" text="Sửa" onAction="#onEdit"/>
+                <Button fx:id="publishButton" text="Xuất bản" onAction="#onPublish"/>
+                <Button fx:id="deleteButton" text="Xóa" onAction="#onDelete"
+                        styleClass="danger-outline-button"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="statusLabel" text="" styleClass="status-label"/>
+            </HBox>
+        </VBox>
+    </center>
+</BorderPane>

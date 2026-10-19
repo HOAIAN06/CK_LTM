@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane styleClass="root,app-shell"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.nihongoquest.client.quiz.QuizSetEditorController">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="18" styleClass="app-header">
+            <VBox spacing="2" HBox.hgrow="ALWAYS">
+                <Label text="NIHONGO QUEST" styleClass="app-brand"/>
+                <Label fx:id="pageTitle" text="Soạn bộ đề" styleClass="header-page-title"/>
+            </VBox>
+            <Label text="Lưu sẽ đưa bộ đề về bản nháp" styleClass="helper-text"/>
+        </HBox>
+    </top>
+    <center>
+        <SplitPane dividerPositions="0.34" styleClass="quiz-editor-split">
+            <VBox spacing="10" styleClass="quiz-side-panel">
+                <Label text="Danh sách câu hỏi" styleClass="section-title"/>
+                <ListView fx:id="questionList" VBox.vgrow="ALWAYS"/>
+                <HBox spacing="8">
+                    <Button fx:id="newQuestionButton" text="Câu mới" onAction="#onNewQuestion"
+                            HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                    <Button fx:id="removeQuestionButton" text="Bỏ câu" onAction="#onRemoveQuestion"
+                            disable="true" styleClass="danger-outline-button"
+                            HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                </HBox>
+            </VBox>
+            <ScrollPane fitToWidth="true" styleClass="quiz-editor-scroll">
+                <VBox fx:id="editorBox" spacing="12" styleClass="quiz-form">
+                    <Label text="Thông tin bộ đề" styleClass="section-title"/>
+                    <Label text="Tên bộ đề" styleClass="field-caption"/>
+                    <TextField fx:id="titleField" promptText="Ví dụ: Từ vựng N5 cơ bản"/>
+                    <HBox spacing="12">
+                        <VBox spacing="5" HBox.hgrow="ALWAYS">
+                            <Label text="Mô tả" styleClass="field-caption"/>
+                            <TextArea fx:id="descriptionArea" prefRowCount="2" wrapText="true"/>
+                        </VBox>
+                        <VBox spacing="5">
+                            <Label text="Cấp độ JLPT" styleClass="field-caption"/>
+                            <ComboBox fx:id="levelCombo" prefWidth="120"/>
+                        </VBox>
+                    </HBox>
+                    <Separator/>
+                    <Label text="Nội dung câu hỏi" styleClass="section-title"/>
+                    <TextArea fx:id="questionArea" promptText="Nhập câu hỏi" prefRowCount="3" wrapText="true"/>
+                    <Label text="Giải thích sau khi trả lời (không bắt buộc)" styleClass="field-caption"/>
+                    <TextArea fx:id="explanationArea" prefRowCount="2" wrapText="true"/>
+                    <Label text="Bốn lựa chọn — chọn nút tròn cạnh đáp án đúng" styleClass="field-caption"/>
+                    <GridPane hgap="10" vgap="9">
+                        <columnConstraints>
+                            <ColumnConstraints minWidth="28"/>
+                            <ColumnConstraints hgrow="ALWAYS"/>
+                        </columnConstraints>
+                        <RadioButton fx:id="correct1" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                        <TextField fx:id="choice1Field" promptText="Lựa chọn 1"
+                                   GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                        <RadioButton fx:id="correct2" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                        <TextField fx:id="choice2Field" promptText="Lựa chọn 2"
+                                   GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                        <RadioButton fx:id="correct3" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                        <TextField fx:id="choice3Field" promptText="Lựa chọn 3"
+                                   GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                        <RadioButton fx:id="correct4" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                        <TextField fx:id="choice4Field" promptText="Lựa chọn 4"
+                                   GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                    </GridPane>
+                    <Button fx:id="applyQuestionButton" text="Thêm câu hỏi"
+                            onAction="#onApplyQuestion" maxWidth="Infinity"/>
+                </VBox>
+            </ScrollPane>
+        </SplitPane>
+    </center>
+    <bottom>
+        <HBox spacing="12" alignment="CENTER_RIGHT" styleClass="editor-footer">
+            <Label fx:id="statusLabel" text="" styleClass="status-label" HBox.hgrow="ALWAYS"/>
+            <Button text="Quay lại" onAction="#onCancel" styleClass="secondary-button"/>
+            <Button fx:id="saveButton" text="Lưu bản nháp" onAction="#onSave"/>
+        </HBox>
+    </bottom>
+</BorderPane>

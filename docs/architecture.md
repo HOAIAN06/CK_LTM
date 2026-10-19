@@ -29,10 +29,14 @@ Ranked chỉ lưu một dòng kết quả trong `matches` và cập nhật hai d
 transaction JDBC ngắn trong `MatchRepository`. Không lưu từng answer, không dùng Elo,
 `SELECT FOR UPDATE` hay lớp transaction tổng quát. Trạng thái realtime nằm trong RAM.
 
+Quản lý bộ đề đi qua `QuizSetService` để kiểm tra dữ liệu và `QuizSetRepository` để lưu
+`quiz_sets`, `questions`, `choices`. Mỗi lần sửa sẽ chuyển bộ đề về draft; chỉ chủ sở hữu
+được sửa, xóa hoặc xuất bản. Bộ đề cần ít nhất ba câu hợp lệ mới được xuất bản.
+
 Schema chuẩn duy nhất là `sql/supabase_schema.sql`; xem `database.md`.
 
 ## Trạng thái triển khai
 
-Nhánh nền đã có xác thực, dashboard, 1v1 ba câu hiện tại, câu hỏi PostgreSQL, protocol
-payload object, session registry và persistence đơn giản. Quiz set UI, Ranked theo
-thời lượng, Quiz Room, history/leaderboard và friends được triển khai ở các nhánh kế tiếp.
+Nền tảng đã có xác thực, dashboard, 1v1 ba câu hiện tại, câu hỏi PostgreSQL, protocol
+payload object, session registry, persistence đơn giản và giao diện quản lý bộ đề.
+Ranked theo thời lượng, Quiz Room, history/leaderboard và friends được triển khai ở các nhánh kế tiếp.

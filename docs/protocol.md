@@ -17,6 +17,9 @@ liệu dùng `null`.
 - Ranked: `FIND_MATCH`, `CANCEL_MATCH`, `WAITING`, `MATCH_CANCELLED`,
   `MATCH_ERROR`, `MATCH_FOUND`, `QUESTION`, `ANSWER`, `ANSWER_RESULT`,
   `SCORE_UPDATE`, `GAME_OVER`.
+- Bộ đề: `QUIZ_SET_LIST/LIST_RESULT`, `QUIZ_SET_GET/DETAIL`,
+  `QUIZ_SET_SAVE/SAVED`, `QUIZ_SET_PUBLISH/PUBLISHED`,
+  `QUIZ_SET_DELETE/DELETED` và `QUIZ_SET_ERROR`.
 - Kết nối: `DISCONNECT`.
 
 `QUESTION` chỉ chứa ID, nội dung, lựa chọn và thời gian; không chứa `correct`,
@@ -26,5 +29,5 @@ khi server đã nhận/chấm câu trả lời.
 Dashboard nhận bản sao traffic đã che trường password của `LOGIN` và `REGISTER`.
 Không dùng HTTP, WebSocket, UDP, TLS hay JWT trong bản demo LAN.
 
-Các message Quiz, history, leaderboard, friends và invite sẽ được bổ sung cùng chức
+Các message Quiz Room, history, leaderboard, friends và invite sẽ được bổ sung cùng chức
 năng tương ứng để client/server luôn thay đổi đồng bộ.

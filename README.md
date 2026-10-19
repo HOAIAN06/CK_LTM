@@ -48,5 +48,5 @@ Dashboard hiển thị IP LAN và mặc định mở TCP port `5000`. Client nh�
 ## Trạng thái
 
 Nền tảng hiện có đăng ký/đăng nhập BCrypt, dashboard, matchmaking 1v1, câu hỏi từ
-Supabase và lưu kết quả đơn giản. Các chức năng Quiz Room, quản lý bộ đề, leaderboard,
-history và friends được phát triển tuần tự theo roadmap.
+Supabase, lưu kết quả đơn giản và màn hình tạo/sửa/xóa/xuất bản bộ đề. Các chức năng
+Quiz Room, Ranked theo thời lượng, leaderboard, history và friends được phát triển tuần tự theo roadmap.
