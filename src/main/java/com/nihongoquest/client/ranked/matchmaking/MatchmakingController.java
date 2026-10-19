@@ -13,6 +13,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.RadioButton;
 
 /**
  * MatchmakingController xử lý màn hình đang tìm đối thủ (matchmaking.fxml).
@@ -34,9 +35,16 @@ public class MatchmakingController {
     private Label profileStatsLabel;
     @FXML
     private ProgressIndicator searchSpinner;
+    @FXML
+    private RadioButton threeMinutesRadio;
+    @FXML
+    private RadioButton fiveMinutesRadio;
+    @FXML
+    private Button searchButton;
 
     private ClientApp app;
     private GameClient gameClient;
+    private boolean searching;
 
     public void setSession(ClientApp app, GameClient gameClient, Player player) {
         this.app = app;
@@ -44,6 +52,7 @@ public class MatchmakingController {
         ProfilePresenter.populate(player, profileAvatarLabel,
                 profileUsernameLabel, profileStatsLabel);
         usernameLabel.setText("Đang tìm cho: " + player.getUsername());
+        searchSpinner.setVisible(false);
         gameClient.setMessageHandler(message ->
                 Platform.runLater(() -> handleMessage(message)));
         gameClient.setConnectionErrorHandler(error ->
@@ -54,13 +63,23 @@ public class MatchmakingController {
                 }));
     }
 
-    public void startSearch() {
+    @FXML
+    private void startSearch() {
+        int duration = fiveMinutesRadio.isSelected() ? 300 : 180;
         try {
-            gameClient.findMatch();
+            searching = true;
+            threeMinutesRadio.setDisable(true);
+            fiveMinutesRadio.setDisable(true);
+            searchButton.setDisable(true);
+            searchSpinner.setVisible(true);
+            cancelButton.setText("HỦY TÌM TRẬN");
+            showStatus("Đang gửi yêu cầu tìm trận " + (duration / 60) + " phút...");
+            gameClient.findMatch(duration);
         } catch (IllegalStateException e) {
+            searching = false;
             showError(e.getMessage());
             searchSpinner.setVisible(false);
-            cancelButton.setDisable(true);
+            searchButton.setDisable(false);
         }
     }
 
@@ -69,6 +88,10 @@ public class MatchmakingController {
      */
     @FXML
     private void onCancel() {
+        if (!searching) {
+            app.showHome();
+            return;
+        }
         cancelButton.setDisable(true);
         showStatus("Đang hủy tìm trận...");
         try {
@@ -82,6 +105,7 @@ public class MatchmakingController {
         switch (message.getType()) {
             case WAITING -> showStatus("Đang tìm đối thủ...");
             case MATCH_CANCELLED -> {
+                searching = false;
                 searchSpinner.setVisible(false);
                 app.showHome();
             }
@@ -103,7 +127,10 @@ public class MatchmakingController {
             }
             searchSpinner.setVisible(false);
             statusLabel.setText("Đã tìm thấy " + match.opponent());
-            app.showBattle(match.roomId(), match.opponent());
+            if (match.durationSeconds() != 180 && match.durationSeconds() != 300) {
+                throw new IllegalArgumentException("Invalid duration");
+            }
+            app.showBattle(match.roomId(), match.opponent(), match.durationSeconds());
         } catch (RuntimeException e) {
             showError("Dữ liệu trận đấu không hợp lệ");
             cancelButton.setDisable(false);
@@ -117,11 +144,18 @@ public class MatchmakingController {
             case "ALREADY_MATCHED" -> "Bạn đã được ghép trận";
             case "OPPONENT_DISCONNECTED" -> "Đối thủ đã ngắt kết nối";
             case "QUESTIONS_UNAVAILABLE" -> "Chưa thể tạo trận: không tải được đủ câu hỏi hợp lệ";
+            case "INVALID_DURATION" -> "Chế độ trận đấu phải là 3 hoặc 5 phút";
             default -> "Không thể tìm trận";
         };
         showError(message);
         if (!"ALREADY_MATCHED".equals(reason)) {
+            searching = false;
+            searchSpinner.setVisible(false);
+            searchButton.setDisable(false);
+            threeMinutesRadio.setDisable(false);
+            fiveMinutesRadio.setDisable(false);
             cancelButton.setDisable(false);
+            cancelButton.setText("QUAY LẠI");
         }
     }
 

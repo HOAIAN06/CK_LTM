@@ -45,24 +45,36 @@ public final class Payloads {
                 node.get("questionsAnswered").asInt(), node.get("correctAnswers").asInt());
     }
 
-    public static JsonNode matchFound(String roomId, String opponent) {
+    public static JsonNode findMatch(int durationSeconds) {
+        return write(new FindMatchRequest(durationSeconds));
+    }
+
+    public static FindMatchRequest parseFindMatch(JsonNode payload) {
+        return fromJson(payload, FindMatchRequest.class);
+    }
+
+    public static JsonNode matchFound(String roomId, String opponent, int durationSeconds) {
         ObjectNode node = MAPPER.createObjectNode();
         node.put("roomId", roomId);
         node.put("opponent", opponent);
+        node.put("durationSeconds", durationSeconds);
         return write(node);
     }
 
     public static MatchFound parseMatchFound(JsonNode payload) {
         JsonNode node = requireObject(payload);
-        return new MatchFound(requiredText(node, "roomId"), requiredText(node, "opponent"));
+        return new MatchFound(requiredText(node, "roomId"), requiredText(node, "opponent"),
+                node.get("durationSeconds").asInt());
     }
 
-    public static JsonNode question(int round, int total, int duration, long questionId,
-                                  String content, List<ChoiceData> choices) {
+    public static JsonNode question(String sessionId, int attempt, int questionDurationSeconds,
+                                    int matchRemainingSeconds, long questionId,
+                                    String content, List<ChoiceData> choices) {
         ObjectNode node = MAPPER.createObjectNode();
-        node.put("round", round);
-        node.put("totalQuestions", total);
-        node.put("durationSeconds", duration);
+        node.put("sessionId", sessionId);
+        node.put("attempt", attempt);
+        node.put("questionDurationSeconds", questionDurationSeconds);
+        node.put("matchRemainingSeconds", matchRemainingSeconds);
         node.put("questionId", questionId);
         node.put("content", content);
         // Explicit public DTO: no server model or answer key can be serialized here.
@@ -72,18 +84,22 @@ public final class Payloads {
 
     public static QuestionData parseQuestion(JsonNode payload) {
         JsonNode node = requireObject(payload);
-        return new QuestionData(node.get("round").asInt(), node.get("totalQuestions").asInt(),
-                node.get("durationSeconds").asInt(), requiredPositiveId(node, "questionId"),
-                requiredText(node, "content"),
+        return new QuestionData(requiredText(node, "sessionId"), requiredPositiveInt(node, "attempt"),
+                requiredPositiveId(node, "questionId"), requiredText(node, "content"),
                 MAPPER.convertValue(node.get("choices"), MAPPER.getTypeFactory()
-                        .constructCollectionType(List.class, ChoiceData.class)));
+                        .constructCollectionType(List.class, ChoiceData.class)),
+                requiredPositiveInt(node, "questionDurationSeconds"),
+                requiredPositiveInt(node, "matchRemainingSeconds"));
     }
 
-    public static JsonNode answer(long questionId, long choiceId) {
-        if (questionId <= 0 || choiceId <= 0) {
+    public static JsonNode answer(String sessionId, int attempt, long questionId, long choiceId) {
+        if (sessionId == null || sessionId.isBlank() || attempt <= 0
+                || questionId <= 0 || choiceId <= 0) {
             throw new IllegalArgumentException("Question and choice IDs must be positive");
         }
         ObjectNode node = MAPPER.createObjectNode();
+        node.put("sessionId", sessionId);
+        node.put("attempt", attempt);
         node.put("questionId", questionId);
         node.put("choiceId", choiceId);
         return write(node);
@@ -91,7 +107,8 @@ public final class Payloads {
 
     public static AnswerData parseAnswer(JsonNode payload) {
         JsonNode node = requireObject(payload);
-        return new AnswerData(requiredPositiveId(node, "questionId"), requiredPositiveId(node, "choiceId"));
+        return new AnswerData(requiredText(node, "sessionId"), requiredPositiveInt(node, "attempt"),
+                requiredPositiveId(node, "questionId"), requiredPositiveId(node, "choiceId"));
     }
 
     private static long requiredPositiveId(JsonNode node, String field) {
@@ -102,18 +119,37 @@ public final class Payloads {
         return value.longValue();
     }
 
-    public static JsonNode answerResult(boolean correct, int chosen, int answer) {
+    public static JsonNode answerResult(String sessionId, int attempt, long questionId,
+                                        boolean correct, Long chosenChoiceId,
+                                        long correctChoiceId, int scoreAwarded) {
         ObjectNode node = MAPPER.createObjectNode();
+        node.put("sessionId", sessionId);
+        node.put("attempt", attempt);
+        node.put("questionId", questionId);
         node.put("correct", correct);
-        node.put("chosenIndex", chosen);
-        node.put("correctIndex", answer);
+        if (chosenChoiceId == null) node.putNull("chosenChoiceId");
+        else node.put("chosenChoiceId", chosenChoiceId);
+        node.put("correctChoiceId", correctChoiceId);
+        node.put("scoreAwarded", scoreAwarded);
         return write(node);
+    }
+
+    private static int requiredPositiveInt(JsonNode node, String field) {
+        JsonNode value = node == null ? null : node.get(field);
+        if (value == null || !value.isIntegralNumber() || !value.canConvertToInt()
+                || value.intValue() <= 0) {
+            throw new IllegalArgumentException("Payload có số không hợp lệ: " + field);
+        }
+        return value.intValue();
     }
 
     public static AnswerResult parseAnswerResult(JsonNode payload) {
         JsonNode node = requireObject(payload);
-        return new AnswerResult(node.get("correct").asBoolean(),
-                node.get("chosenIndex").asInt(), node.get("correctIndex").asInt());
+        JsonNode chosen = node.get("chosenChoiceId");
+        return new AnswerResult(requiredText(node, "sessionId"), node.get("attempt").asInt(),
+                requiredPositiveId(node, "questionId"), node.get("correct").asBoolean(),
+                chosen == null || chosen.isNull() ? null : chosen.asLong(),
+                requiredPositiveId(node, "correctChoiceId"), node.get("scoreAwarded").asInt());
     }
 
     public static JsonNode scores(int mine, int opponent) {
@@ -182,12 +218,15 @@ public final class Payloads {
     public record Credentials(String username, String password) { }
     public record PlayerStats(long id, String username, int wins, int losses,
                               int questionsAnswered, int correctAnswers) { }
-    public record MatchFound(String roomId, String opponent) { }
+    public record FindMatchRequest(int durationSeconds) { }
+    public record MatchFound(String roomId, String opponent, int durationSeconds) { }
     public record ChoiceData(long choiceId, String content, int position) { }
-    public record QuestionData(int round, int totalQuestions, int durationSeconds,
-                               long questionId, String content, List<ChoiceData> choices) { }
-    public record AnswerData(long questionId, long choiceId) { }
-    public record AnswerResult(boolean correct, int chosenIndex, int correctIndex) { }
+    public record QuestionData(String sessionId, int attempt, long questionId,
+                               String content, List<ChoiceData> choices,
+                               int questionDurationSeconds, int matchRemainingSeconds) { }
+    public record AnswerData(String sessionId, int attempt, long questionId, long choiceId) { }
+    public record AnswerResult(String sessionId, int attempt, long questionId, boolean correct,
+                               Long chosenChoiceId, long correctChoiceId, int scoreAwarded) { }
     public record Scores(int myScore, int opponentScore) { }
     public record GameOver(String result, int myScore, int opponentScore) { }
     public record QuizSetListRequest(String scope) { }

@@ -22,24 +22,35 @@ public class QuestionService {
         if (count <= 0) {
             throw new IllegalArgumentException("Ranked question count must be positive");
         }
+        return getRankedQuestionsUpTo(level, count, count);
+    }
+
+    /** Lấy tối đa max câu; vẫn cho tạo trận khi database có ít nhất min câu hợp lệ. */
+    public List<Question> getRankedQuestionsUpTo(String level, int max, int min) {
+        if (min <= 0 || max < min) {
+            throw new IllegalArgumentException("Ranked question limits are invalid");
+        }
         List<Question> valid = new ArrayList<>();
         Set<Long> examined = new LinkedHashSet<>();
         try {
-            while (valid.size() < count) {
-                List<Question> candidates = repository.findRandomQuestions(level, count - valid.size(), examined);
+            while (valid.size() < max) {
+                List<Question> candidates = repository.findRandomQuestions(level, max - valid.size(), examined);
                 int previousSize = examined.size();
                 for (Question question : candidates) {
                     if (question != null && examined.add(question.getId()) && isValidForRanked(question)) {
                         valid.add(question);
-                        if (valid.size() == count) {
+                        if (valid.size() == max) {
                             break;
                         }
                     }
                 }
                 if (examined.size() == previousSize) {
-                    throw new IllegalStateException("Not enough valid Ranked questions: requested="
-                            + count + ", found=" + valid.size() + ", level=" + level);
+                    break;
                 }
+            }
+            if (valid.size() < min) {
+                throw new IllegalStateException("Not enough valid Ranked questions: minimum="
+                        + min + ", found=" + valid.size() + ", level=" + level);
             }
             return List.copyOf(valid);
         } catch (SQLException e) {

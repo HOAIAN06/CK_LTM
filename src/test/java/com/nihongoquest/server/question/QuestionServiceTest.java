@@ -75,11 +75,20 @@ class QuestionServiceTest {
     void failsClearlyWhenBankIsExhaustedOrLevelHasNoQuestions() {
         var subject = new QuestionService(new QuestionFixtures.Bank(List.of(question(1, 4, 1))));
         assertTrue(assertThrows(IllegalStateException.class,
-                () -> subject.getRankedQuestions(null, 3)).getMessage().contains("requested=3, found=1"));
+                () -> subject.getRankedQuestions(null, 3)).getMessage().contains("minimum=3, found=1"));
         assertThrows(IllegalStateException.class, () -> subject.getRankedQuestions("N1", 1));
         assertThrows(IllegalArgumentException.class, () -> subject.getRankedQuestions(null, 0));
         assertThrows(IllegalStateException.class, () -> subject.getQuestion(99));
         assertEquals(1, subject.getQuestion(1).getId());
+    }
+
+    @Test
+    void rankedPoolAcceptsBetweenMinimumAndMaximumQuestions() {
+        List<Question> fiveQuestions = java.util.stream.LongStream.rangeClosed(1, 5)
+                .mapToObj(id -> question(id, 4, 1)).toList();
+        List<Question> result = new QuestionService(new QuestionFixtures.Bank(fiveQuestions))
+                .getRankedQuestionsUpTo(null, 10, 3);
+        assertEquals(5, result.size());
     }
 
     @Test

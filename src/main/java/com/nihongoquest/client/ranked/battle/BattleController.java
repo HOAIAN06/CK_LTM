@@ -53,6 +53,8 @@ public class BattleController {
 
     @FXML
     private Label timeLabel;
+    @FXML
+    private Label matchTimeLabel;
 
     @FXML
     private Button answerAButton;
@@ -74,12 +76,16 @@ public class BattleController {
     private Timeline countdownTimeline;
     private long countdownStartedNanos;
     private long countdownDurationMillis;
+    private long matchCountdownDurationMillis;
+    private long matchCountdownStartedNanos;
+    private String roomId;
 
     public void setSession(ClientApp app, GameClient gameClient, Player player,
-                           String roomId, String opponentUsername) {
+                           String roomId, String opponentUsername, int durationSeconds) {
         this.app = app;
         this.gameClient = gameClient;
         this.opponentUsername = opponentUsername;
+        this.roomId = roomId;
         ProfilePresenter.populate(player, profileAvatarLabel,
                 profileUsernameLabel, profileStatsLabel);
         this.answerButtons = List.of(
@@ -90,6 +96,7 @@ public class BattleController {
         questionLabel.setText("Đã ghép trận thành công - đang chuẩn bị câu hỏi");
         timeProgressBar.setProgress(0);
         timeLabel.setText("--");
+        matchTimeLabel.setText(formatSeconds(durationSeconds));
         setAnswersDisabled(true);
 
         gameClient.setMessageHandler(message ->
@@ -119,7 +126,8 @@ public class BattleController {
         }
         setAnswersDisabled(true);
         try {
-            gameClient.sendAnswer(currentQuestion.questionId(), currentQuestion.choices().get(answerIndex).choiceId());
+            gameClient.sendAnswer(currentQuestion.sessionId(), currentQuestion.attempt(),
+                    currentQuestion.questionId(), currentQuestion.choices().get(answerIndex).choiceId());
         } catch (IllegalStateException | IllegalArgumentException e) {
             questionLabel.setText(e.getMessage());
         }
@@ -147,23 +155,21 @@ public class BattleController {
     private void showQuestion(JsonNode payload) {
         try {
             Payloads.QuestionData question = Payloads.parseQuestion(payload);
-            int round = question.round();
-            int totalQuestions = question.totalQuestions();
-            int durationSeconds = question.durationSeconds();
-            if (round < 0 || totalQuestions <= 0 || round >= totalQuestions
-                    || durationSeconds <= 0 || question.choices() == null || question.choices().size() != 4) {
+            if (!roomId.equals(question.sessionId()) || question.attempt() <= 0
+                    || question.questionDurationSeconds() <= 0
+                    || question.matchRemainingSeconds() <= 0
+                    || question.choices() == null || question.choices().size() != 4) {
                 showProtocolError();
                 return;
             }
             currentQuestion = question;
-            questionLabel.setText("Câu " + (round + 1) + "/" + totalQuestions
-                    + ": " + question.content());
+            questionLabel.setText("Lượt " + question.attempt() + ": " + question.content());
             for (int i = 0; i < answerButtons.size(); i++) {
                 answerButtons.get(i).setText(question.choices().get(i).content());
             }
             clearAnswerStyles();
             setAnswersDisabled(false);
-            startCountdown(durationSeconds);
+            startCountdown(question.questionDurationSeconds(), question.matchRemainingSeconds());
         } catch (RuntimeException e) {
             showProtocolError();
         }
@@ -172,17 +178,21 @@ public class BattleController {
     private void showAnswerResult(JsonNode payload) {
         try {
             Payloads.AnswerResult result = Payloads.parseAnswerResult(payload);
+            if (currentQuestion == null || !roomId.equals(result.sessionId())
+                    || result.attempt() != currentQuestion.attempt()
+                    || result.questionId() != currentQuestion.questionId()) {
+                return;
+            }
             boolean correct = result.correct();
-            int chosenIndex = result.chosenIndex();
-            int correctIndex = result.correctIndex();
-            if ((chosenIndex != -1 && !isAnswerIndex(chosenIndex))
-                    || !isAnswerIndex(correctIndex)) {
+            int chosenIndex = choiceIndex(result.chosenChoiceId());
+            int correctIndex = choiceIndex(result.correctChoiceId());
+            if ((result.chosenChoiceId() != null && chosenIndex < 0) || correctIndex < 0) {
                 showProtocolError();
                 return;
             }
             stopCountdown();
             setAnswersDisabled(true);
-            if (chosenIndex == -1) {
+            if (result.chosenChoiceId() == null) {
                 timeProgressBar.setProgress(0);
                 timeLabel.setText("Hết giờ");
             } else if (!correct) {
@@ -217,12 +227,15 @@ public class BattleController {
         }
     }
 
-    private void startCountdown(int durationSeconds) {
+    private void startCountdown(int questionSeconds, int matchSeconds) {
         stopCountdown();
-        countdownDurationMillis = durationSeconds * 1_000L;
+        countdownDurationMillis = questionSeconds * 1_000L;
         countdownStartedNanos = System.nanoTime();
+        matchCountdownDurationMillis = matchSeconds * 1_000L;
+        matchCountdownStartedNanos = countdownStartedNanos;
         timeProgressBar.setProgress(1);
-        timeLabel.setText(durationSeconds + "s");
+        timeLabel.setText(questionSeconds + "s");
+        matchTimeLabel.setText(formatSeconds(matchSeconds));
 
         countdownTimeline = new Timeline(new KeyFrame(
                 Duration.millis(100), event -> updateCountdown()));
@@ -233,8 +246,11 @@ public class BattleController {
     private void updateCountdown() {
         long elapsedMillis = (System.nanoTime() - countdownStartedNanos) / 1_000_000L;
         long remainingMillis = Math.max(0, countdownDurationMillis - elapsedMillis);
+        long matchElapsedMillis = (System.nanoTime() - matchCountdownStartedNanos) / 1_000_000L;
+        long matchRemainingMillis = Math.max(0, matchCountdownDurationMillis - matchElapsedMillis);
         timeProgressBar.setProgress((double) remainingMillis / countdownDurationMillis);
         timeLabel.setText(((remainingMillis + 999) / 1_000) + "s");
+        matchTimeLabel.setText(formatSeconds((int) ((matchRemainingMillis + 999) / 1_000)));
         if (remainingMillis == 0) {
             stopCountdown();
             setAnswersDisabled(true);
@@ -255,8 +271,16 @@ public class BattleController {
         }
     }
 
-    private boolean isAnswerIndex(int index) {
-        return index >= 0 && index < answerButtons.size();
+    private int choiceIndex(Long choiceId) {
+        if (choiceId == null || currentQuestion == null) return -1;
+        for (int index = 0; index < currentQuestion.choices().size(); index++) {
+            if (currentQuestion.choices().get(index).choiceId() == choiceId) return index;
+        }
+        return -1;
+    }
+
+    private String formatSeconds(int seconds) {
+        return String.format("%d:%02d", seconds / 60, seconds % 60);
     }
 
     private void showProtocolError() {

@@ -36,7 +36,7 @@ public class ServerRequestRouter {
         switch (message.getType()) {
             case REGISTER -> authenticate(client, message, true);
             case LOGIN -> authenticate(client, message, false);
-            case FIND_MATCH -> matchmaking.enqueue(client);
+            case FIND_MATCH -> handleFindMatch(client, message);
             case CANCEL_MATCH -> matchmaking.dequeue(client);
             case ANSWER -> handleAnswer(client, message);
             case QUIZ_SET_LIST -> handleQuizSetList(client, message);
@@ -156,9 +156,18 @@ public class ServerRequestRouter {
         if (room == null) return;
         try {
             Payloads.AnswerData answer = Payloads.parseAnswer(message.getPayload());
-            room.handleAnswer(client, answer.questionId(), answer.choiceId());
+            room.handleAnswer(client, answer);
         } catch (IllegalArgumentException e) {
             LOGGER.warning("Đáp án không hợp lệ từ " + client.getDisplayName());
+        }
+    }
+
+    private void handleFindMatch(ClientHandler client, Message message) {
+        try {
+            Payloads.FindMatchRequest request = Payloads.parseFindMatch(message.getPayload());
+            matchmaking.enqueue(client, request.durationSeconds());
+        } catch (IllegalArgumentException | NullPointerException e) {
+            client.send(new Message(MessageType.MATCH_ERROR, "INVALID_DURATION"));
         }
     }
 
