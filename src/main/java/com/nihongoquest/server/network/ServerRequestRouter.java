@@ -7,6 +7,8 @@ import com.nihongoquest.server.player.PlayerRepository;
 import com.nihongoquest.server.player.PlayerRepository.AuthResult;
 import com.nihongoquest.server.ranked.GameRoom;
 import com.nihongoquest.server.ranked.MatchmakingManager;
+import com.nihongoquest.server.quiz.QuizSetException;
+import com.nihongoquest.server.quiz.QuizSetService;
 
 import java.sql.SQLException;
 import java.util.regex.Pattern;
@@ -20,12 +22,14 @@ public class ServerRequestRouter {
     private final MatchmakingManager matchmaking;
     private final PlayerRepository players;
     private final OnlineUserRegistry onlineUsers;
+    private final QuizSetService quizSets;
 
     public ServerRequestRouter(MatchmakingManager matchmaking, PlayerRepository players,
-                               OnlineUserRegistry onlineUsers) {
+                               OnlineUserRegistry onlineUsers, QuizSetService quizSets) {
         this.matchmaking = matchmaking;
         this.players = players;
         this.onlineUsers = onlineUsers;
+        this.quizSets = quizSets;
     }
 
     public void handle(ClientHandler client, Message message) {
@@ -35,10 +39,111 @@ public class ServerRequestRouter {
             case FIND_MATCH -> matchmaking.enqueue(client);
             case CANCEL_MATCH -> matchmaking.dequeue(client);
             case ANSWER -> handleAnswer(client, message);
+            case QUIZ_SET_LIST -> handleQuizSetList(client, message);
+            case QUIZ_SET_GET -> handleQuizSetGet(client, message);
+            case QUIZ_SET_SAVE -> handleQuizSetSave(client, message);
+            case QUIZ_SET_PUBLISH -> handleQuizSetPublish(client, message);
+            case QUIZ_SET_DELETE -> handleQuizSetDelete(client, message);
             case DISCONNECT -> client.close();
             case CONNECT -> client.reportActivity("TCP client sẵn sàng: " + client.getRemoteAddress());
             default -> LOGGER.fine("Chưa xử lý type=" + message.getType());
         }
+    }
+
+    private void handleQuizSetList(ClientHandler client, Message message) {
+        if (!requireLogin(client)) return;
+        try {
+            Payloads.QuizSetListRequest request = Payloads.fromJson(
+                    message.getPayload(), Payloads.QuizSetListRequest.class);
+            client.send(new Message(MessageType.QUIZ_SET_LIST_RESULT,
+                    Payloads.toJson(quizSets.list(client.getPlayerId(), request.scope()))));
+        } catch (QuizSetException e) {
+            sendQuizError(client, e.getCode());
+        } catch (IllegalArgumentException e) {
+            sendQuizError(client, "BAD_REQUEST");
+        } catch (SQLException e) {
+            databaseQuizError(client, e);
+        }
+    }
+
+    private void handleQuizSetGet(ClientHandler client, Message message) {
+        if (!requireLogin(client)) return;
+        try {
+            Payloads.QuizSetId request = Payloads.fromJson(
+                    message.getPayload(), Payloads.QuizSetId.class);
+            client.send(new Message(MessageType.QUIZ_SET_DETAIL,
+                    Payloads.toJson(quizSets.get(client.getPlayerId(), request.quizSetId()))));
+        } catch (QuizSetException e) {
+            sendQuizError(client, e.getCode());
+        } catch (IllegalArgumentException e) {
+            sendQuizError(client, "BAD_REQUEST");
+        } catch (SQLException e) {
+            databaseQuizError(client, e);
+        }
+    }
+
+    private void handleQuizSetSave(ClientHandler client, Message message) {
+        if (!requireLogin(client)) return;
+        try {
+            Payloads.QuizSetEdit request = Payloads.fromJson(
+                    message.getPayload(), Payloads.QuizSetEdit.class);
+            long id = quizSets.save(client.getPlayerId(), request);
+            client.send(new Message(MessageType.QUIZ_SET_SAVED,
+                    Payloads.toJson(new Payloads.QuizSetSaved(id))));
+        } catch (QuizSetException e) {
+            sendQuizError(client, e.getCode());
+        } catch (IllegalArgumentException e) {
+            sendQuizError(client, "BAD_REQUEST");
+        } catch (SQLException e) {
+            databaseQuizError(client, e);
+        }
+    }
+
+    private void handleQuizSetPublish(ClientHandler client, Message message) {
+        if (!requireLogin(client)) return;
+        try {
+            Payloads.QuizSetPublishRequest request = Payloads.fromJson(
+                    message.getPayload(), Payloads.QuizSetPublishRequest.class);
+            quizSets.publish(client.getPlayerId(), request.quizSetId(), request.published());
+            client.send(new Message(MessageType.QUIZ_SET_PUBLISHED, Payloads.toJson(request)));
+        } catch (QuizSetException e) {
+            sendQuizError(client, e.getCode());
+        } catch (IllegalArgumentException e) {
+            sendQuizError(client, "BAD_REQUEST");
+        } catch (SQLException e) {
+            databaseQuizError(client, e);
+        }
+    }
+
+    private void handleQuizSetDelete(ClientHandler client, Message message) {
+        if (!requireLogin(client)) return;
+        try {
+            Payloads.QuizSetId request = Payloads.fromJson(
+                    message.getPayload(), Payloads.QuizSetId.class);
+            quizSets.delete(client.getPlayerId(), request.quizSetId());
+            client.send(new Message(MessageType.QUIZ_SET_DELETED, Payloads.toJson(request)));
+        } catch (QuizSetException e) {
+            sendQuizError(client, e.getCode());
+        } catch (IllegalArgumentException e) {
+            sendQuizError(client, "BAD_REQUEST");
+        } catch (SQLException e) {
+            databaseQuizError(client, e);
+        }
+    }
+
+    private boolean requireLogin(ClientHandler client) {
+        if (client.isAuthenticated()) return true;
+        sendQuizError(client, "NOT_AUTHENTICATED");
+        return false;
+    }
+
+    private void sendQuizError(ClientHandler client, String code) {
+        client.send(new Message(MessageType.QUIZ_SET_ERROR, code));
+    }
+
+    private void databaseQuizError(ClientHandler client, SQLException error) {
+        LOGGER.warning("Lỗi database bộ đề: " + error.getMessage());
+        sendQuizError(client, "DATABASE_ERROR");
     }
 
     public void disconnected(ClientHandler client) {

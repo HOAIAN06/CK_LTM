@@ -64,4 +64,23 @@ class PayloadsTest {
         assertEquals("WIN", game.result());
         assertEquals(3, game.myScore());
     }
+
+    @Test
+    void quizSetRecordsRoundTripAsNestedJsonObjects() {
+        Payloads.QuizSetEdit input = new Payloads.QuizSetEdit(
+                12L, "Kanji N5", "Bộ đề demo", "N5",
+                List.of(new Payloads.QuizQuestionEdit(21L, "山 là gì?", "Núi",
+                        List.of(
+                                new Payloads.QuizChoiceEdit(1L, "Núi", 1, true),
+                                new Payloads.QuizChoiceEdit(2L, "Sông", 2, false),
+                                new Payloads.QuizChoiceEdit(3L, "Biển", 3, false),
+                                new Payloads.QuizChoiceEdit(4L, "Trời", 4, false)))));
+
+        var json = Payloads.toJson(input);
+        Payloads.QuizSetEdit output = Payloads.fromJson(json, Payloads.QuizSetEdit.class);
+
+        assertTrue(json.isObject());
+        assertTrue(json.get("questions").isArray());
+        assertEquals(input, output);
+    }
 }

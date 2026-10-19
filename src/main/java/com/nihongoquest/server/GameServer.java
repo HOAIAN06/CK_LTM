@@ -8,6 +8,8 @@ import com.nihongoquest.server.network.ServerRequestRouter;
 import com.nihongoquest.server.network.TrafficEvent;
 import com.nihongoquest.server.question.QuestionRepository;
 import com.nihongoquest.server.question.QuestionService;
+import com.nihongoquest.server.quiz.QuizSetRepository;
+import com.nihongoquest.server.quiz.QuizSetService;
 
 import com.nihongoquest.common.protocol.Protocol;
 import com.nihongoquest.server.database.Database;
@@ -65,7 +67,8 @@ public class GameServer {
         this.matchmakingManager = new MatchmakingManager(
                 questionService, new MatchRepository(database), scheduler);
         this.requestRouter = new ServerRequestRouter(
-                matchmakingManager, playerRepository, onlineUsers);
+                matchmakingManager, playerRepository, onlineUsers,
+                new QuizSetService(new QuizSetRepository(database)));
         this.running = false;
     }
 

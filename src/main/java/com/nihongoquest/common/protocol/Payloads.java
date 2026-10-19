@@ -142,6 +142,24 @@ public final class Payloads {
                 node.get("opponentScore").asInt());
     }
 
+    /** Chuyển một record DTO thành JSON object để gửi qua TCP. */
+    public static JsonNode toJson(Object value) {
+        if (value == null) {
+            throw new IllegalArgumentException("Payload không được null");
+        }
+        return write(value);
+    }
+
+    /** Đọc JSON object thành record DTO dùng chung giữa client và server. */
+    public static <T> T fromJson(JsonNode payload, Class<T> type) {
+        requireObject(payload);
+        try {
+            return MAPPER.treeToValue(payload, type);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Payload không đúng định dạng " + type.getSimpleName(), e);
+        }
+    }
+
     private static String requiredText(JsonNode node, String field) {
         JsonNode value = node.get(field);
         if (value == null || !value.isTextual()) {
@@ -172,4 +190,17 @@ public final class Payloads {
     public record AnswerResult(boolean correct, int chosenIndex, int correctIndex) { }
     public record Scores(int myScore, int opponentScore) { }
     public record GameOver(String result, int myScore, int opponentScore) { }
+    public record QuizSetListRequest(String scope) { }
+    public record QuizSetId(long quizSetId) { }
+    public record QuizSetPublishRequest(long quizSetId, boolean published) { }
+    public record QuizSetSaved(long quizSetId) { }
+    public record QuizSetSummary(long id, long ownerId, String ownerUsername,
+                                 String title, String description, String level,
+                                 boolean published, int questionCount, boolean ownedByMe) { }
+    public record QuizChoiceEdit(Long id, String content, int position, boolean correct) { }
+    public record QuizQuestionEdit(Long id, String content, String explanation,
+                                   List<QuizChoiceEdit> choices) { }
+    public record QuizSetEdit(Long id, String title, String description, String level,
+                              List<QuizQuestionEdit> questions) { }
+    public record QuizSetListData(List<QuizSetSummary> items) { }
 }

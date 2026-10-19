@@ -9,6 +9,9 @@ import com.nihongoquest.client.ranked.matchmaking.MatchmakingController;
 import com.nihongoquest.client.ranked.battle.ResultController;
 import com.nihongoquest.client.profile.Player;
 import com.nihongoquest.client.network.GameClient;
+import com.nihongoquest.client.quiz.QuizSetEditorController;
+import com.nihongoquest.client.quiz.QuizSetListController;
+import com.nihongoquest.common.protocol.Payloads;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -100,6 +103,30 @@ public class ClientApp extends Application {
             setScene(root);
         } catch (IOException e) {
             throw new IllegalStateException("Không thể mở màn hình Result", e);
+        }
+    }
+
+    public void showQuizSets() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/quiz/quiz-set-list.fxml"));
+            Parent root = loader.load();
+            QuizSetListController controller = loader.getController();
+            controller.setSession(this, gameClient);
+            setScene(root, 1080, 720);
+        } catch (IOException e) {
+            throw new IllegalStateException("Không thể mở màn hình quản lý bộ đề", e);
+        }
+    }
+
+    public void showQuizSetEditor(Payloads.QuizSetEdit quizSet, boolean editable) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/quiz/quiz-set-editor.fxml"));
+            Parent root = loader.load();
+            QuizSetEditorController controller = loader.getController();
+            controller.setSession(this, gameClient, quizSet, editable);
+            setScene(root, 1180, 780);
+        } catch (IOException e) {
+            throw new IllegalStateException("Không thể mở trình soạn bộ đề", e);
         }
     }
 

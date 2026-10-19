@@ -4,6 +4,7 @@ import com.nihongoquest.common.protocol.Message;
 import com.nihongoquest.common.protocol.MessageType;
 import com.nihongoquest.common.protocol.Protocol;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.nihongoquest.common.protocol.Payloads;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -86,6 +87,30 @@ public class GameClient {
 
     public void sendAnswer(long questionId, long choiceId) {
         send(MessageType.ANSWER, com.nihongoquest.common.protocol.Payloads.answer(questionId, choiceId));
+    }
+
+    public void listQuizSets(String scope) {
+        send(MessageType.QUIZ_SET_LIST,
+                Payloads.toJson(new Payloads.QuizSetListRequest(scope)));
+    }
+
+    public void getQuizSet(long quizSetId) {
+        send(MessageType.QUIZ_SET_GET,
+                Payloads.toJson(new Payloads.QuizSetId(quizSetId)));
+    }
+
+    public void saveQuizSet(Payloads.QuizSetEdit quizSet) {
+        send(MessageType.QUIZ_SET_SAVE, Payloads.toJson(quizSet));
+    }
+
+    public void publishQuizSet(long quizSetId, boolean published) {
+        send(MessageType.QUIZ_SET_PUBLISH,
+                Payloads.toJson(new Payloads.QuizSetPublishRequest(quizSetId, published)));
+    }
+
+    public void deleteQuizSet(long quizSetId) {
+        send(MessageType.QUIZ_SET_DELETE,
+                Payloads.toJson(new Payloads.QuizSetId(quizSetId)));
     }
 
     public void redispatch(Message message) {

@@ -37,6 +37,8 @@ class ClientFxmlTest {
     @ValueSource(strings = {
             "/client/auth/login.fxml",
             "/client/home/home.fxml",
+            "/client/quiz/quiz-set-list.fxml",
+            "/client/quiz/quiz-set-editor.fxml",
             "/client/ranked/matchmaking/matchmaking.fxml",
             "/client/ranked/battle/battle.fxml",
             "/client/ranked/battle/result.fxml"

@@ -61,6 +61,9 @@
                 <Button fx:id="findMatchButton" text="TÌM TRẬN 1V1"
                         onAction="#onFindMatch" prefWidth="250"
                         styleClass="primary-button,large-button"/>
+                <Button text="QUẢN LÝ BỘ ĐỀ"
+                        onAction="#onManageQuizSets" prefWidth="250"
+                        styleClass="secondary-button,large-button"/>
             </VBox>
         </VBox>
     </center>

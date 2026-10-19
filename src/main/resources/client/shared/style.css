@@ -111,6 +111,18 @@
     -fx-background-radius: 6px;
 }
 
+.secondary-button {
+    -fx-background-color: white;
+    -fx-text-fill: #2b6cb0;
+    -fx-border-color: #aac7e8;
+    -fx-border-radius: 7px;
+    -fx-background-radius: 7px;
+}
+
+.secondary-button:hover {
+    -fx-background-color: #edf6ff;
+}
+
 .mode-link {
     -fx-text-fill: #2b6cb0;
     -fx-font-weight: bold;
@@ -470,4 +482,46 @@
     -fx-font-size: 15px;
     -fx-text-fill: #4a5568;
     -fx-padding: 0 0 8px 0;
+}
+
+/* Quiz set management */
+.quiz-list {
+    -fx-background-color: white;
+    -fx-border-color: #dbe5f1;
+    -fx-border-radius: 10px;
+    -fx-background-radius: 10px;
+}
+
+.quiz-list .list-cell,
+.quiz-side-panel .list-cell {
+    -fx-padding: 12px;
+    -fx-cell-size: 58px;
+}
+
+.quiz-editor-split {
+    -fx-padding: 18px 24px;
+    -fx-background-color: transparent;
+}
+
+.quiz-side-panel,
+.quiz-form {
+    -fx-background-color: white;
+    -fx-padding: 18px;
+}
+
+.quiz-editor-scroll {
+    -fx-background-color: white;
+    -fx-border-color: transparent;
+}
+
+.section-title {
+    -fx-font-size: 17px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1a365d;
+}
+
+.editor-footer {
+    -fx-background-color: white;
+    -fx-border-color: #dbe5f1 transparent transparent transparent;
+    -fx-padding: 12px 24px;
 }

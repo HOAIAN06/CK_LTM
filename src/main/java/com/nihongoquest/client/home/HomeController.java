@@ -62,4 +62,9 @@ public class HomeController {
         findMatchButton.setDisable(true);
         app.showMatchmaking();
     }
+
+    @FXML
+    private void onManageQuizSets(ActionEvent event) {
+        app.showQuizSets();
+    }
 }
