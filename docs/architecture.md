@@ -61,4 +61,5 @@ nhưng host bấm hủy/rời sẽ kết thúc phòng cho mọi người.
 Nền tảng đã có xác thực, dashboard, Ranked 1v1 3/5 phút, câu hỏi PostgreSQL, protocol
 payload object, session registry, persistence đơn giản, quản lý bộ đề, Quiz Room, Top 10 Ranked
 và lịch sử thi đấu. `PlayerRepository` phục vụ hồ sơ/leaderboard; `MatchRepository` vừa lưu kết
-quả vừa đọc lịch sử theo user. Friends được triển khai ở nhánh kế tiếp.
+quả vừa đọc lịch sử theo user. `FriendshipRepository` lưu quan hệ bạn bè; `SocialService` giữ
+lời mời chơi 60 giây trong RAM và nối accept với direct Ranked hoặc join Quiz.

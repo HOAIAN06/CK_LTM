@@ -15,6 +15,8 @@ import com.nihongoquest.server.quizroom.QuizRoomManager;
 import com.nihongoquest.common.protocol.Protocol;
 import com.nihongoquest.server.database.Database;
 import com.nihongoquest.server.player.PlayerRepository;
+import com.nihongoquest.server.friend.FriendshipRepository;
+import com.nihongoquest.server.friend.SocialService;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -72,9 +74,11 @@ public class GameServer {
                 questionService, matchRepository, scheduler);
         QuizSetService quizSetService = new QuizSetService(new QuizSetRepository(database));
         this.quizRoomManager = new QuizRoomManager(quizSetService, scheduler);
+        SocialService socialService = new SocialService(new FriendshipRepository(database),
+                onlineUsers, matchmakingManager, quizRoomManager, scheduler);
         this.requestRouter = new ServerRequestRouter(
                 matchmakingManager, playerRepository, onlineUsers, matchRepository,
-                quizSetService, quizRoomManager);
+                quizSetService, quizRoomManager, socialService);
         this.running = false;
     }
 

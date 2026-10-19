@@ -26,6 +26,12 @@ public class OnlineUserRegistry {
         return handler != null && handler.isConnected();
     }
 
+    public boolean isBusy(long userId) {
+        ClientHandler handler = users.get(userId);
+        return handler != null && (handler.isQueued() || handler.getCurrentRoom() != null
+                || handler.getCurrentQuizRoom() != null);
+    }
+
     public int size() {
         return users.size();
     }

@@ -5,6 +5,8 @@ import com.nihongoquest.common.protocol.MessageType;
 import com.nihongoquest.common.protocol.Payloads;
 import com.nihongoquest.server.player.PlayerRepository;
 import com.nihongoquest.server.player.PlayerRepository.AuthResult;
+import com.nihongoquest.server.friend.SocialException;
+import com.nihongoquest.server.friend.SocialService;
 import com.nihongoquest.server.ranked.GameRoom;
 import com.nihongoquest.server.ranked.MatchRepository;
 import com.nihongoquest.server.ranked.MatchmakingManager;
@@ -26,17 +28,19 @@ public class ServerRequestRouter {
     private final PlayerRepository players;
     private final OnlineUserRegistry onlineUsers;
     private final MatchRepository matches;
+    private final SocialService social;
     private final QuizSetService quizSets;
     private final QuizRoomManager quizRooms;
 
     public ServerRequestRouter(MatchmakingManager matchmaking, PlayerRepository players,
                                OnlineUserRegistry onlineUsers, MatchRepository matches,
                                QuizSetService quizSets,
-                               QuizRoomManager quizRooms) {
+                               QuizRoomManager quizRooms, SocialService social) {
         this.matchmaking = matchmaking;
         this.players = players;
         this.onlineUsers = onlineUsers;
         this.matches = matches;
+        this.social = social;
         this.quizSets = quizSets;
         this.quizRooms = quizRooms;
     }
@@ -48,6 +52,14 @@ public class ServerRequestRouter {
             case PROFILE_GET -> handleProfileGet(client);
             case LEADERBOARD_GET -> handleLeaderboardGet(client);
             case MATCH_HISTORY_GET -> handleMatchHistoryGet(client);
+            case USER_SEARCH -> handleUserSearch(client, message);
+            case FRIEND_REQUEST_SEND -> handleFriendRequestSend(client, message);
+            case FRIEND_REQUEST_LIST -> handleSocialAction(client, () -> social.sendRequests(client));
+            case FRIEND_REQUEST_RESPOND -> handleFriendRequestRespond(client, message);
+            case FRIEND_LIST -> handleSocialAction(client, () -> social.sendFriendList(client));
+            case FRIEND_REMOVE -> handleFriendRemove(client, message);
+            case GAME_INVITE_SEND -> handleGameInviteSend(client, message);
+            case GAME_INVITE_RESPOND -> handleGameInviteRespond(client, message);
             case FIND_MATCH -> handleFindMatch(client, message);
             case CANCEL_MATCH -> matchmaking.dequeue(client);
             case ANSWER -> handleAnswer(client, message);
@@ -118,6 +130,66 @@ public class ServerRequestRouter {
     private void databaseQueryError(ClientHandler client, SQLException error) {
         LOGGER.warning("Loi database khi truy van: " + error.getMessage());
         client.send(new Message(MessageType.QUERY_ERROR, "DATABASE_ERROR"));
+    }
+
+    private void handleUserSearch(ClientHandler client, Message message) {
+        handleSocial(client, () -> social.search(client, Payloads.fromJson(
+                message.getPayload(), Payloads.UserSearchRequest.class)));
+    }
+
+    private void handleFriendRequestSend(ClientHandler client, Message message) {
+        handleSocial(client, () -> social.sendFriendRequest(client, Payloads.fromJson(
+                message.getPayload(), Payloads.FriendTarget.class).userId()));
+    }
+
+    private void handleFriendRequestRespond(ClientHandler client, Message message) {
+        handleSocial(client, () -> social.respondRequest(client, Payloads.fromJson(
+                message.getPayload(), Payloads.FriendRequestReply.class)));
+    }
+
+    private void handleFriendRemove(ClientHandler client, Message message) {
+        handleSocial(client, () -> social.removeFriend(client, Payloads.fromJson(
+                message.getPayload(), Payloads.FriendTarget.class).userId()));
+    }
+
+    private void handleGameInviteSend(ClientHandler client, Message message) {
+        handleSocial(client, () -> social.sendGameInvite(client, Payloads.fromJson(
+                message.getPayload(), Payloads.GameInviteSend.class)));
+    }
+
+    private void handleGameInviteRespond(ClientHandler client, Message message) {
+        handleSocial(client, () -> social.respondGameInvite(client, Payloads.fromJson(
+                message.getPayload(), Payloads.GameInviteRespond.class)));
+    }
+
+    private void handleSocialAction(ClientHandler client, SqlAction action) {
+        handleSocial(client, action);
+    }
+
+    private void handleSocial(ClientHandler client, SqlAction action) {
+        if (!client.isAuthenticated()) {
+            sendSocialError(client, "NOT_AUTHENTICATED");
+            return;
+        }
+        try {
+            action.run();
+        } catch (SocialException e) {
+            sendSocialError(client, e.getCode());
+        } catch (IllegalArgumentException | NullPointerException e) {
+            sendSocialError(client, "BAD_REQUEST");
+        } catch (SQLException e) {
+            LOGGER.warning("Loi database social: " + e.getMessage());
+            sendSocialError(client, "DATABASE_ERROR");
+        }
+    }
+
+    private void sendSocialError(ClientHandler client, String code) {
+        client.send(new Message(MessageType.SOCIAL_ERROR, code));
+    }
+
+    @FunctionalInterface
+    private interface SqlAction {
+        void run() throws SQLException;
     }
 
     private void handleQuizSetList(ClientHandler client, Message message) {
@@ -219,6 +291,7 @@ public class ServerRequestRouter {
     public void disconnected(ClientHandler client) {
         matchmaking.disconnect(client);
         quizRooms.disconnected(client);
+        social.onLogout(client);
         onlineUsers.logout(client);
     }
 
@@ -277,7 +350,10 @@ public class ServerRequestRouter {
                 client.setAuthenticatedPlayer(result.player().id(), result.player().username());
             }
             client.send(new Message(ok, result.player().toPayload()));
-            if (!registering) quizRooms.reconnect(client);
+            if (!registering) {
+                quizRooms.reconnect(client);
+                social.onLogin(client);
+            }
         } catch (SQLException e) {
             LOGGER.warning("Lỗi database khi xác thực: " + e.getMessage());
             client.send(new Message(fail, "DATABASE_ERROR"));

@@ -102,4 +102,9 @@ public class HomeController {
     private void onMatchHistory(ActionEvent event) {
         app.showMatchHistory();
     }
+
+    @FXML
+    private void onFriends(ActionEvent event) {
+        app.showFriends();
+    }
 }

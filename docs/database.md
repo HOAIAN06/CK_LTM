@@ -30,3 +30,9 @@ Top 10 đọc trực tiếp từ `users`, sắp theo `wins DESC`, `total_score D
 Lịch sử đọc từ `matches`, join hai username, lọc một trong hai cột người chơi và giới hạn
 100 dòng mới nhất. Hồ sơ và các màn hình truy vấn chỉ tính dữ liệu Ranked; điểm Quiz Room
 không được ghi vào database.
+
+## Quan hệ bạn bè
+
+Mỗi cặp chỉ có một dòng trong `friendships`, luôn thỏa `user_low_id < user_high_id`.
+`requested_by_id` cho biết người gửi khi trạng thái là `PENDING`; accept chuyển sang
+`ACCEPTED`, còn reject/remove xóa dòng. Presence và game invite không lưu database.

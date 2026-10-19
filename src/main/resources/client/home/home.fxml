@@ -75,6 +75,9 @@
                             onAction="#onMatchHistory" prefWidth="180"
                             styleClass="secondary-button"/>
                 </HBox>
+                <Button text="BẠN BÈ VÀ LỜI MỜI"
+                        onAction="#onFriends" prefWidth="250"
+                        styleClass="secondary-button,large-button"/>
             </VBox>
         </VBox>
     </center>
