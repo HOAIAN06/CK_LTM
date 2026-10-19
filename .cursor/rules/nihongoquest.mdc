@@ -1,61 +1,121 @@
----
-description: NihongoQuest — kiến trúc, TCP/server ưu tiên, code gọn, UI tối giản
+description: Quy tắc phát triển AI & Quy trình Git cho dự án NihongoQuest (ĐACS4 - VKU)
 alwaysApply: true
----
 
-# NihongoQuest
+NIHONGOQUEST — AI RULES & WORKFLOW GUIDELINES
 
-JavaFX 1v1 học tiếng Nhật. Client A/B chỉ TCP tới Game Server (không P2P). Stack: Java 17, JavaFX (FXML+CSS), Maven, TCP Socket, JSON câu hỏi.
+Dự án: NihongoQuest — Hệ thống thi đấu tiếng Nhật thời gian thực qua TCP Socket (Đồ án cơ sở 4 - VKU)
+Giảng viên hướng dẫn: TS. Trần Uyên Trang
+Sinh viên: Lê Quốc Dinh (24ITB028) & Nguyễn Văn Hoài An (24ITB004)
 
-## Ưu tiên (môn lập trình mạng)
+I. QUY TRÌNH PHÁT TRIỂN & GIT WORKFLOW (BẮT BUỘC)
 
-Tập trung **server, connect, protocol, matchmaking, game room**. Đúng luồng: connect → find match → battle → answer → score → game over.
+1. Quy trình 5 bước làm việc
 
-Protocol dự kiến (`common`): CONNECT, FIND_MATCH, CANCEL_MATCH, MATCH_FOUND, QUESTION, ANSWER, ANSWER_RESULT, SCORE_UPDATE, GAME_OVER, DISCONNECT. Port mặc định `Protocol.DEFAULT_PORT = 5000`.
+Xác định mục tiêu nhỏ: Không làm quá nhiều thứ cùng lúc. Chia nhỏ tác vụ thành các bước dưới 15-30 phút.
 
-- Server quyết định đáp án đúng, score, winner; Client chỉ hiển thị.
-- Controller **không** `new Socket(...)` — chỉ gọi `GameClient`.
-- `ServerListener` chạy thread riêng, không block UI JavaFX.
-- Không thêm WebSocket / UDP / P2P / DB / login / rank / shop / chat trừ khi được yêu cầu rõ.
+Tạo nhánh mới (Git Branching):
 
-## Package — không viết sai chỗ
+Tất cả thay đổi code/tài liệu BẮT BUỘC làm trên nhánh riêng, KHÔNG commit trực tiếp vào main.
 
-```text
-com.nihongoquest.client          # ClientApp, controller, network, model
-com.nihongoquest.server          # GameServer, ClientHandler, MatchmakingManager, GameRoom, QuestionManager
-com.nihongoquest.common          # Message, MessageType, Protocol — thống nhất trước khi sửa
-```
+Cú pháp đặt tên nhánh:
 
-Không tạo class mới nếu chưa cần; ưu tiên skeleton/package đã có trong README.
+Tính năng mới: feature/<mô-tả-ngắn> (VD: feature/quiz-room-lobby, feature/leaderboard-ui)
 
-## Code gọn — đủ là được
+Sửa lỗi: fix/<mô-tả-loi> (VD: fix/disconnect-handling, fix/login-utf8)
 
-- Ưu tiên TCP gameplay chạy đúng hơn abstraction/framework.
-- Không over-engineer: không interface/DI/pattern thừa, không class “cho đẹp kiến trúc”.
-- Mỗi class một trách nhiệm rõ; method ngắn, đọc được.
-- TODO rõ ràng hơn code giả phức tạp.
+Cập nhật tài liệu: docs/<mô-tả> (VD: docs/setup-guide)
 
-```java
-// ❌ BAD — TCP trong controller
-new Socket("localhost", 5000);
+Tối ưu code: refactor/<mô-tả> (VD: refactor/player-repository)
 
-// ✅ GOOD — controller gọi network layer
-gameClient.findMatch();
-```
+Kiểm tra tự động (Self-Check & Test):
 
-## Frontend — đơn giản, polish sau
+Sau khi sửa code, BẮT BUỘC chạy ./mvnw clean test (hoặc mvnw.cmd clean test trên Windows) để đảm bảo:
 
-UI chỉ cần dùng được: label, button, scene chuyển đúng. CSS tối thiểu.
+Không có lỗi biên dịch (Compilation Error).
 
-**Chưa làm** (để sau): ảnh, animation, sound, hiệu ứng nút, theme đẹp. Đừng thêm asset/effect “cho sẵn” nếu chưa được hỏi.
+Tất cả các Unit Test & FXML Test đều vượt qua (100% PASS).
 
-| Thành phần | Nhiệm vụ |
-|---|---|
-| FXML | Layout |
-| Controller | Sự kiện UI → gọi GameClient / cập nhật view |
-| GameClient / ServerListener | TCP phía client |
-| Server | Matchmaking + logic trận |
+Đệ trình & Xin duyệt (User Approval):
 
-## Out of scope hiện tại
+Hiển thị tóm tắt các file đã thay đổi, kết quả chạy test và gợi ý thông điệp Commit chuẩn.
 
-Login/register, database, rank/coin/shop, AI opponent, chat/friend, polish visual/audio.
+Chờ người dùng xác nhận "Đồng ý / OK".
+
+Commit & Gộp nhánh (Commit & Merge):
+
+Thực hiện commit đúng cú pháp chuẩn đã gợi ý.
+
+Hướng dẫn chuyển về nhánh main và merge khi hoàn thành tính năng.
+
+II. CHUẨN COMMIT (CONVENTIONAL COMMITS)
+
+Tất cả commit message phải tuân theo định dạng chuẩn quốc tế:
+
+<type>(<scope>): <mô tả ngắn gọn bằng tiếng Việt hoặc tiếng Anh>
+
+
+Các <type> được phép sử dụng:
+
+feat: Thêm chức năng mới (Feature)
+
+Ví dụ: feat(quiz): thêm màn hình sảnh chờ và sinh mã PIN 6 số
+
+fix: Sửa lỗi bug (Bug fix)
+
+Ví dụ: fix(ranked): hiển thị popup thông báo khi đối thủ mất kết nối
+
+docs: Cập nhật tài liệu (Documentation)
+
+Ví dụ: docs(readme): cập nhật hướng dẫn chạy ứng dụng
+
+style: Định dạng code, sửa CSS (không ảnh hưởng logic)
+
+Ví dụ: style(client): căn chỉnh lại giao diện thẻ câu hỏi
+
+refactor: Reorganize/tối ưu code mà không đổi tính năng
+
+Ví dụ: refactor(server): đơn giản hóa hàm lưu kết quả JDBC
+
+test: Thêm hoặc sửa test case
+
+Ví dụ: test(common): bổ sung unit test cho Payloads.java
+
+III. QUY ĐỊNH NGUYÊN TẮC KIẾN TRÚC & CODE (ARCHITECTURE RULES)
+
+1. Ranh giới Client - Server (CỰC KỲ QUAN TRỌNG)
+
+Client (com.nihongoquest.client):
+
+Chỉ làm nhiệm vụ hiển thị JavaFX UI, bắt sự kiện nút bấm và gửi/nhận JSON qua TCP.
+
+TUYỆT ĐỐI KHÔNG khởi tạo new Socket(...) trong Controller. Mọi giao tiếp đi qua GameClient.
+
+TUYỆT ĐỐI KHÔNG kết nối CSDL, không chứa mật khẩu DB, không import bất kỳ package nào của Server.
+
+Không tự tính điểm hay tự quyết định thắng/thua.
+
+Server (com.nihongoquest.server):
+
+Đóng vai trò Trọng tài (Authority): Quyết định đáp án đúng, chấm điểm, quản lý thời gian (Timer), xử lý đếm ngược.
+
+Đọc/Ghi CSDL PostgreSQL (Supabase) qua JDBC.
+
+TUYỆT ĐỐI KHÔNG gửi đáp án đúng (correct choice/index) về Client trong bản tin QUESTION.
+
+Common (com.nihongoquest.common):
+
+Chứa DTO, Enum MessageType, và Message format dùng chung giữa 2 bên.
+
+2. Tiêu chuẩn Đồ án cơ sở (ĐACS4)
+
+Đơn giản & Rõ ràng: Ưu tiên code thuần Java 21, JavaFX, JDBC. KHÔNG dùng Spring Boot, JPA/Hibernate, mã hóa SSL/TLS phức tạp hay JWT nếu không có yêu cầu đặc biệt.
+
+Xử lý bất đồng bộ:
+
+ServerListener phía Client phải chạy trên Thread riêng để đọc dữ liệu liên tục từ Socket mà không gây đơ/treo JavaFX UI.
+
+Khi cập nhật giao diện JavaFX từ luồng Socket, BẮT BUỘC bọc trong Platform.runLater(() -> { ... }).
+
+Định dạng kết nối:
+
+TCP Socket truyền chuỗi UTF-8. Mỗi frame là một chuỗi JSON nằm trên một dòng kết thúc bằng ký tự xuống dòng \n.

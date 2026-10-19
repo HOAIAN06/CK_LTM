@@ -3,8 +3,8 @@ package com.nihongoquest.server.ranked;
 import com.nihongoquest.server.network.ClientHandler;
 import com.nihongoquest.server.question.QuestionService;
 import com.nihongoquest.server.question.Question;
-import java.sql.SQLException;
 import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
 
 import com.nihongoquest.common.protocol.Message;
 import com.nihongoquest.common.protocol.MessageType;
@@ -30,17 +30,15 @@ public class MatchmakingManager {
 
     private final Deque<ClientHandler> waitingQueue;
     private final QuestionService questionService;
-    private final RankedMatchService matchService;
-    private final RankedMatchRepository matchRepository;
-    private final RankedResultService resultService;
+    private final MatchRepository matchRepository;
+    private final ScheduledExecutorService scheduler;
 
-    public MatchmakingManager(QuestionService questionService, RankedMatchService matchService,
-                              RankedMatchRepository matchRepository, RankedResultService resultService) {
+    public MatchmakingManager(QuestionService questionService, MatchRepository matchRepository,
+                              ScheduledExecutorService scheduler) {
         this.waitingQueue = new ArrayDeque<>();
         this.questionService = Objects.requireNonNull(questionService);
-        this.matchService = Objects.requireNonNull(matchService);
         this.matchRepository = Objects.requireNonNull(matchRepository);
-        this.resultService = Objects.requireNonNull(resultService);
+        this.scheduler = Objects.requireNonNull(scheduler);
     }
 
     /**
@@ -111,19 +109,8 @@ public class MatchmakingManager {
                 player2.send(new Message(MessageType.MATCH_ERROR, "QUESTIONS_UNAVAILABLE"));
                 continue;
             }
-            RankedMatchService.CreatedMatch match;
-            try {
-                match = matchService.createMatch(player1.getPlayerId(), player2.getPlayerId(),
-                        questions, GameRoom.QUESTION_SECONDS);
-            } catch (SQLException e) {
-                LOGGER.warning("Failed to create ranked match for users " + player1.getPlayerId()
-                        + " and " + player2.getPlayerId() + " (SQLState=" + e.getSQLState() + ")");
-                player1.send(new Message(MessageType.MATCH_ERROR, "DATABASE_ERROR"));
-                player2.send(new Message(MessageType.MATCH_ERROR, "DATABASE_ERROR"));
-                continue;
-            }
-            GameRoom room = new GameRoom(UUID.randomUUID().toString(), match, player1, player2,
-                    questions, matchRepository, resultService);
+            GameRoom room = new GameRoom(UUID.randomUUID().toString(), player1, player2,
+                    questions, matchRepository, scheduler);
             LOGGER.info("Đã tạo room " + room.getRoomId() + ": "
                     + player1.getUsername() + " vs " + player2.getUsername());
             room.start();

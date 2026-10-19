@@ -1,16 +1,16 @@
 package com.nihongoquest.server;
 
 import com.nihongoquest.server.ranked.MatchmakingManager;
-import com.nihongoquest.server.ranked.RankedMatchRepository;
-import com.nihongoquest.server.ranked.RankedMatchService;
-import com.nihongoquest.server.ranked.RankedResultService;
+import com.nihongoquest.server.ranked.MatchRepository;
 import com.nihongoquest.server.network.ClientHandler;
+import com.nihongoquest.server.network.OnlineUserRegistry;
+import com.nihongoquest.server.network.ServerRequestRouter;
 import com.nihongoquest.server.network.TrafficEvent;
 import com.nihongoquest.server.question.QuestionRepository;
 import com.nihongoquest.server.question.QuestionService;
 
 import com.nihongoquest.common.protocol.Protocol;
-import com.nihongoquest.server.infrastructure.persistence.Database;
+import com.nihongoquest.server.database.Database;
 import com.nihongoquest.server.player.PlayerRepository;
 
 import java.io.IOException;
@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,6 +42,9 @@ public class GameServer {
     private MatchmakingManager matchmakingManager;
     private final QuestionService questionService;
     private final PlayerRepository playerRepository;
+    private final OnlineUserRegistry onlineUsers;
+    private final ServerRequestRouter requestRouter;
+    private final ScheduledExecutorService scheduler;
     private volatile boolean running;
     private ServerSocket serverSocket;
     private ExecutorService clientExecutor;
@@ -52,10 +56,16 @@ public class GameServer {
         Database database = new Database();
         this.questionService = new QuestionService(new QuestionRepository(database));
         this.playerRepository = new PlayerRepository(database);
-        RankedMatchRepository matches = new RankedMatchRepository(database);
-        this.matchmakingManager = new MatchmakingManager(questionService,
-                new RankedMatchService(database, matches, playerRepository), matches,
-                new RankedResultService(database, matches, playerRepository));
+        this.scheduler = Executors.newScheduledThreadPool(4, task -> {
+            Thread thread = new Thread(task, "game-timer");
+            thread.setDaemon(true);
+            return thread;
+        });
+        this.onlineUsers = new OnlineUserRegistry();
+        this.matchmakingManager = new MatchmakingManager(
+                questionService, new MatchRepository(database), scheduler);
+        this.requestRouter = new ServerRequestRouter(
+                matchmakingManager, playerRepository, onlineUsers);
         this.running = false;
     }
 
@@ -76,7 +86,7 @@ public class GameServer {
             while (running) {
                 Socket clientSocket = serverSocket.accept();
                 ClientHandler handler = new ClientHandler(
-                        clientSocket, matchmakingManager, playerRepository,
+                        clientSocket, requestRouter,
                         this::publishActivity, this::publishTraffic, this::clientDisconnected);
                 clients.add(handler);
                 publishActivity("Kết nối mới: " + clientSocket.getRemoteSocketAddress());

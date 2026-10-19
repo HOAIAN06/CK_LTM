@@ -1,9 +1,7 @@
 package com.nihongoquest.server.question;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-import com.nihongoquest.server.infrastructure.persistence.Database;
+import com.nihongoquest.server.database.Database;
 
 import javax.sql.rowset.CachedRowSet;
 import javax.sql.rowset.RowSetMetaDataImpl;
@@ -22,46 +20,46 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 class QuestionRepositoryTest {
-    @ParameterizedTest
-    @ValueSource(booleans = {true, false})
-    void batchesChoicesOnOneConnectionAndHandlesOptionalActiveColumn(boolean activeColumn) throws Exception {
-        JdbcStub jdbc = new JdbcStub(activeColumn, false);
+    @Test
+    void loadsOnlyPublishedSetsAndBatchesChoicesOnOneConnection() throws Exception {
+        JdbcStub jdbc = new JdbcStub(false);
         List<Question> questions = new QuestionRepository(jdbc.database()).findRandomQuestions(
                 "N5", 3, List.of(99L));
         assertEquals(1, jdbc.connections);
-        assertEquals(3, jdbc.sql.size()); // metadata + random questions + batched choices
-        String query = jdbc.sql.get(1);
-        assertEquals(activeColumn, query.contains("is_active = TRUE"));
-        assertTrue(query.contains("level = ?"));
-        assertTrue(query.contains("id NOT IN (?)"));
+        assertEquals(2, jdbc.sql.size());
+        String query = jdbc.sql.get(0);
+        assertTrue(query.contains("JOIN quiz_sets"));
+        assertTrue(query.contains("qs.is_published = TRUE"));
+        assertTrue(query.contains("qs.level = ?"));
+        assertTrue(query.contains("q.id NOT IN (?)"));
         assertTrue(query.contains("ORDER BY RANDOM() LIMIT ?"));
-        assertEquals(Map.of(1, "N5", 2, 99L, 3, 3), jdbc.bindings.get(1));
-        assertTrue(jdbc.sql.get(2).contains("question_id IN (?)"));
-        assertTrue(jdbc.sql.get(2).contains("ORDER BY question_id, position"));
-        assertEquals(Map.of(1, 3_000_000_000L), jdbc.bindings.get(2));
+        assertEquals(Map.of(1, "N5", 2, 99L, 3, 3), jdbc.bindings.get(0));
+        assertTrue(jdbc.sql.get(1).contains("question_id IN (?)"));
+        assertTrue(jdbc.sql.get(1).contains("ORDER BY question_id, position"));
+        assertEquals(Map.of(1, 3_000_000_000L), jdbc.bindings.get(1));
         assertEquals(30_000_000_001L, questions.getFirst().getChoices().getFirst().id());
         assertEquals(1, jdbc.closedConnections);
-        assertEquals(3, jdbc.closedStatements);
-        assertEquals(3, jdbc.closedResults);
-    }
-
-    @Test
-    void closesConnectionAndStatementsWhenChoiceQueryFails() {
-        JdbcStub jdbc = new JdbcStub(true, true);
-        assertThrows(SQLException.class, () -> new QuestionRepository(jdbc.database()).findRandomQuestions(3));
-        assertFalse(jdbc.sql.get(1).contains("level = ?"));
-        assertEquals(Map.of(1, 3), jdbc.bindings.get(1));
-        assertEquals(1, jdbc.closedConnections);
-        assertEquals(3, jdbc.closedStatements);
+        assertEquals(2, jdbc.closedStatements);
         assertEquals(2, jdbc.closedResults);
     }
 
     @Test
+    void closesConnectionAndStatementsWhenChoiceQueryFails() {
+        JdbcStub jdbc = new JdbcStub(true);
+        assertThrows(SQLException.class, () -> new QuestionRepository(jdbc.database()).findRandomQuestions(3));
+        assertFalse(jdbc.sql.get(0).contains("qs.level = ?"));
+        assertEquals(Map.of(1, 3), jdbc.bindings.get(0));
+        assertEquals(1, jdbc.closedConnections);
+        assertEquals(2, jdbc.closedStatements);
+        assertEquals(1, jdbc.closedResults);
+    }
+
+    @Test
     void findByIdAndFindChoicesBindLongIds() throws Exception {
-        JdbcStub jdbc = new JdbcStub(true, false);
+        JdbcStub jdbc = new JdbcStub(false);
         assertEquals(3_000_000_000L, new QuestionRepository(jdbc.database()).findById(3_000_000_000L).getId());
-        assertTrue(jdbc.sql.get(1).contains("WHERE id = ? AND is_active = TRUE"));
-        assertEquals(Map.of(1, 3_000_000_000L), jdbc.bindings.get(1));
+        assertTrue(jdbc.sql.get(0).contains("WHERE q.id = ? AND qs.is_published = TRUE"));
+        assertEquals(Map.of(1, 3_000_000_000L), jdbc.bindings.get(0));
         assertEquals(1, new QuestionRepository(jdbc.database()).findChoicesByQuestionId(3_000_000_000L).size());
         assertTrue(jdbc.sql.getLast().contains("WHERE question_id = ? ORDER BY position"));
         assertEquals(Map.of(1, 3_000_000_000L), jdbc.bindings.getLast());
@@ -133,7 +131,6 @@ class QuestionRepositoryTest {
 
     /** Small strict JDBC fake: tests SQL bindings, mapping and closure, not a real DB. */
     private class JdbcStub {
-        final boolean activeColumn;
         final boolean failChoices;
         final List<String> sql = new ArrayList<>();
         final List<Map<Integer, Object>> bindings = new ArrayList<>();
@@ -142,8 +139,7 @@ class QuestionRepositoryTest {
         int closedStatements;
         int closedResults;
 
-        JdbcStub(boolean activeColumn, boolean failChoices) {
-            this.activeColumn = activeColumn;
+        JdbcStub(boolean failChoices) {
             this.failChoices = failChoices;
         }
 
@@ -177,11 +173,7 @@ class QuestionRepositoryTest {
 
         ResultSet results(String query) throws SQLException {
             CachedRowSet rows;
-            if (query.contains("WHERE 1 = 0")) {
-                rows = activeColumn
-                        ? row(new String[]{"id", "is_active"}, new int[]{Types.BIGINT, Types.BOOLEAN}, new Object[]{1L, true})
-                        : row(new String[]{"id"}, new int[]{Types.BIGINT}, new Object[]{1L});
-            } else if (query.contains("FROM choices")) {
+            if (query.contains("FROM choices")) {
                 if (failChoices) throw new SQLException("Choice query failed");
                 rows = choiceRow(true);
             } else {

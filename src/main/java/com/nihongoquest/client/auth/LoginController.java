@@ -7,6 +7,7 @@ import com.nihongoquest.client.profile.Player;
 import com.nihongoquest.client.network.GameClient;
 import com.nihongoquest.common.protocol.Message;
 import com.nihongoquest.common.protocol.Payloads;
+import com.fasterxml.jackson.databind.JsonNode;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -175,7 +176,7 @@ public class LoginController {
                 setSubmitDisabled(false);
             }
             case LOGIN_FAIL, REGISTER_FAIL -> {
-                showError(toVietnameseError(message.getPayload()));
+                showError(toVietnameseError(message.payloadText()));
                 setSubmitDisabled(false);
             }
             default -> {
@@ -184,7 +185,7 @@ public class LoginController {
         }
     }
 
-    private Player parsePlayer(String payload) {
+    private Player parsePlayer(JsonNode payload) {
         Payloads.PlayerStats values = Payloads.parsePlayer(payload);
         return new Player(
                 values.id(), values.username(), values.wins(), values.losses(),

@@ -1,6 +1,6 @@
 package com.nihongoquest.server.question;
 
-import com.nihongoquest.server.infrastructure.persistence.Database;
+import com.nihongoquest.server.database.Database;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -16,7 +16,8 @@ import java.util.Objects;
 
 /** JDBC access only; Ranked eligibility is decided by QuestionService. */
 public class QuestionRepository {
-    private static final String QUESTION_COLUMNS = "id, content, category, level, explanation";
+    private static final String QUESTION_COLUMNS = "q.id, q.content, qs.title AS category, "
+            + "qs.level, q.explanation";
     private static final int QUERY_TIMEOUT_SECONDS = 10;
     private final Database database;
 
@@ -40,10 +41,11 @@ public class QuestionRepository {
         }
         try (Connection connection = database.getConnection()) {
             boolean filterLevel = level != null && !level.isBlank();
-            String sql = "SELECT " + QUESTION_COLUMNS + " FROM questions WHERE 1 = 1"
-                    + (hasActiveColumn(connection) ? " AND is_active = TRUE" : "")
-                    + (filterLevel ? " AND level = ?" : "")
-                    + (excludedIds.isEmpty() ? "" : " AND id NOT IN (" + placeholders(excludedIds.size()) + ")")
+            String sql = "SELECT " + QUESTION_COLUMNS
+                    + " FROM questions q JOIN quiz_sets qs ON qs.id = q.quiz_set_id"
+                    + " WHERE qs.is_published = TRUE"
+                    + (filterLevel ? " AND qs.level = ?" : "")
+                    + (excludedIds.isEmpty() ? "" : " AND q.id NOT IN (" + placeholders(excludedIds.size()) + ")")
                     + " ORDER BY RANDOM() LIMIT ?";
             List<Question> questions;
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -64,11 +66,12 @@ public class QuestionRepository {
         }
     }
 
-    /** Returns null if absent or inactive (when the optional active column exists). */
+    /** Chỉ trả câu hỏi thuộc bộ đề đã xuất bản. */
     public Question findById(long questionId) throws SQLException {
         try (Connection connection = database.getConnection()) {
-            String sql = "SELECT " + QUESTION_COLUMNS + " FROM questions WHERE id = ?"
-                    + (hasActiveColumn(connection) ? " AND is_active = TRUE" : "");
+            String sql = "SELECT " + QUESTION_COLUMNS
+                    + " FROM questions q JOIN quiz_sets qs ON qs.id = q.quiz_set_id"
+                    + " WHERE q.id = ? AND qs.is_published = TRUE";
             List<Question> questions;
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setQueryTimeout(QUERY_TIMEOUT_SECONDS);
@@ -119,22 +122,6 @@ public class QuestionRepository {
         return questions.stream().map(question -> new Question(question.getId(), question.getContent(),
                 question.getCategory(), question.getLevel(), question.getExplanation(),
                 choices.getOrDefault(question.getId(), List.of()))).toList();
-    }
-
-    private boolean hasActiveColumn(Connection connection) throws SQLException {
-        // Inspect the same relation resolved by the queries, without fetching any data.
-        try (PreparedStatement statement = connection.prepareStatement("SELECT * FROM questions WHERE 1 = 0")) {
-            statement.setQueryTimeout(QUERY_TIMEOUT_SECONDS);
-            try (ResultSet result = statement.executeQuery()) {
-                var metadata = result.getMetaData();
-                for (int i = 1; i <= metadata.getColumnCount(); i++) {
-                    if ("is_active".equalsIgnoreCase(metadata.getColumnName(i))) {
-                        return true;
-                    }
-                }
-                return false;
-            }
-        }
     }
 
     static List<Question> readQuestions(ResultSet result) throws SQLException {

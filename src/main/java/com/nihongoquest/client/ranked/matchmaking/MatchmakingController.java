@@ -7,6 +7,7 @@ import com.nihongoquest.client.profile.Player;
 import com.nihongoquest.client.network.GameClient;
 import com.nihongoquest.common.protocol.Message;
 import com.nihongoquest.common.protocol.Payloads;
+import com.fasterxml.jackson.databind.JsonNode;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -85,7 +86,7 @@ public class MatchmakingController {
                 app.showHome();
             }
             case MATCH_FOUND -> handleMatchFound(message.getPayload());
-            case MATCH_ERROR -> handleMatchError(message.getPayload());
+            case MATCH_ERROR -> handleMatchError(message.payloadText());
             case QUESTION, ANSWER_RESULT, SCORE_UPDATE, GAME_OVER ->
                     gameClient.redispatch(message);
             default -> {
@@ -94,7 +95,7 @@ public class MatchmakingController {
         }
     }
 
-    private void handleMatchFound(String payload) {
+    private void handleMatchFound(JsonNode payload) {
         try {
             Payloads.MatchFound match = Payloads.parseMatchFound(payload);
             if (match.roomId().isBlank() || match.opponent().isBlank()) {

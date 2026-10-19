@@ -7,6 +7,7 @@ import com.nihongoquest.client.profile.Player;
 import com.nihongoquest.client.network.GameClient;
 import com.nihongoquest.common.protocol.Message;
 import com.nihongoquest.common.protocol.Payloads;
+import com.fasterxml.jackson.databind.JsonNode;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -143,7 +144,7 @@ public class BattleController {
         }
     }
 
-    private void showQuestion(String payload) {
+    private void showQuestion(JsonNode payload) {
         try {
             Payloads.QuestionData question = Payloads.parseQuestion(payload);
             int round = question.round();
@@ -168,7 +169,7 @@ public class BattleController {
         }
     }
 
-    private void showAnswerResult(String payload) {
+    private void showAnswerResult(JsonNode payload) {
         try {
             Payloads.AnswerResult result = Payloads.parseAnswerResult(payload);
             boolean correct = result.correct();
@@ -196,7 +197,7 @@ public class BattleController {
         }
     }
 
-    private void showScore(String payload) {
+    private void showScore(JsonNode payload) {
         try {
             Payloads.Scores scores = Payloads.parseScores(payload);
             scoreLabel.setText(scores.myScore() + "  :  " + scores.opponentScore());
@@ -205,7 +206,7 @@ public class BattleController {
         }
     }
 
-    private void showGameOver(String payload) {
+    private void showGameOver(JsonNode payload) {
         try {
             stopCountdown();
             Payloads.GameOver result = Payloads.parseGameOver(payload);
