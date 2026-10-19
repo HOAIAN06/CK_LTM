@@ -1,4 +1,6 @@
 -- NihongoQuest — schema Supabase (Postgres)
+-- Ranked JDBC schema verified from live metadata: see docs/ranked-persistence.md.
+-- Read-only demo queries: sql/verify_ranked.sql. Do not run this legacy DDL for Ranked.
 -- LEGACY: chỉ tham khảo phiên bản cũ; không chạy để thiết lập bản JDBC hiện tại.
 -- Bản hiện tại dùng schema users/questions/choices đã có trên Supabase.
 -- Chạy trong Supabase Dashboard → SQL Editor

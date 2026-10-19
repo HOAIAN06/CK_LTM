@@ -28,6 +28,13 @@ dòng byte TCP.
 - `ANSWER_RESULT`, `SCORE_UPDATE`: kết quả câu vừa trả lời và điểm hiện tại.
 - `GAME_OVER`: kết quả trận.
 
+Ranked chỉ gửi `MATCH_FOUND` sau khi transaction tạo trận đã commit, và chỉ gửi
+`GAME_OVER` sau khi transaction lưu kết quả/statistics thành công. Lỗi persistence
+trả `MATCH_ERROR` với payload `DATABASE_ERROR`; hai session cùng user không được
+ghép với nhau (`SAME_USER`). Timeout giữ payload cũ và được lưu server-side với
+choice NULL. Không thay đổi định dạng payload, không yêu cầu client biết database.
+Session đã login nhận `LOGIN_FAIL/ALREADY_AUTHENTICATED` nếu thử login lại.
+
 Server quyết định deadline, đáp án đúng, điểm, người thắng và xử lý mất kết nối.
 Không có UDP, WebSocket, HTTP, P2P hoặc heartbeat PING/PONG trong giao thức này.
 

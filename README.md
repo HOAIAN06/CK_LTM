@@ -113,6 +113,10 @@ Không commit `db.properties` vì tệp này chứa mật khẩu database.
 Yêu cầu: JDK 21. Chạy game cần kết nối Supabase; unit/FXML test dùng dữ liệu giả
 và không truy cập database thật.
 
+Trong IntelliJ, nhớ đặt **Project SDK** và **Run/Debug JRE** về **JDK 21**.
+Nếu vẫn để JDK 24, bạn sẽ thấy các warning JavaFX/JDK màu đỏ như trong ảnh dù
+project vẫn có thể chạy.
+
 ```powershell
 .\mvnw.cmd clean test
 ```
@@ -130,6 +134,16 @@ Nhấn **Khởi động** trên dashboard, sau đó mở hai client bằng hai t
 ```
 
 Đăng nhập bằng hai tài khoản khác nhau, bấm **Tìm trận** và kiểm tra dashboard.
+
+Nếu bấm Run trực tiếp trong IntelliJ, chạy `server/ServerLauncher.java` trước,
+nhấn **Khởi động** ở cổng 5000, rồi chạy `client/ClientLauncher.java` hai lần
+trong hai cấu hình riêng. Mỗi client chọn `localhost:5000`, bấm **KẾT NỐI** và
+đăng nhập một tài khoản khác nhau.
+
+Các launcher là class Java thông thường gọi `Application.launch(...)`, giúp tránh
+lỗi `JavaFX runtime components are missing` khi IDE đưa dependencies lên classpath
+và chạy trực tiếp một class kế thừa `Application`. Dùng launcher cho cách chạy này;
+các lệnh Maven ở trên vẫn giữ nguyên.
 
 ## Trách nhiệm quan trọng
 

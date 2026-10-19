@@ -1,6 +1,9 @@
 package com.nihongoquest.server;
 
 import com.nihongoquest.server.ranked.MatchmakingManager;
+import com.nihongoquest.server.ranked.RankedMatchRepository;
+import com.nihongoquest.server.ranked.RankedMatchService;
+import com.nihongoquest.server.ranked.RankedResultService;
 import com.nihongoquest.server.network.ClientHandler;
 import com.nihongoquest.server.network.TrafficEvent;
 import com.nihongoquest.server.question.QuestionRepository;
@@ -49,7 +52,10 @@ public class GameServer {
         Database database = new Database();
         this.questionService = new QuestionService(new QuestionRepository(database));
         this.playerRepository = new PlayerRepository(database);
-        this.matchmakingManager = new MatchmakingManager(questionService, playerRepository);
+        RankedMatchRepository matches = new RankedMatchRepository(database);
+        this.matchmakingManager = new MatchmakingManager(questionService,
+                new RankedMatchService(database, matches, playerRepository), matches,
+                new RankedResultService(database, matches, playerRepository));
         this.running = false;
     }
 
