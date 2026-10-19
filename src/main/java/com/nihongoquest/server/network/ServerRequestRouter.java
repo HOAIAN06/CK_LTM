@@ -9,6 +9,8 @@ import com.nihongoquest.server.ranked.GameRoom;
 import com.nihongoquest.server.ranked.MatchmakingManager;
 import com.nihongoquest.server.quiz.QuizSetException;
 import com.nihongoquest.server.quiz.QuizSetService;
+import com.nihongoquest.server.quizroom.QuizRoomException;
+import com.nihongoquest.server.quizroom.QuizRoomManager;
 
 import java.sql.SQLException;
 import java.util.regex.Pattern;
@@ -23,13 +25,16 @@ public class ServerRequestRouter {
     private final PlayerRepository players;
     private final OnlineUserRegistry onlineUsers;
     private final QuizSetService quizSets;
+    private final QuizRoomManager quizRooms;
 
     public ServerRequestRouter(MatchmakingManager matchmaking, PlayerRepository players,
-                               OnlineUserRegistry onlineUsers, QuizSetService quizSets) {
+                               OnlineUserRegistry onlineUsers, QuizSetService quizSets,
+                               QuizRoomManager quizRooms) {
         this.matchmaking = matchmaking;
         this.players = players;
         this.onlineUsers = onlineUsers;
         this.quizSets = quizSets;
+        this.quizRooms = quizRooms;
     }
 
     public void handle(ClientHandler client, Message message) {
@@ -44,6 +49,12 @@ public class ServerRequestRouter {
             case QUIZ_SET_SAVE -> handleQuizSetSave(client, message);
             case QUIZ_SET_PUBLISH -> handleQuizSetPublish(client, message);
             case QUIZ_SET_DELETE -> handleQuizSetDelete(client, message);
+            case QUIZ_ROOM_CREATE -> handleQuizRoomCreate(client, message);
+            case QUIZ_ROOM_JOIN -> handleQuizRoomJoin(client, message);
+            case QUIZ_ROOM_START -> handleQuizAction(client, quizRooms::start);
+            case QUIZ_ANSWER -> handleQuizAnswer(client, message);
+            case QUIZ_ROOM_LEAVE -> handleQuizAction(client, quizRooms::leave);
+            case QUIZ_ROOM_CANCEL -> handleQuizAction(client, quizRooms::cancel);
             case DISCONNECT -> client.close();
             case CONNECT -> client.reportActivity("TCP client sẵn sàng: " + client.getRemoteAddress());
             default -> LOGGER.fine("Chưa xử lý type=" + message.getType());
@@ -148,6 +159,7 @@ public class ServerRequestRouter {
 
     public void disconnected(ClientHandler client) {
         matchmaking.disconnect(client);
+        quizRooms.disconnected(client);
         onlineUsers.logout(client);
     }
 
@@ -206,9 +218,62 @@ public class ServerRequestRouter {
                 client.setAuthenticatedPlayer(result.player().id(), result.player().username());
             }
             client.send(new Message(ok, result.player().toPayload()));
+            if (!registering) quizRooms.reconnect(client);
         } catch (SQLException e) {
             LOGGER.warning("Lỗi database khi xác thực: " + e.getMessage());
             client.send(new Message(fail, "DATABASE_ERROR"));
         }
+    }
+
+    private void handleQuizRoomCreate(ClientHandler client, Message message) {
+        try {
+            Payloads.QuizRoomCreateRequest request = Payloads.fromJson(
+                    message.getPayload(), Payloads.QuizRoomCreateRequest.class);
+            quizRooms.create(client, request);
+        } catch (QuizRoomException e) {
+            sendQuizRoomError(client, e.getCode());
+        } catch (IllegalArgumentException e) {
+            sendQuizRoomError(client, "BAD_REQUEST");
+        } catch (SQLException e) {
+            LOGGER.warning("Lỗi database khi tạo phòng Quiz: " + e.getMessage());
+            sendQuizRoomError(client, "DATABASE_ERROR");
+        }
+    }
+
+    private void handleQuizRoomJoin(ClientHandler client, Message message) {
+        try {
+            Payloads.QuizRoomJoinRequest request = Payloads.fromJson(
+                    message.getPayload(), Payloads.QuizRoomJoinRequest.class);
+            quizRooms.join(client, request.pin());
+        } catch (QuizRoomException e) {
+            sendQuizRoomError(client, e.getCode());
+        } catch (IllegalArgumentException e) {
+            sendQuizRoomError(client, "BAD_REQUEST");
+        }
+    }
+
+    private void handleQuizAnswer(ClientHandler client, Message message) {
+        try {
+            Payloads.QuizAnswerData answer = Payloads.fromJson(
+                    message.getPayload(), Payloads.QuizAnswerData.class);
+            quizRooms.answer(client, answer);
+        } catch (QuizRoomException e) {
+            sendQuizRoomError(client, e.getCode());
+        } catch (IllegalArgumentException e) {
+            sendQuizRoomError(client, "BAD_REQUEST");
+        }
+    }
+
+    private void handleQuizAction(ClientHandler client,
+                                  java.util.function.Consumer<ClientHandler> action) {
+        try {
+            action.accept(client);
+        } catch (QuizRoomException e) {
+            sendQuizRoomError(client, e.getCode());
+        }
+    }
+
+    private void sendQuizRoomError(ClientHandler client, String code) {
+        client.send(new Message(MessageType.QUIZ_ERROR, code));
     }
 }

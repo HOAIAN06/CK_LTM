@@ -11,6 +11,9 @@ import com.nihongoquest.client.profile.Player;
 import com.nihongoquest.client.network.GameClient;
 import com.nihongoquest.client.quiz.QuizSetEditorController;
 import com.nihongoquest.client.quiz.QuizSetListController;
+import com.nihongoquest.client.quiz.QuizRoomMenuController;
+import com.nihongoquest.client.quiz.QuizLobbyController;
+import com.nihongoquest.client.quiz.QuizBattleController;
 import com.nihongoquest.common.protocol.Payloads;
 
 import javafx.application.Application;
@@ -127,6 +130,42 @@ public class ClientApp extends Application {
             setScene(root, 1180, 780);
         } catch (IOException e) {
             throw new IllegalStateException("Không thể mở trình soạn bộ đề", e);
+        }
+    }
+
+    public void showQuizRoomMenu() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/quiz/quiz-room-menu.fxml"));
+            Parent root = loader.load();
+            QuizRoomMenuController controller = loader.getController();
+            controller.setSession(this, gameClient);
+            setScene(root, 1040, 720);
+        } catch (IOException e) {
+            throw new IllegalStateException("Không thể mở menu phòng Quiz", e);
+        }
+    }
+
+    public void showQuizLobby(Payloads.QuizLobbyData lobby) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/quiz/quiz-lobby.fxml"));
+            Parent root = loader.load();
+            QuizLobbyController controller = loader.getController();
+            controller.setSession(this, gameClient, lobby);
+            setScene(root, 980, 700);
+        } catch (IOException e) {
+            throw new IllegalStateException("Không thể mở sảnh chờ Quiz", e);
+        }
+    }
+
+    public void showQuizBattle(Payloads.QuizRoomStarted room) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/quiz/quiz-battle.fxml"));
+            Parent root = loader.load();
+            QuizBattleController controller = loader.getController();
+            controller.setSession(this, gameClient, currentPlayer, room);
+            setScene(root, 1180, 760);
+        } catch (IOException e) {
+            throw new IllegalStateException("Không thể mở màn hình thi Quiz", e);
         }
     }
 

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane styleClass="root,app-shell"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.nihongoquest.client.quiz.QuizRoomMenuController">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="18" styleClass="app-header">
+            <VBox spacing="2" HBox.hgrow="ALWAYS">
+                <Label text="NIHONGO QUEST" styleClass="app-brand"/>
+                <Label text="Phòng Quiz nhiều người" styleClass="header-page-title"/>
+            </VBox>
+            <Button text="Trang chủ" onAction="#onHome" styleClass="secondary-button"/>
+        </HBox>
+    </top>
+    <center>
+        <HBox alignment="CENTER" spacing="24" styleClass="page-content">
+            <VBox spacing="13" styleClass="quiz-room-card">
+                <Label text="TẠO PHÒNG" styleClass="section-title"/>
+                <Label text="Bộ đề đã xuất bản" styleClass="field-caption"/>
+                <ComboBox fx:id="quizSetCombo" prefWidth="380"/>
+                <Label text="Thời lượng chung" styleClass="field-caption"/>
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <Spinner fx:id="durationSpinner" editable="true" prefWidth="110"/>
+                    <Label text="phút (1–15)"/>
+                </HBox>
+                <CheckBox fx:id="hostPlaysCheck" text="Host cũng tham gia trả lời" selected="true"/>
+                <Button fx:id="createButton" text="TẠO PHÒNG VÀ LẤY PIN"
+                        onAction="#onCreate" maxWidth="Infinity"/>
+            </VBox>
+            <VBox spacing="13" styleClass="quiz-room-card">
+                <Label text="VÀO PHÒNG" styleClass="section-title"/>
+                <Label text="Nhập PIN 6 chữ số do host cung cấp" styleClass="helper-text"/>
+                <TextField fx:id="pinField" promptText="123456" maxWidth="260"
+                           styleClass="pin-input"/>
+                <Button fx:id="joinButton" text="THAM GIA"
+                        onAction="#onJoin" maxWidth="Infinity"/>
+            </VBox>
+        </HBox>
+    </center>
+    <bottom>
+        <HBox alignment="CENTER" styleClass="editor-footer">
+            <Label fx:id="statusLabel" text="" styleClass="status-label"/>
+        </HBox>
+    </bottom>
+</BorderPane>

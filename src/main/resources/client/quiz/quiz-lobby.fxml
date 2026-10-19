@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane styleClass="root,app-shell"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.nihongoquest.client.quiz.QuizLobbyController">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="18" styleClass="app-header">
+            <VBox spacing="2" HBox.hgrow="ALWAYS">
+                <Label text="NIHONGO QUEST" styleClass="app-brand"/>
+                <Label text="Sảnh chờ Quiz" styleClass="header-page-title"/>
+            </VBox>
+            <VBox alignment="CENTER_RIGHT">
+                <Label text="MÃ PIN" styleClass="field-caption"/>
+                <Label fx:id="pinLabel" text="------" styleClass="lobby-pin"/>
+            </VBox>
+        </HBox>
+    </top>
+    <center>
+        <VBox spacing="14" styleClass="page-content">
+            <HBox alignment="CENTER_LEFT">
+                <VBox spacing="3" HBox.hgrow="ALWAYS">
+                    <Label fx:id="titleLabel" text="Bộ đề" styleClass="section-title"/>
+                    <Label text="Phòng khóa khi host bắt đầu; tối đa 20 người chơi."
+                           styleClass="helper-text"/>
+                </VBox>
+                <Label fx:id="countLabel" text="0/20 người chơi" styleClass="profile-summary"/>
+            </HBox>
+            <ListView fx:id="playerList" VBox.vgrow="ALWAYS" styleClass="quiz-list"/>
+            <Label fx:id="statusLabel" text="" styleClass="status-label"/>
+            <HBox alignment="CENTER_RIGHT" spacing="10">
+                <Button fx:id="leaveButton" text="Rời phòng" onAction="#onLeave"
+                        styleClass="danger-outline-button"/>
+                <Button fx:id="startButton" text="BẮT ĐẦU"
+                        onAction="#onStart" prefWidth="180"/>
+            </HBox>
+        </VBox>
+    </center>
+</BorderPane>

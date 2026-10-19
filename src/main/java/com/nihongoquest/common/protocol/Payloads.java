@@ -242,4 +242,28 @@ public final class Payloads {
     public record QuizSetEdit(Long id, String title, String description, String level,
                               List<QuizQuestionEdit> questions) { }
     public record QuizSetListData(List<QuizSetSummary> items) { }
+    public record QuizRoomCreateRequest(long quizSetId, int durationMinutes, boolean hostPlays) { }
+    public record QuizRoomJoinRequest(String pin) { }
+    public record QuizRoomPinRequest(String pin) { }
+    public record QuizRoomCreated(QuizLobbyData lobby) { }
+    public record QuizLobbyPlayer(long userId, String username, boolean host,
+                                  boolean playing, boolean connected) { }
+    public record QuizLobbyData(String pin, String title, String hostUsername,
+                                boolean currentUserHost, boolean hostPlays, boolean started,
+                                int playerCount, List<QuizLobbyPlayer> members) { }
+    public record QuizRoomStarted(String pin, String title, int durationSeconds,
+                                  boolean playing, boolean host) { }
+    public record QuizQuestionData(String sessionId, String pin, int attempt, long questionId,
+                                   String content, List<ChoiceData> choices,
+                                   int questionDurationSeconds, int roomRemainingSeconds) { }
+    public record QuizAnswerData(String sessionId, int attempt, long questionId, long choiceId) { }
+    public record QuizAnswerResult(String sessionId, int attempt, long questionId,
+                                   boolean correct, Long chosenChoiceId, long correctChoiceId,
+                                   int scoreAwarded, int totalScore) { }
+    public record QuizLeaderboardEntry(int rank, long userId, String username,
+                                       int score, int correctAnswers, boolean connected) { }
+    public record QuizLeaderboardData(String pin, boolean finished,
+                                      List<QuizLeaderboardEntry> entries) { }
+    public record QuizRejoinData(QuizLobbyData lobby, boolean running,
+                                 boolean playing, int remainingSeconds) { }
 }

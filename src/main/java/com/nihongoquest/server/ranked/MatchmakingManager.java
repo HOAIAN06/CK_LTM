@@ -43,7 +43,7 @@ public class MatchmakingManager {
             client.send(new Message(MessageType.MATCH_ERROR, "INVALID_DURATION"));
             return;
         }
-        if (client.getCurrentRoom() != null) {
+        if (client.getCurrentRoom() != null || client.getCurrentQuizRoom() != null) {
             client.send(new Message(MessageType.MATCH_ERROR, "ALREADY_MATCHED"));
             return;
         }

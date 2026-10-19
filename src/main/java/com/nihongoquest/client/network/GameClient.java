@@ -114,6 +114,32 @@ public class GameClient {
                 Payloads.toJson(new Payloads.QuizSetId(quizSetId)));
     }
 
+    public void createQuizRoom(long quizSetId, int durationMinutes, boolean hostPlays) {
+        send(MessageType.QUIZ_ROOM_CREATE, Payloads.toJson(
+                new Payloads.QuizRoomCreateRequest(quizSetId, durationMinutes, hostPlays)));
+    }
+
+    public void joinQuizRoom(String pin) {
+        send(MessageType.QUIZ_ROOM_JOIN,
+                Payloads.toJson(new Payloads.QuizRoomJoinRequest(pin)));
+    }
+
+    public void startQuizRoom() {
+        send(MessageType.QUIZ_ROOM_START, "");
+    }
+
+    public void sendQuizAnswer(Payloads.QuizAnswerData answer) {
+        send(MessageType.QUIZ_ANSWER, Payloads.toJson(answer));
+    }
+
+    public void leaveQuizRoom() {
+        send(MessageType.QUIZ_ROOM_LEAVE, "");
+    }
+
+    public void cancelQuizRoom() {
+        send(MessageType.QUIZ_ROOM_CANCEL, "");
+    }
+
     public void redispatch(Message message) {
         messageHandler.accept(message);
     }

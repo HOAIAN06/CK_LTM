@@ -39,6 +39,9 @@ class ClientFxmlTest {
             "/client/home/home.fxml",
             "/client/quiz/quiz-set-list.fxml",
             "/client/quiz/quiz-set-editor.fxml",
+            "/client/quiz/quiz-room-menu.fxml",
+            "/client/quiz/quiz-lobby.fxml",
+            "/client/quiz/quiz-battle.fxml",
             "/client/ranked/matchmaking/matchmaking.fxml",
             "/client/ranked/battle/battle.fxml",
             "/client/ranked/battle/result.fxml"
