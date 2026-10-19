@@ -3,6 +3,7 @@ package com.nihongoquest.client.network;
 import com.nihongoquest.common.protocol.Message;
 import com.nihongoquest.common.protocol.MessageType;
 import com.nihongoquest.common.protocol.Protocol;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -106,6 +107,16 @@ public class GameClient {
         }
         closeSocket();
         errorHandler.accept(reason);
+    }
+
+    private synchronized void send(MessageType type, JsonNode payload) {
+        if (!connected || writer == null) {
+            throw new IllegalStateException("Chưa kết nối tới server");
+        }
+        writer.println(new Message(type, payload).toWire());
+        if (writer.checkError()) {
+            throw new IllegalStateException("Không thể gửi dữ liệu tới server");
+        }
     }
 
     private synchronized void send(MessageType type, String payload) {

@@ -18,7 +18,7 @@ class DashboardControllerTest {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @Test
-    void formatsValidFrameAndKeepsCredentialPayloadUnmasked() throws Exception {
+    void formatsValidFrameWithObjectPayload() throws Exception {
         String wire = new Message(MessageType.LOGIN,
                 Payloads.credentials("sakura", "secret123")).toWire();
         TrafficEvent event = new TrafficEvent(
@@ -29,8 +29,8 @@ class DashboardControllerTest {
 
         assertEquals("127.0.0.1:5000", formatted.get("client").asText());
         assertEquals("LOGIN", formatted.at("/message/type").asText());
-        assertEquals(Payloads.credentials("sakura", "secret123"),
-                formatted.at("/message/payload").asText());
+        assertEquals("sakura", formatted.at("/message/payload/username").asText());
+        assertEquals("secret123", formatted.at("/message/payload/password").asText());
     }
 
     @Test

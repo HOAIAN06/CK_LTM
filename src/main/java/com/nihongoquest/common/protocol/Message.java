@@ -1,7 +1,10 @@
 package com.nihongoquest.common.protocol;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.NullNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 
 /**
  * Message là model đại diện một gói tin trao đổi giữa Client và Server.
@@ -12,14 +15,20 @@ public class Message {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private MessageType type;
-    private String payload;
+    private JsonNode payload;
 
     public Message() {
     }
 
-    public Message(MessageType type, String payload) {
+    public Message(MessageType type, JsonNode payload) {
         this.type = type;
-        this.payload = payload;
+        this.payload = payload == null ? NullNode.getInstance() : payload;
+    }
+
+    /** Dùng cho các payload trạng thái ngắn như DATABASE_ERROR. */
+    public Message(MessageType type, String payload) {
+        this(type, payload == null || payload.isEmpty()
+                ? NullNode.getInstance() : TextNode.valueOf(payload));
     }
 
     public MessageType getType() {
@@ -30,12 +39,24 @@ public class Message {
         this.type = type;
     }
 
-    public String getPayload() {
+    public JsonNode getPayload() {
         return payload;
     }
 
-    public void setPayload(String payload) {
-        this.payload = payload;
+    public void setPayload(JsonNode payload) {
+        this.payload = payload == null ? NullNode.getInstance() : payload;
+    }
+
+    public String payloadText() {
+        return payload == null || payload.isNull() ? "" : payload.asText();
+    }
+
+    public <T> T payloadAs(Class<T> type) {
+        try {
+            return MAPPER.treeToValue(payload, type);
+        } catch (JsonProcessingException | IllegalArgumentException e) {
+            throw new IllegalArgumentException("Payload JSON không hợp lệ", e);
+        }
     }
 
     public String toWire() {
@@ -56,9 +77,7 @@ public class Message {
             if (message.type == null) {
                 throw new IllegalArgumentException("Message thiếu type");
             }
-            if (message.payload == null) {
-                message.payload = "";
-            }
+            if (message.payload == null) message.payload = NullNode.getInstance();
             return message;
         } catch (JsonProcessingException | IllegalArgumentException e) {
             throw new IllegalArgumentException("Message JSON không hợp lệ", e);

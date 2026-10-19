@@ -13,7 +13,7 @@ class MessageTest {
         Message decoded = Message.fromWire(new Message(MessageType.QUESTION, payload).toWire());
 
         assertEquals(MessageType.QUESTION, decoded.getType());
-        assertEquals(payload, decoded.getPayload());
+        assertEquals(payload, decoded.payloadText());
     }
 
     @Test

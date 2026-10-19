@@ -1,6 +1,6 @@
 package com.nihongoquest.server.question;
 
-import com.nihongoquest.server.infrastructure.persistence.Database;
+import com.nihongoquest.server.database.Database;
 
 import java.sql.SQLException;
 import java.util.ArrayList;

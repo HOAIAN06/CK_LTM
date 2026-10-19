@@ -1,4 +1,4 @@
-package com.nihongoquest.server.infrastructure.persistence;
+package com.nihongoquest.server.database;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -7,6 +7,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
+/** Mở kết nối JDBC tới PostgreSQL từ cấu hình cục bộ db.properties. */
 public class Database {
 
     private final String url;
@@ -18,12 +19,18 @@ public class Database {
         String host = require(properties, "db.host");
         String port = properties.getProperty("db.port", "5432");
         String name = properties.getProperty("db.name", "postgres");
-        String ssl = properties.getProperty("db.ssl", "true");
+        boolean ssl = Boolean.parseBoolean(properties.getProperty("db.ssl", "true"));
+        url = "jdbc:postgresql://" + host + ":" + port + "/" + name
+                + "?sslmode=" + (ssl ? "require" : "disable");
+        user = require(properties, "db.user");
+        password = require(properties, "db.password");
+    }
 
-        this.url = "jdbc:postgresql://" + host + ":" + port + "/" + name
-                + "?sslmode=" + (Boolean.parseBoolean(ssl) ? "require" : "disable");
-        this.user = require(properties, "db.user");
-        this.password = require(properties, "db.password");
+    /** Constructor dành cho test hoặc cấu hình được truyền rõ ràng. */
+    public Database(String url, String user, String password) {
+        this.url = url;
+        this.user = user;
+        this.password = password;
     }
 
     public Connection getConnection() throws SQLException {

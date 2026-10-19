@@ -14,7 +14,7 @@ class PayloadsTest {
 
     @Test
     void questionPayloadPreservesPipeAndNewlineInContent() {
-        String payload = Payloads.question(0, 1, 30, 3_000_000_000L,
+        var payload = Payloads.question(0, 1, 30, 3_000_000_000L,
                 "どれ | chọn đáp án?\n", List.of(new Payloads.ChoiceData(30_000_000_001L, "A | một", 1)));
 
         Payloads.QuestionData question = Payloads.parseQuestion(payload);
@@ -27,8 +27,8 @@ class PayloadsTest {
 
     @Test
     void questionPayloadContainsOnlyPublicFields() throws Exception {
-        var node = new ObjectMapper().readTree(Payloads.question(0, 3, 30, 1,
-                "Q", List.of(new Payloads.ChoiceData(11, "A", 1))));
+        var node = Payloads.question(0, 3, 30, 1,
+                "Q", List.of(new Payloads.ChoiceData(11, "A", 1)));
         assertEquals(6, node.size());
         assertEquals(3, node.get("choices").get(0).size());
         for (String secret : List.of("correct", "is_correct", "correctAnswer", "correctChoiceId", "explanation")) {
@@ -40,9 +40,11 @@ class PayloadsTest {
     void answersCarryDatabaseIdsAndRejectMalformedIdentifiers() {
         assertEquals(new Payloads.AnswerData(3_000_000_000L, 30_000_000_001L),
                 Payloads.parseAnswer(Payloads.answer(3_000_000_000L, 30_000_000_001L)));
+        ObjectMapper mapper = new ObjectMapper();
         for (String malformed : List.of("0", "null", "{}", "{\"questionId\":1,\"choiceId\":-1}",
                 "{\"questionId\":1,\"choiceId\":1.5}", "{\"questionId\":1,\"choiceId\":\"11\"}")) {
-            assertThrows(IllegalArgumentException.class, () -> Payloads.parseAnswer(malformed));
+            assertThrows(IllegalArgumentException.class,
+                    () -> Payloads.parseAnswer(mapper.readTree(malformed)));
         }
     }
 

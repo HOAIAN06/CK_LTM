@@ -1,6 +1,6 @@
 package com.nihongoquest.server.player;
 
-import com.nihongoquest.server.infrastructure.persistence.Database;
+import com.nihongoquest.server.database.Database;
 
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -60,64 +60,6 @@ public class PlayerRepository {
         }
     }
 
-    public void recordMatchResult(long playerId, boolean won, boolean lost,
-                                  int questionsAnswered, int correctAnswers) throws SQLException {
-        String sql = """
-                UPDATE users
-                SET wins = wins + ?, losses = losses + ?,
-                    questions_answered = questions_answered + ?,
-                    correct_answers = correct_answers + ?,
-                    total_matches = total_matches + 1,
-                    draws = draws + ?
-                WHERE id = ?
-                """;
-        try (Connection connection = database.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setInt(1, won ? 1 : 0);
-            statement.setInt(2, lost ? 1 : 0);
-            statement.setInt(3, questionsAnswered);
-            statement.setInt(4, correctAnswers);
-            statement.setInt(5, !won && !lost ? 1 : 0);
-            statement.setLong(6, playerId);
-            statement.executeUpdate();
-        }
-    }
-
-    public int getRankedRating(Connection connection, long userId) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement(
-                "SELECT ranked_rating FROM users WHERE id = ?")) {
-            statement.setQueryTimeout(10);
-            statement.setLong(1, userId);
-            try (ResultSet result = statement.executeQuery()) {
-                if (!result.next()) throw new SQLException("Ranked user missing: " + userId);
-                return result.getInt("ranked_rating");
-            }
-        }
-    }
-
-    public void updateRankedStatistics(Connection connection, long userId, int score,
-                                       boolean won, boolean lost, int questionsAnswered,
-                                       int correctAnswers, int ratingDelta) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("""
-                UPDATE users SET total_score = total_score + ?, total_matches = total_matches + 1,
-                    wins = wins + ?, losses = losses + ?, draws = draws + ?,
-                    questions_answered = questions_answered + ?, correct_answers = correct_answers + ?,
-                    ranked_rating = ranked_rating + ?, updated_at = CURRENT_TIMESTAMP
-                WHERE id = ?
-                """)) {
-            statement.setQueryTimeout(10);
-            statement.setInt(1, score);
-            statement.setInt(2, won ? 1 : 0);
-            statement.setInt(3, lost ? 1 : 0);
-            statement.setInt(4, !won && !lost ? 1 : 0);
-            statement.setInt(5, questionsAnswered);
-            statement.setInt(6, correctAnswers);
-            statement.setInt(7, ratingDelta);
-            statement.setLong(8, userId);
-            if (statement.executeUpdate() != 1) throw new SQLException("Ranked user missing: " + userId);
-        }
-    }
-
     private PlayerData readPlayer(ResultSet result) throws SQLException {
         return new PlayerData(
                 result.getLong("id"),
@@ -131,7 +73,7 @@ public class PlayerRepository {
 
     public record PlayerData(long id, String username, int wins, int losses,
                              int questionsAnswered, int correctAnswers) {
-        public String toPayload() {
+        public com.fasterxml.jackson.databind.JsonNode toPayload() {
             return com.nihongoquest.common.protocol.Payloads.player(id, username, wins, losses,
                     questionsAnswered, correctAnswers);
         }

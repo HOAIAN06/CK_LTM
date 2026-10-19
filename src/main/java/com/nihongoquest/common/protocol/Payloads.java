@@ -1,6 +1,5 @@
 package com.nihongoquest.common.protocol;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -15,19 +14,19 @@ public final class Payloads {
     private Payloads() {
     }
 
-    public static String credentials(String username, String password) {
+    public static JsonNode credentials(String username, String password) {
         ObjectNode node = MAPPER.createObjectNode();
         node.put("username", username);
         node.put("password", password);
         return write(node);
     }
 
-    public static Credentials parseCredentials(String payload) {
-        JsonNode node = read(payload);
+    public static Credentials parseCredentials(JsonNode payload) {
+        JsonNode node = requireObject(payload);
         return new Credentials(requiredText(node, "username"), requiredText(node, "password"));
     }
 
-    public static String player(long id, String username, int wins, int losses,
+    public static JsonNode player(long id, String username, int wins, int losses,
                                 int questionsAnswered, int correctAnswers) {
         ObjectNode node = MAPPER.createObjectNode();
         node.put("id", id);
@@ -39,26 +38,26 @@ public final class Payloads {
         return write(node);
     }
 
-    public static PlayerStats parsePlayer(String payload) {
-        JsonNode node = read(payload);
+    public static PlayerStats parsePlayer(JsonNode payload) {
+        JsonNode node = requireObject(payload);
         return new PlayerStats(node.get("id").asLong(), requiredText(node, "username"),
                 node.get("wins").asInt(), node.get("losses").asInt(),
                 node.get("questionsAnswered").asInt(), node.get("correctAnswers").asInt());
     }
 
-    public static String matchFound(String roomId, String opponent) {
+    public static JsonNode matchFound(String roomId, String opponent) {
         ObjectNode node = MAPPER.createObjectNode();
         node.put("roomId", roomId);
         node.put("opponent", opponent);
         return write(node);
     }
 
-    public static MatchFound parseMatchFound(String payload) {
-        JsonNode node = read(payload);
+    public static MatchFound parseMatchFound(JsonNode payload) {
+        JsonNode node = requireObject(payload);
         return new MatchFound(requiredText(node, "roomId"), requiredText(node, "opponent"));
     }
 
-    public static String question(int round, int total, int duration, long questionId,
+    public static JsonNode question(int round, int total, int duration, long questionId,
                                   String content, List<ChoiceData> choices) {
         ObjectNode node = MAPPER.createObjectNode();
         node.put("round", round);
@@ -71,8 +70,8 @@ public final class Payloads {
         return write(node);
     }
 
-    public static QuestionData parseQuestion(String payload) {
-        JsonNode node = read(payload);
+    public static QuestionData parseQuestion(JsonNode payload) {
+        JsonNode node = requireObject(payload);
         return new QuestionData(node.get("round").asInt(), node.get("totalQuestions").asInt(),
                 node.get("durationSeconds").asInt(), requiredPositiveId(node, "questionId"),
                 requiredText(node, "content"),
@@ -80,7 +79,7 @@ public final class Payloads {
                         .constructCollectionType(List.class, ChoiceData.class)));
     }
 
-    public static String answer(long questionId, long choiceId) {
+    public static JsonNode answer(long questionId, long choiceId) {
         if (questionId <= 0 || choiceId <= 0) {
             throw new IllegalArgumentException("Question and choice IDs must be positive");
         }
@@ -90,8 +89,8 @@ public final class Payloads {
         return write(node);
     }
 
-    public static AnswerData parseAnswer(String payload) {
-        JsonNode node = read(payload);
+    public static AnswerData parseAnswer(JsonNode payload) {
+        JsonNode node = requireObject(payload);
         return new AnswerData(requiredPositiveId(node, "questionId"), requiredPositiveId(node, "choiceId"));
     }
 
@@ -103,7 +102,7 @@ public final class Payloads {
         return value.longValue();
     }
 
-    public static String answerResult(boolean correct, int chosen, int answer) {
+    public static JsonNode answerResult(boolean correct, int chosen, int answer) {
         ObjectNode node = MAPPER.createObjectNode();
         node.put("correct", correct);
         node.put("chosenIndex", chosen);
@@ -111,25 +110,25 @@ public final class Payloads {
         return write(node);
     }
 
-    public static AnswerResult parseAnswerResult(String payload) {
-        JsonNode node = read(payload);
+    public static AnswerResult parseAnswerResult(JsonNode payload) {
+        JsonNode node = requireObject(payload);
         return new AnswerResult(node.get("correct").asBoolean(),
                 node.get("chosenIndex").asInt(), node.get("correctIndex").asInt());
     }
 
-    public static String scores(int mine, int opponent) {
+    public static JsonNode scores(int mine, int opponent) {
         ObjectNode node = MAPPER.createObjectNode();
         node.put("myScore", mine);
         node.put("opponentScore", opponent);
         return write(node);
     }
 
-    public static Scores parseScores(String payload) {
-        JsonNode node = read(payload);
+    public static Scores parseScores(JsonNode payload) {
+        JsonNode node = requireObject(payload);
         return new Scores(node.get("myScore").asInt(), node.get("opponentScore").asInt());
     }
 
-    public static String gameOver(String result, int mine, int opponent) {
+    public static JsonNode gameOver(String result, int mine, int opponent) {
         ObjectNode node = MAPPER.createObjectNode();
         node.put("result", result);
         node.put("myScore", mine);
@@ -137,8 +136,8 @@ public final class Payloads {
         return write(node);
     }
 
-    public static GameOver parseGameOver(String payload) {
-        JsonNode node = read(payload);
+    public static GameOver parseGameOver(JsonNode payload) {
+        JsonNode node = requireObject(payload);
         return new GameOver(requiredText(node, "result"), node.get("myScore").asInt(),
                 node.get("opponentScore").asInt());
     }
@@ -151,20 +150,15 @@ public final class Payloads {
         return value.textValue();
     }
 
-    private static JsonNode read(String payload) {
-        try {
-            return MAPPER.readTree(payload);
-        } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Payload JSON không hợp lệ", e);
+    private static JsonNode requireObject(JsonNode payload) {
+        if (payload == null || !payload.isObject()) {
+            throw new IllegalArgumentException("Payload phải là JSON object");
         }
+        return payload;
     }
 
-    private static String write(Object value) {
-        try {
-            return MAPPER.writeValueAsString(value);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Không thể tạo payload JSON", e);
-        }
+    private static JsonNode write(Object value) {
+        return MAPPER.valueToTree(value);
     }
 
     public record Credentials(String username, String password) { }

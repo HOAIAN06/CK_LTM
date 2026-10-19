@@ -13,6 +13,7 @@ src/main/resources/db.properties
 
 ### Kilo (AI worktrees) ###
 .kilo/
+repomix-output.md
 
 ### Eclipse ###
 .apt_generated
