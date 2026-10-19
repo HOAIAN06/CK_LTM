@@ -106,4 +106,23 @@ class PayloadsTest {
         assertEquals(board, Payloads.fromJson(
                 Payloads.toJson(board), Payloads.QuizLeaderboardData.class));
     }
+
+    @Test
+    void profileLeaderboardAndHistoryUseObjectPayloads() {
+        Payloads.PlayerStats profile = Payloads.parsePlayer(
+                Payloads.player(1, "sakura", 4, 2, 1, 350, 20, 12));
+        assertEquals(1, profile.draws());
+        assertEquals(350, profile.totalScore());
+
+        Payloads.LeaderboardData leaderboard = new Payloads.LeaderboardData(List.of(
+                new Payloads.LeaderboardEntry(1, 1, "sakura", 4, 2, 1, 350)));
+        assertEquals(leaderboard, Payloads.fromJson(
+                Payloads.toJson(leaderboard), Payloads.LeaderboardData.class));
+
+        Payloads.MatchHistoryData history = new Payloads.MatchHistoryData(List.of(
+                new Payloads.MatchHistoryEntry(10, "tanaka", 5, 3,
+                        "WIN", 180, "NORMAL", "2026-10-19T05:00:00Z")));
+        assertEquals(history, Payloads.fromJson(
+                Payloads.toJson(history), Payloads.MatchHistoryData.class));
+    }
 }

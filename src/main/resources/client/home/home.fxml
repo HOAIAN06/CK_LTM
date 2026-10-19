@@ -67,6 +67,14 @@
                 <Button text="PHÒNG QUIZ NHIỀU NGƯỜI"
                         onAction="#onQuizRoom" prefWidth="250"
                         styleClass="secondary-button,large-button"/>
+                <HBox alignment="CENTER" spacing="10">
+                    <Button text="BẢNG XẾP HẠNG"
+                            onAction="#onLeaderboard" prefWidth="180"
+                            styleClass="secondary-button"/>
+                    <Button text="LỊCH SỬ THI ĐẤU"
+                            onAction="#onMatchHistory" prefWidth="180"
+                            styleClass="secondary-button"/>
+                </HBox>
             </VBox>
         </VBox>
     </center>

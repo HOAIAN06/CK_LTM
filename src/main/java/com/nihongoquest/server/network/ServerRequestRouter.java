@@ -6,6 +6,7 @@ import com.nihongoquest.common.protocol.Payloads;
 import com.nihongoquest.server.player.PlayerRepository;
 import com.nihongoquest.server.player.PlayerRepository.AuthResult;
 import com.nihongoquest.server.ranked.GameRoom;
+import com.nihongoquest.server.ranked.MatchRepository;
 import com.nihongoquest.server.ranked.MatchmakingManager;
 import com.nihongoquest.server.quiz.QuizSetException;
 import com.nihongoquest.server.quiz.QuizSetService;
@@ -24,15 +25,18 @@ public class ServerRequestRouter {
     private final MatchmakingManager matchmaking;
     private final PlayerRepository players;
     private final OnlineUserRegistry onlineUsers;
+    private final MatchRepository matches;
     private final QuizSetService quizSets;
     private final QuizRoomManager quizRooms;
 
     public ServerRequestRouter(MatchmakingManager matchmaking, PlayerRepository players,
-                               OnlineUserRegistry onlineUsers, QuizSetService quizSets,
+                               OnlineUserRegistry onlineUsers, MatchRepository matches,
+                               QuizSetService quizSets,
                                QuizRoomManager quizRooms) {
         this.matchmaking = matchmaking;
         this.players = players;
         this.onlineUsers = onlineUsers;
+        this.matches = matches;
         this.quizSets = quizSets;
         this.quizRooms = quizRooms;
     }
@@ -41,6 +45,9 @@ public class ServerRequestRouter {
         switch (message.getType()) {
             case REGISTER -> authenticate(client, message, true);
             case LOGIN -> authenticate(client, message, false);
+            case PROFILE_GET -> handleProfileGet(client);
+            case LEADERBOARD_GET -> handleLeaderboardGet(client);
+            case MATCH_HISTORY_GET -> handleMatchHistoryGet(client);
             case FIND_MATCH -> handleFindMatch(client, message);
             case CANCEL_MATCH -> matchmaking.dequeue(client);
             case ANSWER -> handleAnswer(client, message);
@@ -59,6 +66,58 @@ public class ServerRequestRouter {
             case CONNECT -> client.reportActivity("TCP client sẵn sàng: " + client.getRemoteAddress());
             default -> LOGGER.fine("Chưa xử lý type=" + message.getType());
         }
+    }
+
+    private void handleProfileGet(ClientHandler client) {
+        if (!requireQueryLogin(client)) return;
+        try {
+            client.send(new Message(MessageType.PROFILE_DATA,
+                    players.findProfile(client.getPlayerId()).toPayload()));
+        } catch (SQLException e) {
+            databaseQueryError(client, e);
+        }
+    }
+
+    private void handleLeaderboardGet(ClientHandler client) {
+        if (!requireQueryLogin(client)) return;
+        try {
+            var entries = players.findLeaderboard(10).stream()
+                    .map(player -> new Payloads.LeaderboardEntry(
+                            player.rank(), player.userId(), player.username(), player.wins(),
+                            player.losses(), player.draws(), player.totalScore()))
+                    .toList();
+            client.send(new Message(MessageType.LEADERBOARD_DATA,
+                    Payloads.toJson(new Payloads.LeaderboardData(entries))));
+        } catch (SQLException e) {
+            databaseQueryError(client, e);
+        }
+    }
+
+    private void handleMatchHistoryGet(ClientHandler client) {
+        if (!requireQueryLogin(client)) return;
+        try {
+            var entries = matches.findHistory(client.getPlayerId(), 100).stream()
+                    .map(match -> new Payloads.MatchHistoryEntry(
+                            match.matchId(), match.opponentUsername(), match.myScore(),
+                            match.opponentScore(), match.result(), match.durationSeconds(),
+                            match.endReason(), match.playedAt()))
+                    .toList();
+            client.send(new Message(MessageType.MATCH_HISTORY_DATA,
+                    Payloads.toJson(new Payloads.MatchHistoryData(entries))));
+        } catch (SQLException e) {
+            databaseQueryError(client, e);
+        }
+    }
+
+    private boolean requireQueryLogin(ClientHandler client) {
+        if (client.isAuthenticated()) return true;
+        client.send(new Message(MessageType.QUERY_ERROR, "NOT_AUTHENTICATED"));
+        return false;
+    }
+
+    private void databaseQueryError(ClientHandler client, SQLException error) {
+        LOGGER.warning("Loi database khi truy van: " + error.getMessage());
+        client.send(new Message(MessageType.QUERY_ERROR, "DATABASE_ERROR"));
     }
 
     private void handleQuizSetList(ClientHandler client, Message message) {

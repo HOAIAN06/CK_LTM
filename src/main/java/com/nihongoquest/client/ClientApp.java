@@ -14,6 +14,8 @@ import com.nihongoquest.client.quiz.QuizSetListController;
 import com.nihongoquest.client.quiz.QuizRoomMenuController;
 import com.nihongoquest.client.quiz.QuizLobbyController;
 import com.nihongoquest.client.quiz.QuizBattleController;
+import com.nihongoquest.client.leaderboard.LeaderboardController;
+import com.nihongoquest.client.history.MatchHistoryController;
 import com.nihongoquest.common.protocol.Payloads;
 
 import javafx.application.Application;
@@ -67,6 +69,36 @@ public class ClientApp extends Application {
             throw new IllegalStateException("Chưa có người chơi đăng nhập");
         }
         showHome(currentPlayer);
+    }
+
+    public void updateCurrentPlayer(Player player) {
+        currentPlayer = player;
+    }
+
+    public void showLeaderboard() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/client/leaderboard/leaderboard.fxml"));
+            Parent root = loader.load();
+            LeaderboardController controller = loader.getController();
+            controller.setSession(this, gameClient);
+            setScene(root, 980, 700);
+        } catch (IOException e) {
+            throw new IllegalStateException("Khong the mo bang xep hang", e);
+        }
+    }
+
+    public void showMatchHistory() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/client/history/match-history.fxml"));
+            Parent root = loader.load();
+            MatchHistoryController controller = loader.getController();
+            controller.setSession(this, gameClient);
+            setScene(root, 1120, 720);
+        } catch (IOException e) {
+            throw new IllegalStateException("Khong the mo lich su thi dau", e);
+        }
     }
 
     public void showMatchmaking() {

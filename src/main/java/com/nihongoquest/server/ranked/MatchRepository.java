@@ -4,8 +4,10 @@ import com.nihongoquest.server.database.Database;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -44,6 +46,51 @@ public class MatchRepository {
                 throw e;
             }
         }
+    }
+
+    public List<MatchHistoryItem> findHistory(long userId, int limit) throws SQLException {
+        if (limit < 1 || limit > 100) throw new IllegalArgumentException("Limit khong hop le");
+        String sql = """
+                SELECT m.id, m.player1_id, m.player2_id,
+                       player1.username AS player1_username,
+                       player2.username AS player2_username,
+                       m.score1, m.score2, m.winner_id, m.duration_seconds,
+                       m.end_reason, m.played_at
+                FROM matches m
+                JOIN users player1 ON player1.id = m.player1_id
+                JOIN users player2 ON player2.id = m.player2_id
+                WHERE m.player1_id = ? OR m.player2_id = ?
+                ORDER BY m.played_at DESC
+                LIMIT ?
+                """;
+        List<MatchHistoryItem> history = new ArrayList<>();
+        try (Connection connection = database.getConnection();
+             PreparedStatement statement = prepare(connection, sql)) {
+            statement.setLong(1, userId);
+            statement.setLong(2, userId);
+            statement.setInt(3, limit);
+            try (ResultSet result = statement.executeQuery()) {
+                while (result.next()) history.add(readHistory(result, userId));
+            }
+        }
+        return List.copyOf(history);
+    }
+
+    static MatchHistoryItem readHistory(ResultSet result, long userId) throws SQLException {
+        long player1Id = result.getLong("player1_id");
+        boolean first = player1Id == userId;
+        long winnerId = result.getLong("winner_id");
+        boolean draw = result.wasNull();
+        String outcome = draw ? "DRAW" : winnerId == userId ? "WIN" : "LOSS";
+        return new MatchHistoryItem(
+                result.getLong("id"),
+                result.getString(first ? "player2_username" : "player1_username"),
+                result.getInt(first ? "score1" : "score2"),
+                result.getInt(first ? "score2" : "score1"),
+                outcome,
+                result.getInt("duration_seconds"),
+                result.getString("end_reason"),
+                result.getTimestamp("played_at").toInstant().toString());
     }
 
     private void insertMatch(Connection connection, MatchResult first, MatchResult second,
@@ -125,4 +172,8 @@ public class MatchRepository {
             }
         }
     }
+
+    public record MatchHistoryItem(long matchId, String opponentUsername,
+                                   int myScore, int opponentScore, String result,
+                                   int durationSeconds, String endReason, String playedAt) { }
 }

@@ -14,6 +14,8 @@ liệu dùng `null`.
 ## Message hiện có
 
 - Auth: `CONNECT`, `REGISTER`, `REGISTER_OK/FAIL`, `LOGIN`, `LOGIN_OK/FAIL`.
+- Truy vấn: `PROFILE_GET/DATA`, `LEADERBOARD_GET/DATA`,
+  `MATCH_HISTORY_GET/DATA` và `QUERY_ERROR`.
 - Ranked: `FIND_MATCH`, `CANCEL_MATCH`, `WAITING`, `MATCH_CANCELLED`,
   `MATCH_ERROR`, `MATCH_FOUND`, `QUESTION`, `ANSWER`, `ANSWER_RESULT`,
   `SCORE_UPDATE`, `GAME_OVER`.
@@ -60,5 +62,12 @@ câu hiện tại. Kết quả phòng chỉ ở RAM, không ghi database.
 Dashboard nhận bản sao traffic đã che trường password của `LOGIN` và `REGISTER`.
 Không dùng HTTP, WebSocket, UDP, TLS hay JWT trong bản demo LAN.
 
-Các message history, leaderboard, friends và invite sẽ được bổ sung cùng chức
-năng tương ứng để client/server luôn thay đổi đồng bộ.
+## Hồ sơ, bảng xếp hạng và lịch sử
+
+`PROFILE_GET` không cần payload; server đọc lại thống kê Ranked mới nhất trong `users` và trả
+`PROFILE_DATA`. `LEADERBOARD_GET` trả tối đa 10 người, xếp theo số trận thắng giảm dần, tổng
+điểm giảm dần rồi username tăng dần.
+
+`MATCH_HISTORY_GET` trả tối đa 100 trận mới nhất. Mỗi dòng chứa đối thủ, tỷ số theo góc nhìn
+người đang đăng nhập, kết quả `WIN/LOSS/DRAW`, chế độ 180/300 giây, lý do kết thúc và thời gian.
+Các message friends và invite sẽ được bổ sung cùng chức năng tương ứng.

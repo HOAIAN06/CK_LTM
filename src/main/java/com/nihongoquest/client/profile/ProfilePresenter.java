@@ -14,6 +14,7 @@ public final class ProfilePresenter {
         avatar.setText(player.getUsername().substring(0, 1).toUpperCase(Locale.ROOT));
         username.setText(player.getUsername());
         summary.setText(player.getWins() + " thắng  •  " + player.getLosses() + " thua  •  "
+                + player.getDraws() + " hòa  •  " + player.getTotalScore() + " điểm  •  "
                 + accuracy(player) + "% đúng");
     }
 

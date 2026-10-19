@@ -26,13 +26,15 @@ public final class Payloads {
         return new Credentials(requiredText(node, "username"), requiredText(node, "password"));
     }
 
-    public static JsonNode player(long id, String username, int wins, int losses,
-                                int questionsAnswered, int correctAnswers) {
+    public static JsonNode player(long id, String username, int wins, int losses, int draws,
+                                  int totalScore, int questionsAnswered, int correctAnswers) {
         ObjectNode node = MAPPER.createObjectNode();
         node.put("id", id);
         node.put("username", username);
         node.put("wins", wins);
         node.put("losses", losses);
+        node.put("draws", draws);
+        node.put("totalScore", totalScore);
         node.put("questionsAnswered", questionsAnswered);
         node.put("correctAnswers", correctAnswers);
         return write(node);
@@ -42,6 +44,7 @@ public final class Payloads {
         JsonNode node = requireObject(payload);
         return new PlayerStats(node.get("id").asLong(), requiredText(node, "username"),
                 node.get("wins").asInt(), node.get("losses").asInt(),
+                node.get("draws").asInt(), node.get("totalScore").asInt(),
                 node.get("questionsAnswered").asInt(), node.get("correctAnswers").asInt());
     }
 
@@ -216,8 +219,15 @@ public final class Payloads {
     }
 
     public record Credentials(String username, String password) { }
-    public record PlayerStats(long id, String username, int wins, int losses,
-                              int questionsAnswered, int correctAnswers) { }
+    public record PlayerStats(long id, String username, int wins, int losses, int draws,
+                              int totalScore, int questionsAnswered, int correctAnswers) { }
+    public record LeaderboardEntry(int rank, long userId, String username,
+                                   int wins, int losses, int draws, int totalScore) { }
+    public record LeaderboardData(List<LeaderboardEntry> players) { }
+    public record MatchHistoryEntry(long matchId, String opponentUsername,
+                                    int myScore, int opponentScore, String result,
+                                    int durationSeconds, String endReason, String playedAt) { }
+    public record MatchHistoryData(List<MatchHistoryEntry> matches) { }
     public record FindMatchRequest(int durationSeconds) { }
     public record MatchFound(String roomId, String opponent, int durationSeconds) { }
     public record ChoiceData(long choiceId, String content, int position) { }

@@ -45,6 +45,7 @@ public class GameServer {
     private MatchmakingManager matchmakingManager;
     private final QuestionService questionService;
     private final PlayerRepository playerRepository;
+    private final MatchRepository matchRepository;
     private final OnlineUserRegistry onlineUsers;
     private final ServerRequestRouter requestRouter;
     private final QuizRoomManager quizRoomManager;
@@ -60,6 +61,7 @@ public class GameServer {
         Database database = new Database();
         this.questionService = new QuestionService(new QuestionRepository(database));
         this.playerRepository = new PlayerRepository(database);
+        this.matchRepository = new MatchRepository(database);
         this.scheduler = Executors.newScheduledThreadPool(4, task -> {
             Thread thread = new Thread(task, "game-timer");
             thread.setDaemon(true);
@@ -67,11 +69,11 @@ public class GameServer {
         });
         this.onlineUsers = new OnlineUserRegistry();
         this.matchmakingManager = new MatchmakingManager(
-                questionService, new MatchRepository(database), scheduler);
+                questionService, matchRepository, scheduler);
         QuizSetService quizSetService = new QuizSetService(new QuizSetRepository(database));
         this.quizRoomManager = new QuizRoomManager(quizSetService, scheduler);
         this.requestRouter = new ServerRequestRouter(
-                matchmakingManager, playerRepository, onlineUsers,
+                matchmakingManager, playerRepository, onlineUsers, matchRepository,
                 quizSetService, quizRoomManager);
         this.running = false;
     }
