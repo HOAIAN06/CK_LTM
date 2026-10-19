@@ -14,6 +14,28 @@ import java.util.Optional;
 /** Các truy vấn JDBC đơn giản cho bộ đề, câu hỏi và bốn lựa chọn. */
 public class QuizSetRepository {
     private static final int QUERY_TIMEOUT_SECONDS = 10;
+    private static final String LIST_OWNED_SQL = """
+            SELECT qs.id, qs.owner_id, u.username AS owner_username,
+                   qs.title, qs.description, qs.level, qs.is_published,
+                   COUNT(q.id)::INT AS question_count
+            FROM quiz_sets qs
+            JOIN users u ON u.id = qs.owner_id
+            LEFT JOIN questions q ON q.quiz_set_id = qs.id
+            WHERE qs.owner_id = ?
+            GROUP BY qs.id, u.username
+            ORDER BY qs.updated_at DESC, qs.id DESC
+            """;
+    private static final String LIST_PUBLISHED_SQL = """
+            SELECT qs.id, qs.owner_id, u.username AS owner_username,
+                   qs.title, qs.description, qs.level, qs.is_published,
+                   COUNT(q.id)::INT AS question_count
+            FROM quiz_sets qs
+            JOIN users u ON u.id = qs.owner_id
+            LEFT JOIN questions q ON q.quiz_set_id = qs.id
+            WHERE qs.is_published = TRUE
+            GROUP BY qs.id, u.username
+            ORDER BY qs.updated_at DESC, qs.id DESC
+            """;
     private final Database database;
 
     public QuizSetRepository(Database database) {
@@ -21,26 +43,15 @@ public class QuizSetRepository {
     }
 
     public List<Payloads.QuizSetSummary> listOwned(long ownerId) throws SQLException {
-        return list("WHERE qs.owner_id = ?", ownerId, ownerId);
+        return list(LIST_OWNED_SQL, ownerId, ownerId);
     }
 
     public List<Payloads.QuizSetSummary> listPublished(long currentUserId) throws SQLException {
-        return list("WHERE qs.is_published = TRUE", null, currentUserId);
+        return list(LIST_PUBLISHED_SQL, null, currentUserId);
     }
 
-    private List<Payloads.QuizSetSummary> list(String where, Long parameter, long currentUserId)
+    private List<Payloads.QuizSetSummary> list(String sql, Long parameter, long currentUserId)
             throws SQLException {
-        String sql = """
-                SELECT qs.id, qs.owner_id, u.username AS owner_username,
-                       qs.title, qs.description, qs.level, qs.is_published,
-                       COUNT(q.id)::INT AS question_count
-                FROM quiz_sets qs
-                JOIN users u ON u.id = qs.owner_id
-                LEFT JOIN questions q ON q.quiz_set_id = qs.id
-                """ + where + """
-                GROUP BY qs.id, u.username
-                ORDER BY qs.updated_at DESC, qs.id DESC
-                """;
         try (Connection connection = database.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setQueryTimeout(QUERY_TIMEOUT_SECONDS);
