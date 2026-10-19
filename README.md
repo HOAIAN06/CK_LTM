@@ -48,5 +48,5 @@ Dashboard hiển thị IP LAN và mặc định mở TCP port `5000`. Client nh�
 ## Trạng thái
 
 Nền tảng hiện có đăng ký/đăng nhập BCrypt, dashboard, Ranked 1v1 theo chế độ 3/5 phút,
-quản lý bộ đề và Quiz Room nhiều người bằng PIN với leaderboard trực tiếp. Các chức năng
-leaderboard hệ thống, history và friends được phát triển tuần tự theo roadmap.
+quản lý bộ đề, Quiz Room nhiều người bằng PIN, Top 10 Ranked và lịch sử 100 trận gần nhất.
+Hệ thống bạn bè và lời mời được phát triển ở giai đoạn tiếp theo.

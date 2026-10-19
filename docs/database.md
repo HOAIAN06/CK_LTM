@@ -23,3 +23,10 @@ lấy câu từ quiz set có `is_published = true`. Validation đầy đủ vẫ
 trước khi câu được phát tới client.
 
 Client không chứa cấu hình và không kết nối trực tiếp Supabase.
+
+## Truy vấn thống kê
+
+Top 10 đọc trực tiếp từ `users`, sắp theo `wins DESC`, `total_score DESC`, `username ASC`.
+Lịch sử đọc từ `matches`, join hai username, lọc một trong hai cột người chơi và giới hạn
+100 dòng mới nhất. Hồ sơ và các màn hình truy vấn chỉ tính dữ liệu Ranked; điểm Quiz Room
+không được ghi vào database.

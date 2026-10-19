@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane styleClass="root,app-shell"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.nihongoquest.client.history.MatchHistoryController">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="14" styleClass="app-header">
+            <Button text="← TRANG CHỦ" onAction="#onBack" styleClass="secondary-button"/>
+            <VBox spacing="2" HBox.hgrow="ALWAYS">
+                <Label text="LỊCH SỬ THI ĐẤU" styleClass="header-page-title"/>
+                <Label text="Tối đa 100 trận Ranked mới nhất" styleClass="profile-summary"/>
+            </VBox>
+            <Button text="LÀM MỚI" onAction="#onRefresh" styleClass="primary-button"/>
+        </HBox>
+    </top>
+    <center>
+        <VBox spacing="14" styleClass="page-content">
+            <TableView fx:id="historyTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="timeColumn" text="THỜI GIAN" prefWidth="180"/>
+                    <TableColumn fx:id="opponentColumn" text="ĐỐI THỦ" prefWidth="210"/>
+                    <TableColumn fx:id="scoreColumn" text="TỶ SỐ" prefWidth="120"/>
+                    <TableColumn fx:id="resultColumn" text="KẾT QUẢ" prefWidth="130"/>
+                    <TableColumn fx:id="modeColumn" text="CHẾ ĐỘ" prefWidth="130"/>
+                    <TableColumn fx:id="reasonColumn" text="KẾT THÚC" prefWidth="170"/>
+                </columns>
+            </TableView>
+            <Label fx:id="statusLabel" text="Đang tải..." styleClass="profile-summary"/>
+        </VBox>
+    </center>
+</BorderPane>

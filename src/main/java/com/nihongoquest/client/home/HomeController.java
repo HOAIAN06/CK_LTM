@@ -5,6 +5,10 @@ import com.nihongoquest.client.profile.ProfilePresenter;
 import com.nihongoquest.client.ClientApp;
 import com.nihongoquest.client.profile.Player;
 import com.nihongoquest.client.network.GameClient;
+import com.nihongoquest.common.protocol.Message;
+import com.nihongoquest.common.protocol.MessageType;
+import com.nihongoquest.common.protocol.Payloads;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -44,7 +48,23 @@ public class HomeController {
         this.app = app;
         this.gameClient = gameClient;
         this.player = player;
-        gameClient.setMessageHandler(message -> { });
+        gameClient.setMessageHandler(message ->
+                Platform.runLater(() -> handleServerMessage(message)));
+        showPlayer(player);
+        gameClient.getProfile();
+    }
+
+    private void handleServerMessage(Message message) {
+        if (message.getType() != MessageType.PROFILE_DATA) return;
+        Payloads.PlayerStats values = Payloads.parsePlayer(message.getPayload());
+        player = new Player(values.id(), values.username(), values.wins(), values.losses(),
+                values.draws(), values.totalScore(), values.questionsAnswered(),
+                values.correctAnswers());
+        app.updateCurrentPlayer(player);
+        showPlayer(player);
+    }
+
+    private void showPlayer(Player player) {
         ProfilePresenter.populate(player, profileAvatarLabel,
                 profileUsernameLabel, profileStatsLabel);
         usernameLabel.setText("Xin chào, " + player.getUsername() + "!");
@@ -71,5 +91,15 @@ public class HomeController {
     @FXML
     private void onQuizRoom(ActionEvent event) {
         app.showQuizRoomMenu();
+    }
+
+    @FXML
+    private void onLeaderboard(ActionEvent event) {
+        app.showLeaderboard();
+    }
+
+    @FXML
+    private void onMatchHistory(ActionEvent event) {
+        app.showMatchHistory();
     }
 }

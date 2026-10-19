@@ -203,6 +203,7 @@ public class LoginController {
         Payloads.PlayerStats values = Payloads.parsePlayer(payload);
         return new Player(
                 values.id(), values.username(), values.wins(), values.losses(),
+                values.draws(), values.totalScore(),
                 values.questionsAnswered(), values.correctAnswers()
         );
     }

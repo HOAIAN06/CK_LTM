@@ -85,6 +85,18 @@ public class GameClient {
         send(MessageType.CANCEL_MATCH, "");
     }
 
+    public void getProfile() {
+        send(MessageType.PROFILE_GET, "");
+    }
+
+    public void getLeaderboard() {
+        send(MessageType.LEADERBOARD_GET, "");
+    }
+
+    public void getMatchHistory() {
+        send(MessageType.MATCH_HISTORY_GET, "");
+    }
+
     public void sendAnswer(String sessionId, int attempt, long questionId, long choiceId) {
         send(MessageType.ANSWER,
                 Payloads.answer(sessionId, attempt, questionId, choiceId));
