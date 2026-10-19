@@ -1,0 +1,160 @@
+package com.nihongoquest.server.ranked;
+
+import com.nihongoquest.server.network.ClientHandler;
+import com.nihongoquest.server.question.QuestionService;
+import com.nihongoquest.server.question.Question;
+import java.sql.SQLException;
+import java.util.List;
+
+import com.nihongoquest.common.protocol.Message;
+import com.nihongoquest.common.protocol.MessageType;
+
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.logging.Logger;
+
+/**
+ * MatchmakingManager quản lý hàng chờ tìm trận.
+ *
+ * Luồng dự kiến:
+ * Player A, Player B → MatchmakingManager → GameRoom
+ *
+ * Sau này dùng Queue&lt;ClientHandler&gt; hoặc ConcurrentLinkedQueue&lt;ClientHandler&gt;
+ * để xếp hàng Client đang FIND_MATCH. Khi đủ 2 người thì tạo GameRoom.
+ */
+public class MatchmakingManager {
+
+    private static final Logger LOGGER = Logger.getLogger(MatchmakingManager.class.getName());
+
+    private final Deque<ClientHandler> waitingQueue;
+    private final QuestionService questionService;
+    private final RankedMatchService matchService;
+    private final RankedMatchRepository matchRepository;
+    private final RankedResultService resultService;
+
+    public MatchmakingManager(QuestionService questionService, RankedMatchService matchService,
+                              RankedMatchRepository matchRepository, RankedResultService resultService) {
+        this.waitingQueue = new ArrayDeque<>();
+        this.questionService = Objects.requireNonNull(questionService);
+        this.matchService = Objects.requireNonNull(matchService);
+        this.matchRepository = Objects.requireNonNull(matchRepository);
+        this.resultService = Objects.requireNonNull(resultService);
+    }
+
+    /**
+     * Thêm client vào hàng chờ tìm trận.
+     */
+    public synchronized void enqueue(ClientHandler client) {
+        if (!client.isAuthenticated()) {
+            client.send(new Message(MessageType.MATCH_ERROR, "NOT_AUTHENTICATED"));
+            return;
+        }
+        if (client.getCurrentRoom() != null) {
+            client.send(new Message(MessageType.MATCH_ERROR, "ALREADY_MATCHED"));
+            return;
+        }
+        if (client.isQueued()) {
+            client.send(new Message(MessageType.MATCH_ERROR, "ALREADY_WAITING"));
+            return;
+        }
+
+        waitingQueue.offerLast(client);
+        client.setQueued(true);
+        client.send(new Message(MessageType.WAITING, ""));
+        LOGGER.info(client.getUsername() + " đã vào hàng chờ. Hiện có: "
+                + waitingQueue.size());
+        tryCreateMatch();
+    }
+
+    /**
+     * Gỡ Client khỏi hàng chờ (khi hủy tìm trận hoặc disconnect).
+     */
+    public synchronized void dequeue(ClientHandler client) {
+        if (client.getCurrentRoom() != null) {
+            client.send(new Message(MessageType.MATCH_ERROR, "ALREADY_MATCHED"));
+            return;
+        }
+        removeFromQueue(client);
+        client.send(new Message(MessageType.MATCH_CANCELLED, ""));
+    }
+
+    /**
+     * Thử ghép cặp khi đủ 2 client trong hàng chờ.
+     */
+    public synchronized void tryCreateMatch() {
+        while (true) {
+            ClientHandler player1 = pollValidClient();
+            if (player1 == null) {
+                return;
+            }
+            ClientHandler player2 = pollValidClient();
+            if (player2 == null) {
+                waitingQueue.addFirst(player1);
+                return;
+            }
+
+            player1.setQueued(false);
+            player2.setQueued(false);
+            if (Objects.equals(player1.getPlayerId(), player2.getPlayerId())) {
+                player1.send(new Message(MessageType.MATCH_ERROR, "SAME_USER"));
+                player2.send(new Message(MessageType.MATCH_ERROR, "SAME_USER"));
+                continue;
+            }
+            List<Question> questions;
+            try {
+                questions = questionService.getRankedQuestions(null, GameRoom.RANKED_QUESTION_COUNT);
+            } catch (IllegalStateException e) {
+                LOGGER.log(java.util.logging.Level.WARNING, "Không thể tạo trận: lỗi ngân hàng câu hỏi", e);
+                player1.send(new Message(MessageType.MATCH_ERROR, "QUESTIONS_UNAVAILABLE"));
+                player2.send(new Message(MessageType.MATCH_ERROR, "QUESTIONS_UNAVAILABLE"));
+                continue;
+            }
+            RankedMatchService.CreatedMatch match;
+            try {
+                match = matchService.createMatch(player1.getPlayerId(), player2.getPlayerId(),
+                        questions, GameRoom.QUESTION_SECONDS);
+            } catch (SQLException e) {
+                LOGGER.warning("Failed to create ranked match for users " + player1.getPlayerId()
+                        + " and " + player2.getPlayerId() + " (SQLState=" + e.getSQLState() + ")");
+                player1.send(new Message(MessageType.MATCH_ERROR, "DATABASE_ERROR"));
+                player2.send(new Message(MessageType.MATCH_ERROR, "DATABASE_ERROR"));
+                continue;
+            }
+            GameRoom room = new GameRoom(UUID.randomUUID().toString(), match, player1, player2,
+                    questions, matchRepository, resultService);
+            LOGGER.info("Đã tạo room " + room.getRoomId() + ": "
+                    + player1.getUsername() + " vs " + player2.getUsername());
+            room.start();
+        }
+    }
+
+    public synchronized void disconnect(ClientHandler client) {
+        removeFromQueue(client);
+    }
+
+    private ClientHandler pollValidClient() {
+        while (!waitingQueue.isEmpty()) {
+            ClientHandler client = waitingQueue.pollFirst();
+            if (client.isConnected() && client.isAuthenticated()
+                    && client.getCurrentRoom() == null) {
+                return client;
+            }
+            client.setQueued(false);
+        }
+        return null;
+    }
+
+    private void removeFromQueue(ClientHandler client) {
+        if (waitingQueue.remove(client)) {
+            client.setQueued(false);
+            LOGGER.info(client.getUsername()
+                    + " đã rời hàng chờ. Còn lại: " + waitingQueue.size());
+        }
+    }
+
+    public synchronized int getWaitingCount() {
+        return waitingQueue.size();
+    }
+}
