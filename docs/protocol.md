@@ -26,6 +26,20 @@ liệu dùng `null`.
 `is_correct`, explanation hoặc đáp án đúng. `ANSWER_RESULT` chỉ công bố đáp án sau
 khi server đã nhận/chấm câu trả lời.
 
+## Payload Ranked theo thời gian
+
+- `FIND_MATCH`: `{ "durationSeconds": 180 }` hoặc `300`; hai người chỉ được ghép khi
+  chọn cùng thời lượng.
+- `MATCH_FOUND`: room ID, tên đối thủ và thời lượng trận.
+- `QUESTION`: `sessionId`, `attempt`, `questionId`, nội dung, bốn lựa chọn,
+  `questionDurationSeconds` và `matchRemainingSeconds`. Không có đáp án đúng.
+- `ANSWER`: gửi lại đúng `sessionId`, `attempt`, `questionId`, `choiceId`. Server bỏ qua
+  attempt cũ, trùng hoặc đã quá 30 giây.
+- `ANSWER_RESULT`: sau khi chấm mới chứa `correctChoiceId`, lựa chọn đã gửi và điểm nhận được.
+
+Mỗi người nhận câu tiếp theo ngay sau khi trả lời hoặc timeout, không phải đợi đối thủ.
+Hết danh sách tối đa 10 câu thì server lặp lại từ đầu cho tới deadline chung.
+
 Dashboard nhận bản sao traffic đã che trường password của `LOGIN` và `REGISTER`.
 Không dùng HTTP, WebSocket, UDP, TLS hay JWT trong bản demo LAN.
 

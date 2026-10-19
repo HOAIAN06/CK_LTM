@@ -36,6 +36,7 @@
                 <VBox alignment="CENTER" spacing="2" styleClass="score-panel">
                     <Label fx:id="scoreLabel" text="0  :  0" styleClass="score-value"/>
                     <Label text="ĐIỂM" styleClass="score-caption"/>
+                    <Label fx:id="matchTimeLabel" text="3:00" styleClass="match-time-label"/>
                 </VBox>
                 <VBox alignment="CENTER" spacing="4" styleClass="player-panel">
                     <Label text="ĐỐI THỦ" styleClass="player-role"/>

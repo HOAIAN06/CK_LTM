@@ -29,19 +29,29 @@
     <center>
         <VBox alignment="CENTER" spacing="22" styleClass="page-content">
             <VBox alignment="CENTER" spacing="18" styleClass="search-card">
-                <Label text="ĐANG TÌM ĐỐI THỦ" styleClass="search-title"/>
+                <Label text="THI ĐẤU RANKED 1V1" styleClass="search-title"/>
                 <Label fx:id="usernameLabel" text="Đang tìm cho: Người chơi"
                        styleClass="search-user"/>
+                <HBox alignment="CENTER" spacing="16">
+                    <RadioButton fx:id="threeMinutesRadio" text="3 phút" selected="true">
+                        <toggleGroup>
+                            <ToggleGroup fx:id="durationGroup"/>
+                        </toggleGroup>
+                    </RadioButton>
+                    <RadioButton fx:id="fiveMinutesRadio" text="5 phút" toggleGroup="$durationGroup"/>
+                </HBox>
+                <Button fx:id="searchButton" text="BẮT ĐẦU TÌM TRẬN"
+                        onAction="#startSearch" prefWidth="220"/>
                 <StackPane styleClass="spinner-ring">
                     <ProgressIndicator fx:id="searchSpinner" progress="-1.0"
                                        prefWidth="82" prefHeight="82"
                                        styleClass="search-spinner"/>
                 </StackPane>
-                <Label fx:id="statusLabel" text="Đang gửi yêu cầu tìm trận..."
+                <Label fx:id="statusLabel" text="Chọn thời lượng rồi bắt đầu tìm đối thủ."
                        styleClass="status-label,search-status" wrapText="true" maxWidth="400"/>
                 <Label text="Hệ thống sẽ tự động chuyển sang màn hình thi đấu khi tìm thấy đối thủ."
                        styleClass="helper-text" wrapText="true" maxWidth="400"/>
-                <Button fx:id="cancelButton" text="HỦY TÌM TRẬN"
+                <Button fx:id="cancelButton" text="QUAY LẠI"
                         onAction="#onCancel" prefWidth="220"
                         styleClass="danger-outline-button"/>
             </VBox>

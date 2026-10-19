@@ -74,18 +74,18 @@ public class ClientApp extends Application {
             MatchmakingController controller = loader.getController();
             controller.setSession(this, gameClient, currentPlayer);
             setScene(root);
-            controller.startSearch();
         } catch (IOException e) {
             throw new IllegalStateException("Không thể mở màn hình tìm trận", e);
         }
     }
 
-    public void showBattle(String roomId, String opponentUsername) {
+    public void showBattle(String roomId, String opponentUsername, int durationSeconds) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/ranked/battle/battle.fxml"));
             Parent root = loader.load();
             BattleController controller = loader.getController();
-            controller.setSession(this, gameClient, currentPlayer, roomId, opponentUsername);
+            controller.setSession(this, gameClient, currentPlayer,
+                    roomId, opponentUsername, durationSeconds);
             setScene(root);
         } catch (IOException e) {
             throw new IllegalStateException("Không thể mở màn hình Battle", e);

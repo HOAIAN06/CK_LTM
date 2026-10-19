@@ -67,8 +67,8 @@ public class GameClient {
         }
     }
 
-    public void findMatch() {
-        send(MessageType.FIND_MATCH, "");
+    public void findMatch(int durationSeconds) {
+        send(MessageType.FIND_MATCH, Payloads.findMatch(durationSeconds));
     }
 
     public void register(String username, String password) {
@@ -85,8 +85,9 @@ public class GameClient {
         send(MessageType.CANCEL_MATCH, "");
     }
 
-    public void sendAnswer(long questionId, long choiceId) {
-        send(MessageType.ANSWER, com.nihongoquest.common.protocol.Payloads.answer(questionId, choiceId));
+    public void sendAnswer(String sessionId, int attempt, long questionId, long choiceId) {
+        send(MessageType.ANSWER,
+                Payloads.answer(sessionId, attempt, questionId, choiceId));
     }
 
     public void listQuizSets(String scope) {

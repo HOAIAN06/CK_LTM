@@ -35,8 +35,18 @@ Quản lý bộ đề đi qua `QuizSetService` để kiểm tra dữ liệu và 
 
 Schema chuẩn duy nhất là `sql/supabase_schema.sql`; xem `database.md`.
 
+## Ranked theo thời gian
+
+`MatchmakingManager` giữ hai hàng chờ riêng cho chế độ 180 và 300 giây. Mỗi `GameRoom`
+chỉ dùng scheduler chung của server nhưng giữ con trỏ câu hỏi, attempt và timer 30 giây
+riêng cho từng người. Vì vậy người trả lời nhanh được chuyển câu ngay, không chờ đối thủ.
+Server dùng `sessionId + attempt + questionId` để bỏ qua đáp án cũ hoặc trùng.
+
+Mỗi trận lấy tối đa 10 câu hợp lệ từ các bộ đề đã publish và cần ít nhất 3 câu. Khi hết
+danh sách, câu hỏi lặp lại cho tới deadline chung. Ngắt kết nối vẫn xử thua ngay.
+
 ## Trạng thái triển khai
 
-Nền tảng đã có xác thực, dashboard, 1v1 ba câu hiện tại, câu hỏi PostgreSQL, protocol
+Nền tảng đã có xác thực, dashboard, Ranked 1v1 3/5 phút, câu hỏi PostgreSQL, protocol
 payload object, session registry, persistence đơn giản và giao diện quản lý bộ đề.
-Ranked theo thời lượng, Quiz Room, history/leaderboard và friends được triển khai ở các nhánh kế tiếp.
+Quiz Room, history/leaderboard và friends được triển khai ở các nhánh kế tiếp.

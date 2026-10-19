@@ -381,6 +381,12 @@
     -fx-text-fill: #90cdf4;
 }
 
+.match-time-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #fbd38d;
+}
+
 .question-card {
     -fx-background-color: white;
     -fx-background-radius: 14px;

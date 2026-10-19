@@ -14,7 +14,7 @@ class PayloadsTest {
 
     @Test
     void questionPayloadPreservesPipeAndNewlineInContent() {
-        var payload = Payloads.question(0, 1, 30, 3_000_000_000L,
+        var payload = Payloads.question("ranked-1", 4, 30, 155, 3_000_000_000L,
                 "どれ | chọn đáp án?\n", List.of(new Payloads.ChoiceData(30_000_000_001L, "A | một", 1)));
 
         Payloads.QuestionData question = Payloads.parseQuestion(payload);
@@ -23,13 +23,16 @@ class PayloadsTest {
         assertEquals("A | một", question.choices().getFirst().content());
         assertEquals(3_000_000_000L, question.questionId());
         assertEquals(30_000_000_001L, question.choices().getFirst().choiceId());
+        assertEquals("ranked-1", question.sessionId());
+        assertEquals(4, question.attempt());
+        assertEquals(155, question.matchRemainingSeconds());
     }
 
     @Test
     void questionPayloadContainsOnlyPublicFields() throws Exception {
-        var node = Payloads.question(0, 3, 30, 1,
+        var node = Payloads.question("room", 1, 30, 180, 1,
                 "Q", List.of(new Payloads.ChoiceData(11, "A", 1)));
-        assertEquals(6, node.size());
+        assertEquals(7, node.size());
         assertEquals(3, node.get("choices").get(0).size());
         for (String secret : List.of("correct", "is_correct", "correctAnswer", "correctChoiceId", "explanation")) {
             assertFalse(node.findValues(secret).iterator().hasNext());
@@ -38,13 +41,15 @@ class PayloadsTest {
 
     @Test
     void answersCarryDatabaseIdsAndRejectMalformedIdentifiers() {
-        assertEquals(new Payloads.AnswerData(3_000_000_000L, 30_000_000_001L),
-                Payloads.parseAnswer(Payloads.answer(3_000_000_000L, 30_000_000_001L)));
+        assertEquals(new Payloads.AnswerData("room", 2,
+                        3_000_000_000L, 30_000_000_001L),
+                Payloads.parseAnswer(Payloads.answer("room", 2,
+                        3_000_000_000L, 30_000_000_001L)));
         ObjectMapper mapper = new ObjectMapper();
         for (String malformed : List.of("0", "null", "{}", "{\"questionId\":1,\"choiceId\":-1}",
+                "{\"sessionId\":\"room\",\"attempt\":0,\"questionId\":1,\"choiceId\":11}",
                 "{\"questionId\":1,\"choiceId\":1.5}", "{\"questionId\":1,\"choiceId\":\"11\"}")) {
-            assertThrows(IllegalArgumentException.class,
-                    () -> Payloads.parseAnswer(mapper.readTree(malformed)));
+            assertThrows(RuntimeException.class, () -> Payloads.parseAnswer(mapper.readTree(malformed)));
         }
     }
 
@@ -53,14 +58,14 @@ class PayloadsTest {
         Payloads.Credentials credentials = Payloads.parseCredentials(
                 Payloads.credentials("player_1", "mật-khẩu"));
         Payloads.AnswerResult answer = Payloads.parseAnswerResult(
-                Payloads.answerResult(true, 2, 2));
+                Payloads.answerResult("room", 1, 10, true, 12L, 12, 1));
         Payloads.GameOver game = Payloads.parseGameOver(
                 Payloads.gameOver("WIN", 3, 1));
 
         assertEquals("player_1", credentials.username());
         assertEquals("mật-khẩu", credentials.password());
         assertTrue(answer.correct());
-        assertEquals(2, answer.correctIndex());
+        assertEquals(12, answer.correctChoiceId());
         assertEquals("WIN", game.result());
         assertEquals(3, game.myScore());
     }

@@ -1,52 +1,46 @@
 package com.nihongoquest.server.ranked;
 
-import com.nihongoquest.server.network.ClientHandler;
-import com.nihongoquest.server.question.QuestionService;
-import com.nihongoquest.server.question.Question;
-import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-
 import com.nihongoquest.common.protocol.Message;
 import com.nihongoquest.common.protocol.MessageType;
+import com.nihongoquest.server.network.ClientHandler;
+import com.nihongoquest.server.question.Question;
+import com.nihongoquest.server.question.QuestionService;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * MatchmakingManager quản lý hàng chờ tìm trận.
- *
- * Luồng dự kiến:
- * Player A, Player B → MatchmakingManager → GameRoom
- *
- * Sau này dùng Queue&lt;ClientHandler&gt; hoặc ConcurrentLinkedQueue&lt;ClientHandler&gt;
- * để xếp hàng Client đang FIND_MATCH. Khi đủ 2 người thì tạo GameRoom.
- */
+/** Ghép riêng người chọn cùng chế độ 3 phút hoặc 5 phút. */
 public class MatchmakingManager {
-
     private static final Logger LOGGER = Logger.getLogger(MatchmakingManager.class.getName());
 
-    private final Deque<ClientHandler> waitingQueue;
+    private final Map<Integer, Deque<ClientHandler>> queues = Map.of(
+            GameRoom.THREE_MINUTES, new ArrayDeque<>(),
+            GameRoom.FIVE_MINUTES, new ArrayDeque<>());
     private final QuestionService questionService;
     private final MatchRepository matchRepository;
     private final ScheduledExecutorService scheduler;
 
     public MatchmakingManager(QuestionService questionService, MatchRepository matchRepository,
                               ScheduledExecutorService scheduler) {
-        this.waitingQueue = new ArrayDeque<>();
         this.questionService = Objects.requireNonNull(questionService);
         this.matchRepository = Objects.requireNonNull(matchRepository);
         this.scheduler = Objects.requireNonNull(scheduler);
     }
 
-    /**
-     * Thêm client vào hàng chờ tìm trận.
-     */
-    public synchronized void enqueue(ClientHandler client) {
+    public synchronized void enqueue(ClientHandler client, int durationSeconds) {
         if (!client.isAuthenticated()) {
             client.send(new Message(MessageType.MATCH_ERROR, "NOT_AUTHENTICATED"));
+            return;
+        }
+        if (!queues.containsKey(durationSeconds)) {
+            client.send(new Message(MessageType.MATCH_ERROR, "INVALID_DURATION"));
             return;
         }
         if (client.getCurrentRoom() != null) {
@@ -58,17 +52,14 @@ public class MatchmakingManager {
             return;
         }
 
-        waitingQueue.offerLast(client);
+        queues.get(durationSeconds).offerLast(client);
         client.setQueued(true);
         client.send(new Message(MessageType.WAITING, ""));
-        LOGGER.info(client.getUsername() + " đã vào hàng chờ. Hiện có: "
-                + waitingQueue.size());
-        tryCreateMatch();
+        LOGGER.info(client.getUsername() + " đã vào hàng chờ " + durationSeconds
+                + " giây. Hiện có: " + queues.get(durationSeconds).size());
+        tryCreateMatch(durationSeconds);
     }
 
-    /**
-     * Gỡ Client khỏi hàng chờ (khi hủy tìm trận hoặc disconnect).
-     */
     public synchronized void dequeue(ClientHandler client) {
         if (client.getCurrentRoom() != null) {
             client.send(new Message(MessageType.MATCH_ERROR, "ALREADY_MATCHED"));
@@ -78,18 +69,15 @@ public class MatchmakingManager {
         client.send(new Message(MessageType.MATCH_CANCELLED, ""));
     }
 
-    /**
-     * Thử ghép cặp khi đủ 2 client trong hàng chờ.
-     */
-    public synchronized void tryCreateMatch() {
+    public synchronized void tryCreateMatch(int durationSeconds) {
+        Deque<ClientHandler> queue = queues.get(durationSeconds);
+        if (queue == null) return;
         while (true) {
-            ClientHandler player1 = pollValidClient();
-            if (player1 == null) {
-                return;
-            }
-            ClientHandler player2 = pollValidClient();
+            ClientHandler player1 = pollValidClient(queue);
+            if (player1 == null) return;
+            ClientHandler player2 = pollValidClient(queue);
             if (player2 == null) {
-                waitingQueue.addFirst(player1);
+                queue.addFirst(player1);
                 return;
             }
 
@@ -102,16 +90,17 @@ public class MatchmakingManager {
             }
             List<Question> questions;
             try {
-                questions = questionService.getRankedQuestions(null, GameRoom.RANKED_QUESTION_COUNT);
+                questions = questionService.getRankedQuestionsUpTo(null,
+                        GameRoom.MAX_QUESTION_POOL, GameRoom.MIN_QUESTION_POOL);
             } catch (IllegalStateException e) {
-                LOGGER.log(java.util.logging.Level.WARNING, "Không thể tạo trận: lỗi ngân hàng câu hỏi", e);
+                LOGGER.log(Level.WARNING, "Không thể tạo trận: lỗi ngân hàng câu hỏi", e);
                 player1.send(new Message(MessageType.MATCH_ERROR, "QUESTIONS_UNAVAILABLE"));
                 player2.send(new Message(MessageType.MATCH_ERROR, "QUESTIONS_UNAVAILABLE"));
                 continue;
             }
             GameRoom room = new GameRoom(UUID.randomUUID().toString(), player1, player2,
-                    questions, matchRepository, scheduler);
-            LOGGER.info("Đã tạo room " + room.getRoomId() + ": "
+                    questions, durationSeconds, matchRepository, scheduler);
+            LOGGER.info("Đã tạo room " + room.getRoomId() + " (" + durationSeconds + " giây): "
                     + player1.getUsername() + " vs " + player2.getUsername());
             room.start();
         }
@@ -121,9 +110,9 @@ public class MatchmakingManager {
         removeFromQueue(client);
     }
 
-    private ClientHandler pollValidClient() {
-        while (!waitingQueue.isEmpty()) {
-            ClientHandler client = waitingQueue.pollFirst();
+    private ClientHandler pollValidClient(Deque<ClientHandler> queue) {
+        while (!queue.isEmpty()) {
+            ClientHandler client = queue.pollFirst();
             if (client.isConnected() && client.isAuthenticated()
                     && client.getCurrentRoom() == null) {
                 return client;
@@ -134,14 +123,14 @@ public class MatchmakingManager {
     }
 
     private void removeFromQueue(ClientHandler client) {
-        if (waitingQueue.remove(client)) {
+        boolean removed = queues.values().stream().anyMatch(queue -> queue.remove(client));
+        if (removed) {
             client.setQueued(false);
-            LOGGER.info(client.getUsername()
-                    + " đã rời hàng chờ. Còn lại: " + waitingQueue.size());
+            LOGGER.info(client.getUsername() + " đã rời hàng chờ. Còn lại: " + getWaitingCount());
         }
     }
 
     public synchronized int getWaitingCount() {
-        return waitingQueue.size();
+        return queues.values().stream().mapToInt(Deque::size).sum();
     }
 }
