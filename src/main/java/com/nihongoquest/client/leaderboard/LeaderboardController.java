@@ -23,7 +23,6 @@ public class LeaderboardController {
     @FXML private TableColumn<Payloads.LeaderboardEntry, Number> scoreColumn;
     @FXML private Label statusLabel;
 
-    private ClientApp app;
     private GameClient gameClient;
 
     @FXML
@@ -33,11 +32,12 @@ public class LeaderboardController {
         winsColumn.setCellValueFactory(row -> new ReadOnlyIntegerWrapper(row.getValue().wins()));
         drawsColumn.setCellValueFactory(row -> new ReadOnlyIntegerWrapper(row.getValue().draws()));
         scoreColumn.setCellValueFactory(row -> new ReadOnlyIntegerWrapper(row.getValue().totalScore()));
+        leaderboardTable.setColumnResizePolicy(
+                TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         leaderboardTable.setPlaceholder(new Label("Chưa có dữ liệu xếp hạng"));
     }
 
     public void setSession(ClientApp app, GameClient gameClient) {
-        this.app = app;
         this.gameClient = gameClient;
         gameClient.setMessageHandler(message ->
                 Platform.runLater(() -> handleServerMessage(message)));
@@ -49,11 +49,6 @@ public class LeaderboardController {
     private void onRefresh() {
         statusLabel.setText("Đang làm mới...");
         gameClient.getLeaderboard();
-    }
-
-    @FXML
-    private void onBack() {
-        app.showHome();
     }
 
     private void handleServerMessage(Message message) {

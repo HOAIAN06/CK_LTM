@@ -8,18 +8,11 @@
             xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.nihongoquest.client.leaderboard.LeaderboardController">
-    <top>
-        <HBox alignment="CENTER_LEFT" spacing="14" styleClass="app-header">
-            <Button text="← TRANG CHỦ" onAction="#onBack" styleClass="secondary-button"/>
-            <VBox spacing="2" HBox.hgrow="ALWAYS">
-                <Label text="BẢNG XẾP HẠNG" styleClass="header-page-title"/>
-                <Label text="Top 10 thành tích Ranked toàn hệ thống" styleClass="profile-summary"/>
-            </VBox>
-            <Button text="LÀM MỚI" onAction="#onRefresh" styleClass="primary-button"/>
-        </HBox>
-    </top>
     <center>
         <VBox spacing="14" styleClass="page-content">
+            <HBox alignment="CENTER_RIGHT" styleClass="page-action-row">
+                <Button text="LÀM MỚI" onAction="#onRefresh" styleClass="primary-button"/>
+            </HBox>
             <TableView fx:id="leaderboardTable" VBox.vgrow="ALWAYS">
                 <columns>
                     <TableColumn fx:id="rankColumn" text="HẠNG" prefWidth="90"/>
@@ -29,7 +22,7 @@
                     <TableColumn fx:id="scoreColumn" text="TỔNG ĐIỂM" prefWidth="190"/>
                 </columns>
             </TableView>
-            <Label fx:id="statusLabel" text="Đang tải..." styleClass="profile-summary"/>
+            <Label fx:id="statusLabel" text="Đang tải..." styleClass="helper-text"/>
         </VBox>
     </center>
 </BorderPane>

@@ -7,25 +7,6 @@
             xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.nihongoquest.client.ranked.battle.BattleController">
-    <top>
-        <HBox alignment="CENTER_LEFT" spacing="20" styleClass="app-header">
-            <VBox spacing="2" HBox.hgrow="ALWAYS">
-                <Label text="NIHONGO QUEST" styleClass="app-brand"/>
-                <Label text="Đấu trường 1v1" styleClass="header-page-title"/>
-            </VBox>
-            <HBox alignment="CENTER_LEFT" spacing="10" styleClass="profile-card">
-                <StackPane styleClass="profile-avatar">
-                    <Label fx:id="profileAvatarLabel" text="N" styleClass="profile-avatar-text"/>
-                </StackPane>
-                <VBox spacing="2">
-                    <Label fx:id="profileUsernameLabel" text="Người chơi"
-                           styleClass="profile-username"/>
-                    <Label fx:id="profileStatsLabel" text="0 thắng  •  0 thua  •  0% đúng"
-                           styleClass="profile-summary"/>
-                </VBox>
-            </HBox>
-        </HBox>
-    </top>
     <center>
         <VBox alignment="TOP_CENTER" spacing="16" styleClass="battle-content">
             <HBox alignment="CENTER" spacing="28" styleClass="scoreboard-card">

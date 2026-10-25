@@ -30,7 +30,6 @@ public class MatchHistoryController {
     @FXML private TableColumn<Payloads.MatchHistoryEntry, String> reasonColumn;
     @FXML private Label statusLabel;
 
-    private ClientApp app;
     private GameClient gameClient;
 
     @FXML
@@ -44,11 +43,12 @@ public class MatchHistoryController {
                 row.getValue().durationSeconds() == 180 ? "3 phút" : "5 phút"));
         reasonColumn.setCellValueFactory(row -> new SimpleStringProperty(
                 "DISCONNECT".equals(row.getValue().endReason()) ? "Mất kết nối" : "Bình thường"));
+        historyTable.setColumnResizePolicy(
+                TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         historyTable.setPlaceholder(new Label("Bạn chưa có trận Ranked nào"));
     }
 
     public void setSession(ClientApp app, GameClient gameClient) {
-        this.app = app;
         this.gameClient = gameClient;
         gameClient.setMessageHandler(message ->
                 Platform.runLater(() -> handleServerMessage(message)));
@@ -60,11 +60,6 @@ public class MatchHistoryController {
     private void onRefresh() {
         statusLabel.setText("Đang làm mới...");
         gameClient.getMatchHistory();
-    }
-
-    @FXML
-    private void onBack() {
-        app.showHome();
     }
 
     private void handleServerMessage(Message message) {

@@ -8,7 +8,7 @@
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.nihongoquest.client.quiz.QuizBattleController">
     <top>
-        <HBox alignment="CENTER_LEFT" spacing="18" styleClass="app-header">
+        <HBox alignment="CENTER_LEFT" spacing="18" styleClass="gameplay-header">
             <VBox spacing="2" HBox.hgrow="ALWAYS">
                 <Label text="QUIZ ROOM" styleClass="app-brand"/>
                 <Label fx:id="titleLabel" text="Bộ đề" styleClass="header-page-title"/>

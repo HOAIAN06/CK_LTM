@@ -102,12 +102,12 @@ public class QuizBattleController {
     @FXML
     private void onLeave() {
         if (finished) {
-            app.showHome();
+            app.showMatchmaking();
             return;
         }
         if (room.host()) gameClient.cancelQuizRoom();
         else gameClient.leaveQuizRoom();
-        app.showHome();
+        app.showMatchmaking();
     }
 
     private void handleMessage(Message message) {
@@ -120,7 +120,7 @@ public class QuizBattleController {
                     message.getPayload(), Payloads.QuizLeaderboardData.class));
             case QUIZ_ROOM_FINISHED -> showFinished(Payloads.fromJson(
                     message.getPayload(), Payloads.QuizLeaderboardData.class));
-            case QUIZ_ROOM_CANCEL -> app.showHome();
+            case QUIZ_ROOM_CANCEL -> app.showMatchmaking();
             case QUIZ_ERROR -> showError(QuizRoomUi.errorText(message.payloadText()));
             default -> { }
         }

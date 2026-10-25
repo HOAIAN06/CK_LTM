@@ -8,15 +8,6 @@
             xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.nihongoquest.client.quiz.QuizSetListController">
-    <top>
-        <HBox alignment="CENTER_LEFT" spacing="18" styleClass="app-header">
-            <VBox spacing="2" HBox.hgrow="ALWAYS">
-                <Label text="NIHONGO QUEST" styleClass="app-brand"/>
-                <Label text="Quản lý bộ đề" styleClass="header-page-title"/>
-            </VBox>
-            <Button text="Trang chủ" onAction="#onHome" styleClass="secondary-button"/>
-        </HBox>
-    </top>
     <center>
         <VBox spacing="14" styleClass="page-content">
             <HBox spacing="10" alignment="CENTER_LEFT">

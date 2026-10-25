@@ -1,84 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.Circle?>
 
-<BorderPane styleClass="root,app-shell"
-            xmlns="http://javafx.com/javafx/21"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.nihongoquest.client.home.HomeController">
-    <top>
-        <HBox alignment="CENTER_LEFT" spacing="20" styleClass="app-header">
-            <VBox spacing="2" HBox.hgrow="ALWAYS">
-                <Label text="NIHONGO QUEST" styleClass="app-brand"/>
-                <Label text="Trang chủ" styleClass="header-page-title"/>
-            </VBox>
-            <HBox alignment="CENTER_LEFT" spacing="10" styleClass="profile-card">
-                <StackPane styleClass="profile-avatar">
-                    <Label fx:id="profileAvatarLabel" text="N" styleClass="profile-avatar-text"/>
-                </StackPane>
-                <VBox spacing="2">
-                    <Label fx:id="profileUsernameLabel" text="Người chơi"
-                           styleClass="profile-username"/>
-                    <Label fx:id="profileStatsLabel" text="0 thắng  •  0 thua  •  0% đúng"
-                           styleClass="profile-summary"/>
-                </VBox>
-            </HBox>
-        </HBox>
-    </top>
-    <center>
-        <VBox alignment="CENTER" spacing="24" styleClass="page-content">
-            <VBox alignment="CENTER" spacing="6">
-                <Label fx:id="usernameLabel" text="Xin chào!" styleClass="welcome-title"/>
-                <Label text="Theo dõi tiến độ và bắt đầu một trận đấu mới"
-                       styleClass="welcome-subtitle"/>
-            </VBox>
-
-            <HBox alignment="CENTER" spacing="14">
-                <VBox alignment="CENTER" spacing="5" styleClass="stat-card">
-                    <Label fx:id="winsLabel" text="0" styleClass="stat-value,stat-win"/>
-                    <Label text="TRẬN THẮNG" styleClass="stat-caption"/>
-                </VBox>
-                <VBox alignment="CENTER" spacing="5" styleClass="stat-card">
-                    <Label fx:id="lossesLabel" text="0" styleClass="stat-value,stat-loss"/>
-                    <Label text="TRẬN THUA" styleClass="stat-caption"/>
-                </VBox>
-                <VBox alignment="CENTER" spacing="5" styleClass="stat-card">
-                    <Label fx:id="questionsLabel" text="0" styleClass="stat-value"/>
-                    <Label text="CÂU ĐÃ TRẢ LỜI" styleClass="stat-caption"/>
-                </VBox>
-                <VBox alignment="CENTER" spacing="5" styleClass="stat-card">
-                    <Label fx:id="correctAnswersLabel" text="0" styleClass="stat-value,stat-correct"/>
-                    <Label text="CÂU TRẢ LỜI ĐÚNG" styleClass="stat-caption"/>
-                </VBox>
-            </HBox>
-
-            <VBox alignment="CENTER" spacing="12" styleClass="action-card">
-                <Label text="Sẵn sàng thử thách?" styleClass="action-title"/>
-                <Label text="Ghép cặp với một người chơi và kiểm tra vốn tiếng Nhật của bạn."
-                       styleClass="action-subtitle" wrapText="true"/>
-                <Button fx:id="findMatchButton" text="TÌM TRẬN 1V1"
-                        onAction="#onFindMatch" prefWidth="250"
-                        styleClass="primary-button,large-button"/>
-                <Button text="QUẢN LÝ BỘ ĐỀ"
-                        onAction="#onManageQuizSets" prefWidth="250"
-                        styleClass="secondary-button,large-button"/>
-                <Button text="PHÒNG QUIZ NHIỀU NGƯỜI"
-                        onAction="#onQuizRoom" prefWidth="250"
-                        styleClass="secondary-button,large-button"/>
-                <HBox alignment="CENTER" spacing="10">
-                    <Button text="BẢNG XẾP HẠNG"
-                            onAction="#onLeaderboard" prefWidth="180"
-                            styleClass="secondary-button"/>
-                    <Button text="LỊCH SỬ THI ĐẤU"
-                            onAction="#onMatchHistory" prefWidth="180"
-                            styleClass="secondary-button"/>
-                </HBox>
-                <Button text="BẠN BÈ VÀ LỜI MỜI"
-                        onAction="#onFriends" prefWidth="250"
-                        styleClass="secondary-button,large-button"/>
-            </VBox>
-        </VBox>
-    </center>
-</BorderPane>
+<StackPane styleClass="home-page"
+           xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.nihongoquest.client.home.HomeController">
+    <Pane mouseTransparent="true">
+        <Circle radius="120" layoutX="730" layoutY="120" styleClass="home-orb,home-orb-primary"/>
+        <Circle radius="70" layoutX="650" layoutY="470" styleClass="home-orb,home-orb-secondary"/>
+    </Pane>
+    <VBox alignment="CENTER_LEFT" spacing="18" maxWidth="760" styleClass="home-hero">
+        <Label text="NIHONGOQUEST" styleClass="home-eyebrow"/>
+        <Label text="Sẵn sàng chinh phục tiếng Nhật?"
+               wrapText="true" styleClass="home-hero-title"/>
+        <Label text="Thử sức trong một trận đấu thời gian thực và nâng cao phản xạ tiếng Nhật qua từng câu hỏi."
+               wrapText="true" maxWidth="560" styleClass="home-hero-subtitle"/>
+        <Button fx:id="findMatchButton" text="TÌM TRẬN 1V1"
+                onAction="#onFindMatch" styleClass="primary-button,home-cta-button"/>
+    </VBox>
+</StackPane>

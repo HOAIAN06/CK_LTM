@@ -69,7 +69,7 @@ public class LoginController {
         showStatus("Hãy kết nối server trước khi đăng nhập");
         setSubmitDisabled(true);
     }
-
+ 
     @FXML
     private void onConnect() {
         String host = serverHostField.getText().trim();
@@ -167,7 +167,7 @@ public class LoginController {
 
     private void handleServerMessage(Message message) {
         switch (message.getType()) {
-            case LOGIN_OK -> app.showHome(parsePlayer(message.getPayload()));
+            case LOGIN_OK -> app.showMatchmaking(parsePlayer(message.getPayload()));
             case REGISTER_OK -> {
                 setMode(true);
                 passwordField.clear();

@@ -1,12 +1,6 @@
 package com.nihongoquest.client.ranked.battle;
 
-import com.nihongoquest.client.profile.ProfilePresenter;
-
-import com.nihongoquest.client.ClientApp;
-import com.nihongoquest.client.profile.Player;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 
 /**
@@ -14,8 +8,6 @@ import javafx.scene.control.Label;
  * Hiển thị thắng/thua, điểm và tên đối thủ theo dữ liệu Server gửi về.
  */
 public class ResultController {
-
-    private ClientApp app;
 
     @FXML
     private Label resultLabel;
@@ -26,28 +18,8 @@ public class ResultController {
     @FXML
     private Label opponentLabel;
 
-    @FXML
-    private Label profileAvatarLabel;
-
-    @FXML
-    private Label profileUsernameLabel;
-
-    @FXML
-    private Label profileStatsLabel;
-
-    @FXML
-    private Button homeButton;
-
-    @FXML
-    private void onBackHome(ActionEvent event) {
-        app.showHome();
-    }
-
-    public void setResult(ClientApp app, Player player, String result, int myScore,
+    public void setResult(String result, int myScore,
                           int opponentScore, String opponentName) {
-        this.app = app;
-        ProfilePresenter.populate(player, profileAvatarLabel,
-                profileUsernameLabel, profileStatsLabel);
         resultLabel.getStyleClass().removeAll("result-win", "result-lose", "result-draw");
         resultLabel.setText(switch (result) {
             case "WIN" -> "CHIẾN THẮNG";

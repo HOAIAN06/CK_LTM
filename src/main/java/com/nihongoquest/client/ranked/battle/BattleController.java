@@ -1,7 +1,5 @@
 package com.nihongoquest.client.ranked.battle;
 
-import com.nihongoquest.client.profile.ProfilePresenter;
-
 import com.nihongoquest.client.ClientApp;
 import com.nihongoquest.client.profile.Player;
 import com.nihongoquest.client.network.GameClient;
@@ -29,15 +27,6 @@ public class BattleController {
 
     @FXML
     private Label player1Label;
-
-    @FXML
-    private Label profileAvatarLabel;
-
-    @FXML
-    private Label profileUsernameLabel;
-
-    @FXML
-    private Label profileStatsLabel;
 
     @FXML
     private Label player2Label;
@@ -86,8 +75,6 @@ public class BattleController {
         this.gameClient = gameClient;
         this.opponentUsername = opponentUsername;
         this.roomId = roomId;
-        ProfilePresenter.populate(player, profileAvatarLabel,
-                profileUsernameLabel, profileStatsLabel);
         this.answerButtons = List.of(
                 answerAButton, answerBButton, answerCButton, answerDButton);
         player1Label.setText(player.getUsername());

@@ -71,11 +71,6 @@ public class QuizRoomMenuController {
         gameClient.joinQuizRoom(pin);
     }
 
-    @FXML
-    private void onHome() {
-        app.showHome();
-    }
-
     private void handleMessage(Message message) {
         switch (message.getType()) {
             case QUIZ_SET_LIST_RESULT -> {

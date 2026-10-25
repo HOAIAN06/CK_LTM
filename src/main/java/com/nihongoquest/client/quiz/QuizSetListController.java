@@ -114,11 +114,6 @@ public class QuizSetListController {
         });
     }
 
-    @FXML
-    private void onHome() {
-        app.showHome();
-    }
-
     private void load(String requestedScope) {
         scope = requestedScope;
         statusLabel.setText("Đang tải danh sách...");

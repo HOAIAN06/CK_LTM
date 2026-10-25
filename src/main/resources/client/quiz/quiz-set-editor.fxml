@@ -8,15 +8,6 @@
             xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.nihongoquest.client.quiz.QuizSetEditorController">
-    <top>
-        <HBox alignment="CENTER_LEFT" spacing="18" styleClass="app-header">
-            <VBox spacing="2" HBox.hgrow="ALWAYS">
-                <Label text="NIHONGO QUEST" styleClass="app-brand"/>
-                <Label fx:id="pageTitle" text="Soạn bộ đề" styleClass="header-page-title"/>
-            </VBox>
-            <Label text="Lưu sẽ đưa bộ đề về bản nháp" styleClass="helper-text"/>
-        </HBox>
-    </top>
     <center>
         <SplitPane dividerPositions="0.34" styleClass="quiz-editor-split">
             <VBox spacing="10" styleClass="quiz-side-panel">
