@@ -1,6 +1,7 @@
 package com.nihongoquest.client.quiz;
 
 import com.nihongoquest.client.ClientApp;
+import com.nihongoquest.client.layout.NavigationGuard;
 import com.nihongoquest.client.network.GameClient;
 import com.nihongoquest.common.protocol.Message;
 import com.nihongoquest.common.protocol.Payloads;
@@ -8,12 +9,16 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 
+import java.util.Optional;
+
 /** Sảnh chờ hiển thị PIN, host và trạng thái kết nối thành viên. */
-public class QuizLobbyController {
+public class QuizLobbyController implements NavigationGuard {
     @FXML private Label pinLabel;
     @FXML private Label titleLabel;
     @FXML private Label countLabel;
@@ -60,7 +65,7 @@ public class QuizLobbyController {
         leaveButton.setDisable(true);
         if (host) gameClient.cancelQuizRoom();
         else gameClient.leaveQuizRoom();
-        app.showHome();
+        app.showMatchmaking();
     }
 
     private void handleMessage(Message message) {
@@ -70,7 +75,7 @@ public class QuizLobbyController {
             case QUIZ_ROOM_START -> app.showQuizBattle(Payloads.fromJson(
                     message.getPayload(), Payloads.QuizRoomStarted.class));
             case QUIZ_QUESTION, QUIZ_LEADERBOARD -> gameClient.redispatch(message);
-            case QUIZ_ROOM_CANCEL -> app.showHome();
+            case QUIZ_ROOM_CANCEL -> app.showMatchmaking();
             case QUIZ_ERROR -> {
                 startButton.setDisable(false);
                 showError(QuizRoomUi.errorText(message.payloadText()));
@@ -98,5 +103,20 @@ public class QuizLobbyController {
         statusLabel.setText(text);
         statusLabel.getStyleClass().removeAll("status-success", "status-error");
         statusLabel.getStyleClass().add("status-error");
+    }
+
+    @Override
+    public boolean requestNavigationAway() {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle(host ? "Hủy phòng Quiz" : "Rời phòng Quiz");
+        alert.setHeaderText(host ? "Bạn đang là host của phòng" : "Bạn đang ở trong sảnh chờ");
+        alert.setContentText(host
+                ? "Rời màn hình sẽ hủy phòng đối với tất cả thành viên."
+                : "Bạn sẽ rời khỏi phòng Quiz hiện tại.");
+        Optional<ButtonType> choice = alert.showAndWait();
+        if (choice.isEmpty() || choice.get() != ButtonType.OK) return false;
+        if (host) gameClient.cancelQuizRoom();
+        else gameClient.leaveQuizRoom();
+        return true;
     }
 }

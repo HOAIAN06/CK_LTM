@@ -1,0 +1,21 @@
+---
+description: Quy chuẩn giao diện client NihongoQuest thống nhất
+globs: "{src/main/resources/client/**/*.fxml,src/main/resources/client/**/*.css,src/main/java/com/nihongoquest/client/**/*.java}"
+alwaysApply: false
+---
+
+# NihongoQuest UI Design System
+
+- Mọi màn hình đã đăng nhập phải dùng authenticated shell; không tự tạo sidebar/header riêng.
+- Sidebar rộng 232px, nền navy `#0F2747`; nội dung nền sáng, primary blue `#3182CE`.
+- Dùng thang spacing 8/12/16/24/32px, bo góc 8–12px và font `Segoe UI`.
+- Không dùng inline `style` trong FXML; tạo semantic style class trong `client/shared/style.css`.
+- Home không hiển thị username, avatar hay thống kê cá nhân; dữ liệu này chỉ xuất hiện ở Hồ sơ.
+- Sidebar luôn theo thứ tự: Trang chủ, Đấu hạng 1v1, Phòng Quiz, Quản lý bộ đề,
+  Bảng xếp hạng, Lịch sử thi đấu, Bạn bè; cuối thanh là Hồ sơ và Đăng xuất.
+- Màn hình thi đấu 1v1/Quiz phải ẩn sidebar và shared header để giữ tập trung.
+- Nút điều hướng phải có trạng thái hover, active, focus và disabled rõ ràng.
+- Nội dung phải co giãn an toàn từ cửa sổ tối thiểu 1024x680; tránh kích thước tuyệt đối không cần thiết.
+- Text UI dùng tiếng Việt nhất quán; controller chỉ xử lý trạng thái và điều hướng, không tạo style inline.
+
+Ví dụ: dùng `styleClass="sidebar-button"`, không dùng `style="-fx-background-color: ..."`.

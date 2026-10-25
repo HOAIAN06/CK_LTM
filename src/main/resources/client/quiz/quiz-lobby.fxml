@@ -7,18 +7,6 @@
             xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.nihongoquest.client.quiz.QuizLobbyController">
-    <top>
-        <HBox alignment="CENTER_LEFT" spacing="18" styleClass="app-header">
-            <VBox spacing="2" HBox.hgrow="ALWAYS">
-                <Label text="NIHONGO QUEST" styleClass="app-brand"/>
-                <Label text="Sảnh chờ Quiz" styleClass="header-page-title"/>
-            </VBox>
-            <VBox alignment="CENTER_RIGHT">
-                <Label text="MÃ PIN" styleClass="field-caption"/>
-                <Label fx:id="pinLabel" text="------" styleClass="lobby-pin"/>
-            </VBox>
-        </HBox>
-    </top>
     <center>
         <VBox spacing="14" styleClass="page-content">
             <HBox alignment="CENTER_LEFT">
@@ -27,7 +15,11 @@
                     <Label text="Phòng khóa khi host bắt đầu; tối đa 20 người chơi."
                            styleClass="helper-text"/>
                 </VBox>
-                <Label fx:id="countLabel" text="0/20 người chơi" styleClass="profile-summary"/>
+                <VBox alignment="CENTER_RIGHT" spacing="2">
+                    <Label text="MÃ PIN" styleClass="field-caption"/>
+                    <Label fx:id="pinLabel" text="------" styleClass="lobby-pin"/>
+                </VBox>
+                <Label fx:id="countLabel" text="0/20 người chơi" styleClass="helper-text"/>
             </HBox>
             <ListView fx:id="playerList" VBox.vgrow="ALWAYS" styleClass="quiz-list"/>
             <Label fx:id="statusLabel" text="" styleClass="status-label"/>

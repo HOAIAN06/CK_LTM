@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox alignment="TOP_CENTER" spacing="24" styleClass="profile-page"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.nihongoquest.client.profile.ProfileController">
+    <HBox alignment="CENTER_LEFT" spacing="18" styleClass="profile-hero">
+        <StackPane styleClass="profile-page-avatar">
+            <Label fx:id="avatarLabel" text="N" styleClass="profile-page-avatar-text"/>
+        </StackPane>
+        <VBox spacing="5">
+            <Label text="NGƯỜI CHƠI" styleClass="profile-eyebrow"/>
+            <Label fx:id="usernameLabel" text="Username" styleClass="profile-page-username"/>
+            <Label text="Thành tích được đồng bộ trực tiếp từ máy chủ"
+                   styleClass="shared-page-subtitle"/>
+        </VBox>
+    </HBox>
+    <GridPane hgap="16" vgap="16" styleClass="profile-stats-grid">
+        <columnConstraints>
+            <ColumnConstraints percentWidth="33.333" hgrow="ALWAYS"/>
+            <ColumnConstraints percentWidth="33.333" hgrow="ALWAYS"/>
+            <ColumnConstraints percentWidth="33.333" hgrow="ALWAYS"/>
+        </columnConstraints>
+        <VBox alignment="CENTER" spacing="6" styleClass="profile-stat-card" GridPane.columnIndex="0" GridPane.rowIndex="0">
+            <Label fx:id="winsLabel" text="0" styleClass="profile-stat-value,stat-win"/>
+            <Label text="TRẬN THẮNG" styleClass="stat-caption"/>
+        </VBox>
+        <VBox alignment="CENTER" spacing="6" styleClass="profile-stat-card" GridPane.columnIndex="1" GridPane.rowIndex="0">
+            <Label fx:id="lossesLabel" text="0" styleClass="profile-stat-value,stat-loss"/>
+            <Label text="TRẬN THUA" styleClass="stat-caption"/>
+        </VBox>
+        <VBox alignment="CENTER" spacing="6" styleClass="profile-stat-card" GridPane.columnIndex="2" GridPane.rowIndex="0">
+            <Label fx:id="drawsLabel" text="0" styleClass="profile-stat-value"/>
+            <Label text="TRẬN HÒA" styleClass="stat-caption"/>
+        </VBox>
+        <VBox alignment="CENTER" spacing="6" styleClass="profile-stat-card" GridPane.columnIndex="0" GridPane.rowIndex="1">
+            <Label fx:id="totalScoreLabel" text="0" styleClass="profile-stat-value"/>
+            <Label text="TỔNG ĐIỂM" styleClass="stat-caption"/>
+        </VBox>
+        <VBox alignment="CENTER" spacing="6" styleClass="profile-stat-card" GridPane.columnIndex="1" GridPane.rowIndex="1">
+            <Label fx:id="questionsLabel" text="0" styleClass="profile-stat-value"/>
+            <Label text="CÂU ĐÃ TRẢ LỜI" styleClass="stat-caption"/>
+        </VBox>
+        <VBox alignment="CENTER" spacing="6" styleClass="profile-stat-card" GridPane.columnIndex="2" GridPane.rowIndex="1">
+            <Label fx:id="correctAnswersLabel" text="0" styleClass="profile-stat-value,stat-correct"/>
+            <Label text="CÂU TRẢ LỜI ĐÚNG" styleClass="stat-caption"/>
+        </VBox>
+    </GridPane>
+    <HBox alignment="CENTER_LEFT" spacing="16" styleClass="accuracy-card">
+        <Label fx:id="accuracyLabel" text="0%" styleClass="accuracy-value"/>
+        <VBox spacing="3">
+            <Label text="TỶ LỆ CHÍNH XÁC" styleClass="section-title"/>
+            <Label text="Tỷ lệ được tính trên tổng số câu đã trả lời"
+                   styleClass="shared-page-subtitle"/>
+        </VBox>
+    </HBox>
+    <Label fx:id="statusLabel" text="" styleClass="status-label"/>
+</VBox>

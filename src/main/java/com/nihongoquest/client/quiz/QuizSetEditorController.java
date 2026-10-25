@@ -1,6 +1,7 @@
 package com.nihongoquest.client.quiz;
 
 import com.nihongoquest.client.ClientApp;
+import com.nihongoquest.client.layout.NavigationGuard;
 import com.nihongoquest.client.network.GameClient;
 import com.nihongoquest.common.protocol.Message;
 import com.nihongoquest.common.protocol.MessageType;
@@ -8,9 +9,12 @@ import com.nihongoquest.common.protocol.Payloads;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
@@ -23,10 +27,10 @@ import javafx.scene.layout.VBox;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /** Form dễ học để sửa metadata và từng câu hỏi của một bộ đề. */
-public class QuizSetEditorController {
-    @FXML private Label pageTitle;
+public class QuizSetEditorController implements NavigationGuard {
     @FXML private TextField titleField;
     @FXML private TextArea descriptionArea;
     @FXML private ComboBox<String> levelCombo;
@@ -55,6 +59,9 @@ public class QuizSetEditorController {
     private GameClient gameClient;
     private Long quizSetId;
     private boolean editable;
+    private boolean dirty;
+    private boolean dirtyTrackingReady;
+    private boolean updatingForm;
 
     @FXML
     private void initialize() {
@@ -74,6 +81,16 @@ public class QuizSetEditorController {
         });
         questionList.getSelectionModel().selectedItemProperty()
                 .addListener((ignored, oldValue, selected) -> showQuestion(selected));
+        titleField.textProperty().addListener((ignored, oldValue, value) -> markDirty());
+        descriptionArea.textProperty().addListener((ignored, oldValue, value) -> markDirty());
+        levelCombo.valueProperty().addListener((ignored, oldValue, value) -> markDirty());
+        questionArea.textProperty().addListener((ignored, oldValue, value) -> markDirty());
+        explanationArea.textProperty().addListener((ignored, oldValue, value) -> markDirty());
+        List.of(choice1Field, choice2Field, choice3Field, choice4Field).forEach(field ->
+                field.textProperty().addListener((ignored, oldValue, value) -> markDirty()));
+        correctGroup.selectedToggleProperty()
+                .addListener((ignored, oldValue, value) -> markDirty());
+        questions.addListener((ListChangeListener<Payloads.QuizQuestionEdit>) change -> markDirty());
     }
 
     public void setSession(ClientApp app, GameClient gameClient,
@@ -86,14 +103,13 @@ public class QuizSetEditorController {
         descriptionArea.setText(data.description());
         levelCombo.setValue(data.level());
         questions.setAll(data.questions() == null ? List.of() : data.questions());
-        pageTitle.setText(editable
-                ? (data.id() == null ? "Tạo bộ đề" : "Sửa bộ đề")
-                : "Xem bộ đề công khai");
         setEditable(editorBox, editable);
         newQuestionButton.setDisable(!editable);
         removeQuestionButton.setDisable(true);
         saveButton.setVisible(editable);
         saveButton.setManaged(editable);
+        dirty = false;
+        dirtyTrackingReady = true;
         gameClient.setMessageHandler(message -> Platform.runLater(() -> handleMessage(message)));
         gameClient.setConnectionErrorHandler(error -> Platform.runLater(() -> showError(error)));
     }
@@ -156,7 +172,7 @@ public class QuizSetEditorController {
 
     @FXML
     private void onCancel() {
-        app.showQuizSets();
+        if (requestNavigationAway()) app.showQuizSets();
     }
 
     private Payloads.QuizQuestionEdit readQuestionForm() {
@@ -180,31 +196,41 @@ public class QuizSetEditorController {
     private void showQuestion(Payloads.QuizQuestionEdit question) {
         removeQuestionButton.setDisable(!editable || question == null);
         if (question == null) return;
-        questionArea.setText(question.content());
-        explanationArea.setText(question.explanation());
-        List<TextField> fields = List.of(choice1Field, choice2Field, choice3Field, choice4Field);
-        List<RadioButton> radios = List.of(correct1, correct2, correct3, correct4);
-        correctGroup.selectToggle(null);
-        for (Payloads.QuizChoiceEdit choice : question.choices()) {
-            int index = choice.position() - 1;
-            if (index >= 0 && index < 4) {
-                fields.get(index).setText(choice.content());
-                if (choice.correct()) radios.get(index).setSelected(true);
+        updatingForm = true;
+        try {
+            questionArea.setText(question.content());
+            explanationArea.setText(question.explanation());
+            List<TextField> fields = List.of(choice1Field, choice2Field, choice3Field, choice4Field);
+            List<RadioButton> radios = List.of(correct1, correct2, correct3, correct4);
+            correctGroup.selectToggle(null);
+            for (Payloads.QuizChoiceEdit choice : question.choices()) {
+                int index = choice.position() - 1;
+                if (index >= 0 && index < 4) {
+                    fields.get(index).setText(choice.content());
+                    if (choice.correct()) radios.get(index).setSelected(true);
+                }
             }
+            applyQuestionButton.setText("Cập nhật câu hỏi");
+        } finally {
+            updatingForm = false;
         }
-        applyQuestionButton.setText("Cập nhật câu hỏi");
     }
 
     private void clearQuestionForm() {
-        questionArea.clear();
-        explanationArea.clear();
-        choice1Field.clear();
-        choice2Field.clear();
-        choice3Field.clear();
-        choice4Field.clear();
-        correctGroup.selectToggle(null);
-        applyQuestionButton.setText("Thêm câu hỏi");
-        removeQuestionButton.setDisable(true);
+        updatingForm = true;
+        try {
+            questionArea.clear();
+            explanationArea.clear();
+            choice1Field.clear();
+            choice2Field.clear();
+            choice3Field.clear();
+            choice4Field.clear();
+            correctGroup.selectToggle(null);
+            applyQuestionButton.setText("Thêm câu hỏi");
+            removeQuestionButton.setDisable(true);
+        } finally {
+            updatingForm = false;
+        }
     }
 
     private void handleMessage(Message message) {
@@ -212,6 +238,7 @@ public class QuizSetEditorController {
             Payloads.QuizSetSaved saved = Payloads.fromJson(
                     message.getPayload(), Payloads.QuizSetSaved.class);
             quizSetId = saved.quizSetId();
+            dirty = false;
             app.showQuizSets();
         } else if (message.getType() == MessageType.QUIZ_SET_ERROR) {
             saveButton.setDisable(false);
@@ -228,5 +255,20 @@ public class QuizSetEditorController {
 
     private String clean(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private void markDirty() {
+        if (editable && dirtyTrackingReady && !updatingForm) dirty = true;
+    }
+
+    @Override
+    public boolean requestNavigationAway() {
+        if (!dirty) return true;
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Thay đổi chưa lưu");
+        alert.setHeaderText("Bộ đề có thay đổi chưa được lưu");
+        alert.setContentText("Nếu rời màn hình, các thay đổi hiện tại sẽ bị mất.");
+        Optional<ButtonType> choice = alert.showAndWait();
+        return choice.isPresent() && choice.get() == ButtonType.OK;
     }
 }

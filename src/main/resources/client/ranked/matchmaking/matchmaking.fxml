@@ -7,25 +7,6 @@
             xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.nihongoquest.client.ranked.matchmaking.MatchmakingController">
-    <top>
-        <HBox alignment="CENTER_LEFT" spacing="20" styleClass="app-header">
-            <VBox spacing="2" HBox.hgrow="ALWAYS">
-                <Label text="NIHONGO QUEST" styleClass="app-brand"/>
-                <Label text="Ghép trận" styleClass="header-page-title"/>
-            </VBox>
-            <HBox alignment="CENTER_LEFT" spacing="10" styleClass="profile-card">
-                <StackPane styleClass="profile-avatar">
-                    <Label fx:id="profileAvatarLabel" text="N" styleClass="profile-avatar-text"/>
-                </StackPane>
-                <VBox spacing="2">
-                    <Label fx:id="profileUsernameLabel" text="Người chơi"
-                           styleClass="profile-username"/>
-                    <Label fx:id="profileStatsLabel" text="0 thắng  •  0 thua  •  0% đúng"
-                           styleClass="profile-summary"/>
-                </VBox>
-            </HBox>
-        </HBox>
-    </top>
     <center>
         <VBox alignment="CENTER" spacing="22" styleClass="page-content">
             <VBox alignment="CENTER" spacing="18" styleClass="search-card">
@@ -51,8 +32,9 @@
                        styleClass="status-label,search-status" wrapText="true" maxWidth="400"/>
                 <Label text="Hệ thống sẽ tự động chuyển sang màn hình thi đấu khi tìm thấy đối thủ."
                        styleClass="helper-text" wrapText="true" maxWidth="400"/>
-                <Button fx:id="cancelButton" text="QUAY LẠI"
+                <Button fx:id="cancelButton" text="HỦY TÌM TRẬN"
                         onAction="#onCancel" prefWidth="220"
+                        managed="false" visible="false"
                         styleClass="danger-outline-button"/>
             </VBox>
         </VBox>

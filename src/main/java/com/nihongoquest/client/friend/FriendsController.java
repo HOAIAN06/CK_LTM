@@ -95,6 +95,7 @@ public class FriendsController {
     private void onInviteRanked() {
         Payloads.FriendItem selected = selectedFriend();
         if (selected == null) return;
+        app.expectInviteTransition("RANKED");
         gameClient.inviteRanked(selected.userId(), rankedDurationBox.getValue());
         showStatus("Đang gửi lời mời Ranked...");
     }
@@ -115,11 +116,6 @@ public class FriendsController {
     @FXML
     private void onRefresh() {
         refresh();
-    }
-
-    @FXML
-    private void onBack() {
-        app.showHome();
     }
 
     private void refresh() {

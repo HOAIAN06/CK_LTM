@@ -1,6 +1,6 @@
 package com.nihongoquest.client.ranked.matchmaking;
 
-import com.nihongoquest.client.profile.ProfilePresenter;
+import com.nihongoquest.client.layout.NavigationGuard;
 
 import com.nihongoquest.client.ClientApp;
 import com.nihongoquest.client.profile.Player;
@@ -11,15 +11,19 @@ import com.fasterxml.jackson.databind.JsonNode;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.RadioButton;
+
+import java.util.Optional;
 
 /**
  * MatchmakingController xử lý màn hình đang tìm đối thủ (matchmaking.fxml).
  * Hiển thị trạng thái chờ; sau này nhận MATCH_FOUND từ Server rồi chuyển sang Battle.
  */
-public class MatchmakingController {
+public class MatchmakingController implements NavigationGuard {
 
     @FXML
     private Label statusLabel;
@@ -27,12 +31,6 @@ public class MatchmakingController {
     private Button cancelButton;
     @FXML
     private Label usernameLabel;
-    @FXML
-    private Label profileAvatarLabel;
-    @FXML
-    private Label profileUsernameLabel;
-    @FXML
-    private Label profileStatsLabel;
     @FXML
     private ProgressIndicator searchSpinner;
     @FXML
@@ -49,8 +47,6 @@ public class MatchmakingController {
     public void setSession(ClientApp app, GameClient gameClient, Player player) {
         this.app = app;
         this.gameClient = gameClient;
-        ProfilePresenter.populate(player, profileAvatarLabel,
-                profileUsernameLabel, profileStatsLabel);
         usernameLabel.setText("Đang tìm cho: " + player.getUsername());
         searchSpinner.setVisible(false);
         gameClient.setMessageHandler(message ->
@@ -72,6 +68,8 @@ public class MatchmakingController {
             fiveMinutesRadio.setDisable(true);
             searchButton.setDisable(true);
             searchSpinner.setVisible(true);
+            cancelButton.setManaged(true);
+            cancelButton.setVisible(true);
             cancelButton.setText("HỦY TÌM TRẬN");
             showStatus("Đang gửi yêu cầu tìm trận " + (duration / 60) + " phút...");
             gameClient.findMatch(duration);
@@ -89,7 +87,6 @@ public class MatchmakingController {
     @FXML
     private void onCancel() {
         if (!searching) {
-            app.showHome();
             return;
         }
         cancelButton.setDisable(true);
@@ -107,7 +104,7 @@ public class MatchmakingController {
             case MATCH_CANCELLED -> {
                 searching = false;
                 searchSpinner.setVisible(false);
-                app.showHome();
+                app.showMatchmaking();
             }
             case MATCH_FOUND -> handleMatchFound(message.getPayload());
             case MATCH_ERROR -> handleMatchError(message.payloadText());
@@ -155,7 +152,8 @@ public class MatchmakingController {
             threeMinutesRadio.setDisable(false);
             fiveMinutesRadio.setDisable(false);
             cancelButton.setDisable(false);
-            cancelButton.setText("QUAY LẠI");
+            cancelButton.setManaged(false);
+            cancelButton.setVisible(false);
         }
     }
 
@@ -169,5 +167,19 @@ public class MatchmakingController {
             statusLabel.getStyleClass().add("status-error");
         }
         statusLabel.setText(message);
+    }
+
+    @Override
+    public boolean requestNavigationAway() {
+        if (!searching) return true;
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Hủy tìm trận");
+        alert.setHeaderText("Bạn đang trong hàng chờ ghép trận");
+        alert.setContentText("Rời màn hình sẽ hủy yêu cầu tìm đối thủ hiện tại.");
+        Optional<ButtonType> choice = alert.showAndWait();
+        if (choice.isEmpty() || choice.get() != ButtonType.OK) return false;
+        gameClient.cancelMatch();
+        searching = false;
+        return true;
     }
 }
