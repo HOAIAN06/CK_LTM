@@ -21,6 +21,7 @@ public class QuizRoomMenuController {
     @FXML private ComboBox<Payloads.QuizSetSummary> quizSetCombo;
     @FXML private Spinner<Integer> durationSpinner;
     @FXML private CheckBox hostPlaysCheck;
+    @FXML private CheckBox proctoringCheck;
     @FXML private TextField pinField;
     @FXML private Label statusLabel;
     @FXML private Button createButton;
@@ -35,6 +36,10 @@ public class QuizRoomMenuController {
                 new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 15, 3));
         quizSetCombo.setCellFactory(ignored -> summaryCell());
         quizSetCombo.setButtonCell(summaryCell());
+        proctoringCheck.selectedProperty().addListener((ignored, oldValue, enabled) -> {
+            if (enabled) hostPlaysCheck.setSelected(false);
+            hostPlaysCheck.setDisable(enabled);
+        });
     }
 
     public void setSession(ClientApp app, GameClient gameClient) {
@@ -56,7 +61,8 @@ public class QuizRoomMenuController {
         createButton.setDisable(true);
         statusLabel.setText("Đang tạo phòng...");
         gameClient.createQuizRoom(
-                selected.id(), durationSpinner.getValue(), hostPlaysCheck.isSelected());
+                selected.id(), durationSpinner.getValue(), hostPlaysCheck.isSelected(),
+                proctoringCheck.isSelected());
     }
 
     @FXML

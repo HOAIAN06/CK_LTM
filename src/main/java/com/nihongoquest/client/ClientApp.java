@@ -10,6 +10,7 @@ import com.nihongoquest.client.leaderboard.LeaderboardController;
 import com.nihongoquest.client.network.GameClient;
 import com.nihongoquest.client.profile.Player;
 import com.nihongoquest.client.profile.ProfileController;
+import com.nihongoquest.client.proctor.ProctoringCoordinator;
 import com.nihongoquest.client.quiz.QuizBattleController;
 import com.nihongoquest.client.quiz.QuizLobbyController;
 import com.nihongoquest.client.quiz.QuizRoomMenuController;
@@ -50,12 +51,14 @@ public class ClientApp extends Application {
     private AuthenticatedShellController shellController;
     private Object currentController;
     private AuthenticatedRoute currentRoute;
+    private ProctoringCoordinator proctoringCoordinator;
 
     @Override
     public void start(Stage primaryStage) throws IOException {
         this.primaryStage = primaryStage;
         primaryStage.setTitle("NihongoQuest");
         gameClient.setGlobalMessageHandler(this::handleGlobalMessage);
+        proctoringCoordinator = new ProctoringCoordinator(gameClient, primaryStage);
         showLogin();
         primaryStage.show();
     }
@@ -230,6 +233,7 @@ public class ClientApp extends Application {
     }
 
     public void showQuizLobby(Payloads.QuizLobbyData lobby) {
+        proctoringCoordinator.enterLobby(lobby);
         try {
             FXMLLoader loader = loader("/client/quiz/quiz-lobby.fxml");
             Parent root = loader.load();
@@ -244,6 +248,7 @@ public class ClientApp extends Application {
     }
 
     public void showQuizBattle(Payloads.QuizRoomStarted room) {
+        proctoringCoordinator.startRoom(room);
         try {
             FXMLLoader loader = loader("/client/quiz/quiz-battle.fxml");
             Parent root = loader.load();
@@ -287,6 +292,8 @@ public class ClientApp extends Application {
         Optional<ButtonType> choice = alert.showAndWait();
         if (choice.isEmpty() || choice.get() != ButtonType.OK) return;
         gameClient.disconnect();
+        proctoringCoordinator.close();
+        proctoringCoordinator = new ProctoringCoordinator(gameClient, primaryStage);
         currentPlayer = null;
         pendingInviteType = null;
         try {
@@ -345,6 +352,7 @@ public class ClientApp extends Application {
     }
 
     private void handleGlobalMessage(Message message) {
+        if (proctoringCoordinator != null && proctoringCoordinator.handleMessage(message)) return;
         if (message.getType() == MessageType.GAME_INVITE_RECEIVED) {
             Payloads.GameInviteReceived invite = Payloads.fromJson(
                     message.getPayload(), Payloads.GameInviteReceived.class);
@@ -407,7 +415,12 @@ public class ClientApp extends Application {
 
     @Override
     public void stop() {
+        if (proctoringCoordinator != null) proctoringCoordinator.close();
         gameClient.disconnect();
+    }
+
+    public ProctoringCoordinator getProctoringCoordinator() {
+        return proctoringCoordinator;
     }
 
     public static void main(String[] args) {

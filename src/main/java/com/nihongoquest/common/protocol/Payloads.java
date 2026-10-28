@@ -269,17 +269,35 @@ public final class Payloads {
     public record QuizSetEdit(Long id, String title, String description, String level,
                               List<QuizQuestionEdit> questions) { }
     public record QuizSetListData(List<QuizSetSummary> items) { }
-    public record QuizRoomCreateRequest(long quizSetId, int durationMinutes, boolean hostPlays) { }
+    public enum CameraStatus {
+        NOT_REQUIRED, NOT_APPLICABLE, INITIALIZING, READY, DENIED,
+        NOT_FOUND, FAILED, LOST, BLOCKED, STOPPED
+    }
+    public enum CalibrationStatus { NOT_REQUIRED, PENDING, READY, FAILED }
+    public enum ProctorEventType {
+        NO_FACE, MULTIPLE_FACES, LOOKING_AWAY, PHONE_DETECTED,
+        CAMERA_BLOCKED, APP_FOCUS_LOST, APP_MINIMIZED
+    }
+    public enum ProctorSeverity { WARNING, EVIDENCE }
+    public enum MediaRole { PUBLISHER, HOST_SUBSCRIBER }
+
+    public record QuizRoomCreateRequest(long quizSetId, int durationMinutes,
+                                        boolean hostPlays, boolean proctoringEnabled) { }
     public record QuizRoomJoinRequest(String pin) { }
     public record QuizRoomPinRequest(String pin) { }
     public record QuizRoomCreated(QuizLobbyData lobby) { }
     public record QuizLobbyPlayer(long userId, String username, boolean host,
-                                  boolean playing, boolean connected) { }
+                                  boolean playing, boolean connected,
+                                  CameraStatus cameraStatus,
+                                  CalibrationStatus calibrationStatus,
+                                  int warningCount) { }
     public record QuizLobbyData(String pin, String title, String hostUsername,
-                                boolean currentUserHost, boolean hostPlays, boolean started,
-                                int playerCount, List<QuizLobbyPlayer> members) { }
+                                boolean currentUserHost, boolean hostPlays,
+                                boolean proctoringEnabled, boolean started, int playerCount,
+                                List<QuizLobbyPlayer> members) { }
     public record QuizRoomStarted(String pin, String title, int durationSeconds,
-                                  boolean playing, boolean host) { }
+                                  boolean playing, boolean host,
+                                  boolean proctoringEnabled) { }
     public record QuizQuestionData(String sessionId, String pin, int attempt, long questionId,
                                    String content, List<ChoiceData> choices,
                                    int questionDurationSeconds, int roomRemainingSeconds) { }
@@ -292,5 +310,25 @@ public final class Payloads {
     public record QuizLeaderboardData(String pin, boolean finished,
                                       List<QuizLeaderboardEntry> entries) { }
     public record QuizRejoinData(QuizLobbyData lobby, boolean running,
-                                 boolean playing, int remainingSeconds) { }
+                                 boolean playing, boolean proctoringEnabled,
+                                 int remainingSeconds) { }
+    public record ProctorStatusReport(String pin, CameraStatus cameraStatus,
+                                      CalibrationStatus calibrationStatus, String detail,
+                                      long observedAtEpochMillis) { }
+    public record ProctorStatusUpdate(String pin, long userId, String username,
+                                      CameraStatus cameraStatus,
+                                      CalibrationStatus calibrationStatus,
+                                      boolean connected, int warningCount,
+                                      long serverTimeEpochMillis) { }
+    public record ProctorEventReport(String pin, String eventId, ProctorEventType type,
+                                     ProctorSeverity severity, long frameSequence,
+                                     long occurredAtEpochMillis, int durationMillis,
+                                     double confidence) { }
+    public record ProctorEventData(String pin, String eventId, long userId, String username,
+                                   ProctorEventType type, ProctorSeverity severity,
+                                   long frameSequence, long clientOccurredAtEpochMillis,
+                                   long serverReceivedAtEpochMillis, int durationMillis,
+                                   double confidence, int warningCount) { }
+    public record ProctorMediaSession(String pin, MediaRole role, int mediaPort,
+                                      String ticket, long expiresAtEpochMillis) { }
 }

@@ -16,6 +16,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.UUID;
 
 import static com.nihongoquest.server.question.QuestionFixtures.question;
 import static org.junit.jupiter.api.Assertions.*;
@@ -204,10 +205,126 @@ class QuizRoomTest {
         }
     }
 
+    @Test
+    void proctoredHostControlsRoomWithoutReceivingQuestions() {
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        StubClient host = new StubClient(1);
+        StubClient first = new StubClient(2);
+        StubClient second = new StubClient(3);
+        QuizRoom room = room(host, false, true, scheduler, new AtomicLong(), new AtomicInteger());
+        try {
+            room.join(first);
+            room.join(second);
+            room.start(host);
+
+            assertNull(host.firstOrNull(MessageType.QUIZ_QUESTION));
+            assertNotNull(first.first(MessageType.QUIZ_QUESTION));
+            Payloads.QuizRoomStarted started = Payloads.fromJson(
+                    host.last(MessageType.QUIZ_ROOM_START).getPayload(),
+                    Payloads.QuizRoomStarted.class);
+            assertTrue(started.proctoringEnabled());
+            assertFalse(started.playing());
+        } finally {
+            room.cancelByHost(host);
+            scheduler.shutdownNow();
+        }
+    }
+
+    @Test
+    void proctorStatusAndEventsAreForwardedOnlyToHostAndDeduplicated() {
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        StubClient host = new StubClient(1);
+        StubClient first = new StubClient(2);
+        StubClient second = new StubClient(3);
+        QuizRoom room = room(host, false, true, scheduler, new AtomicLong(), new AtomicInteger());
+        try {
+            room.join(first);
+            room.join(second);
+            room.reportProctorStatus(first, new Payloads.ProctorStatusReport(
+                    "123456", Payloads.CameraStatus.DENIED,
+                    Payloads.CalibrationStatus.FAILED, "user denied", 10));
+            room.reportProctorStatus(first, new Payloads.ProctorStatusReport(
+                    "123456", Payloads.CameraStatus.DENIED,
+                    Payloads.CalibrationStatus.FAILED, "duplicate", 11));
+
+            Payloads.ProctorStatusUpdate status = Payloads.fromJson(
+                    host.last(MessageType.PROCTOR_STATUS_UPDATE).getPayload(),
+                    Payloads.ProctorStatusUpdate.class);
+            assertEquals(1, status.warningCount());
+            assertEquals(Payloads.CameraStatus.DENIED, status.cameraStatus());
+            assertNull(second.firstOrNull(MessageType.PROCTOR_STATUS_UPDATE));
+
+            room.start(host);
+            String eventId = UUID.randomUUID().toString();
+            Payloads.ProctorEventReport event = new Payloads.ProctorEventReport(
+                    "123456", eventId, Payloads.ProctorEventType.LOOKING_AWAY,
+                    Payloads.ProctorSeverity.EVIDENCE, 42, 20, 2_000, 0.9);
+            room.reportProctorEvent(first, event);
+            room.reportProctorEvent(first, event);
+
+            assertEquals(1, host.count(MessageType.PROCTOR_EVENT));
+            Payloads.ProctorEventData data = Payloads.fromJson(
+                    host.last(MessageType.PROCTOR_EVENT).getPayload(),
+                    Payloads.ProctorEventData.class);
+            assertEquals(2, data.warningCount());
+            assertEquals(2, data.userId());
+            assertNull(second.firstOrNull(MessageType.PROCTOR_EVENT));
+        } finally {
+            room.cancelByHost(host);
+            scheduler.shutdownNow();
+        }
+    }
+
+    @Test
+    void proctorDisconnectAndReconnectPublishCameraTransitions() {
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        StubClient host = new StubClient(1);
+        StubClient first = new StubClient(2);
+        StubClient second = new StubClient(3);
+        QuizRoom room = room(host, false, true, scheduler, new AtomicLong(), new AtomicInteger());
+        try {
+            room.join(first);
+            room.join(second);
+            room.start(host);
+            first.connected = false;
+            room.disconnected(first);
+            Payloads.ProctorStatusUpdate lost = Payloads.fromJson(
+                    host.last(MessageType.PROCTOR_STATUS_UPDATE).getPayload(),
+                    Payloads.ProctorStatusUpdate.class);
+            assertEquals(Payloads.CameraStatus.LOST, lost.cameraStatus());
+            assertFalse(lost.connected());
+
+            StubClient reconnected = new StubClient(2);
+            assertTrue(room.reconnect(reconnected));
+            Payloads.ProctorStatusUpdate initializing = Payloads.fromJson(
+                    host.last(MessageType.PROCTOR_STATUS_UPDATE).getPayload(),
+                    Payloads.ProctorStatusUpdate.class);
+            assertEquals(Payloads.CameraStatus.INITIALIZING, initializing.cameraStatus());
+            assertTrue(initializing.connected());
+            Payloads.QuizRejoinData rejoin = Payloads.fromJson(
+                    reconnected.last(MessageType.QUIZ_REJOINED).getPayload(),
+                    Payloads.QuizRejoinData.class);
+            assertEquals(Payloads.CameraStatus.INITIALIZING,
+                    rejoin.lobby().members().stream()
+                            .filter(member -> member.userId() == 2).findFirst().orElseThrow()
+                            .cameraStatus());
+        } finally {
+            room.cancelByHost(host);
+            scheduler.shutdownNow();
+        }
+    }
+
     private static QuizRoom room(StubClient host, boolean hostPlays,
                                  ScheduledExecutorService scheduler, AtomicLong time,
                                  AtomicInteger finished) {
-        return new QuizRoom("123456", host, "Demo", hostPlays, 180, BANK,
+        return room(host, hostPlays, false, scheduler, time, finished);
+    }
+
+    private static QuizRoom room(StubClient host, boolean hostPlays,
+                                 boolean proctoringEnabled,
+                                 ScheduledExecutorService scheduler, AtomicLong time,
+                                 AtomicInteger finished) {
+        return new QuizRoom("123456", host, "Demo", hostPlays, proctoringEnabled, 180, BANK,
                 scheduler, time::get, ignored -> finished.incrementAndGet());
     }
 
@@ -249,6 +366,10 @@ class QuizRoomTest {
         Message last(MessageType type) {
             return messages.stream().filter(message -> message.getType() == type)
                     .reduce((first, second) -> second).orElseThrow();
+        }
+
+        long count(MessageType type) {
+            return messages.stream().filter(message -> message.getType() == type).count();
         }
     }
 }

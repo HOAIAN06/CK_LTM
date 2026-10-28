@@ -44,6 +44,9 @@ public class QuizRoomManager {
         if (request == null || request.durationMinutes() < 1 || request.durationMinutes() > 15) {
             throw new QuizRoomException("INVALID_DURATION");
         }
+        if (request.proctoringEnabled() && request.hostPlays()) {
+            throw new QuizRoomException("PROCTORING_HOST_CANNOT_PLAY");
+        }
         Payloads.QuizSetEdit quizSet;
         try {
             quizSet = quizSets.getPublishedForRoom(request.quizSetId());
@@ -53,6 +56,7 @@ public class QuizRoomManager {
         List<Question> questions = snapshot(quizSet);
         String pin = uniquePin();
         QuizRoom room = new QuizRoom(pin, host, quizSet.title(), request.hostPlays(),
+                request.proctoringEnabled(),
                 request.durationMinutes() * 60, questions, scheduler, System::nanoTime,
                 this::scheduleCleanup);
         rooms.put(pin, room);
@@ -77,6 +81,14 @@ public class QuizRoomManager {
 
     public void answer(ClientHandler client, Payloads.QuizAnswerData answer) {
         requireCurrent(client).answer(client, answer);
+    }
+
+    public void reportProctorStatus(ClientHandler client, Payloads.ProctorStatusReport report) {
+        requireCurrent(client).reportProctorStatus(client, report);
+    }
+
+    public void reportProctorEvent(ClientHandler client, Payloads.ProctorEventReport report) {
+        requireCurrent(client).reportProctorEvent(client, report);
     }
 
     public synchronized void leave(ClientHandler client) {

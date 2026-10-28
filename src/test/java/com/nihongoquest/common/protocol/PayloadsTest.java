@@ -138,4 +138,27 @@ class PayloadsTest {
         assertEquals(invite, Payloads.fromJson(
                 Payloads.toJson(invite), Payloads.GameInviteReceived.class));
     }
+
+    @Test
+    void proctorPayloadsRoundTripAndLegacyCreateDefaultsToDisabled() {
+        Payloads.ProctorEventReport event = new Payloads.ProctorEventReport(
+                "123456", "a60aeaa0-ff38-4789-a6f6-e47419b06a60",
+                Payloads.ProctorEventType.MULTIPLE_FACES,
+                Payloads.ProctorSeverity.EVIDENCE, 17, 1234, 1000, 0.87);
+        assertEquals(event, Payloads.fromJson(
+                Payloads.toJson(event), Payloads.ProctorEventReport.class));
+
+        Payloads.ProctorStatusUpdate status = new Payloads.ProctorStatusUpdate(
+                "123456", 2, "sakura", Payloads.CameraStatus.READY,
+                Payloads.CalibrationStatus.READY, true, 3, 5678);
+        assertEquals(status, Payloads.fromJson(
+                Payloads.toJson(status), Payloads.ProctorStatusUpdate.class));
+
+        Payloads.QuizRoomCreateRequest legacy = Payloads.fromJson(
+                new ObjectMapper().createObjectNode()
+                        .put("quizSetId", 5).put("durationMinutes", 3)
+                        .put("hostPlays", false),
+                Payloads.QuizRoomCreateRequest.class);
+        assertFalse(legacy.proctoringEnabled());
+    }
 }

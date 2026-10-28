@@ -9,9 +9,12 @@ import com.nihongoquest.server.question.Question;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +33,7 @@ public class QuizRoom {
     private final long hostId;
     private final String title;
     private final boolean hostPlays;
+    private final boolean proctoringEnabled;
     private final int durationSeconds;
     private final List<Question> questions;
     private final ScheduledExecutorService scheduler;
@@ -42,6 +46,7 @@ public class QuizRoom {
     private ScheduledFuture<?> roomTimeout;
 
     QuizRoom(String pin, ClientHandler host, String title, boolean hostPlays,
+             boolean proctoringEnabled,
              int durationSeconds, List<Question> questions,
              ScheduledExecutorService scheduler, LongSupplier nanoTime,
              Consumer<QuizRoom> finishedCallback) {
@@ -49,12 +54,16 @@ public class QuizRoom {
         this.hostId = host.getPlayerId();
         this.title = title;
         this.hostPlays = hostPlays;
+        this.proctoringEnabled = proctoringEnabled;
         this.durationSeconds = durationSeconds;
         this.questions = List.copyOf(questions);
         this.scheduler = scheduler;
         this.nanoTime = nanoTime;
         this.finishedCallback = finishedCallback;
-        PlayerState hostState = new PlayerState(hostId, host.getUsername(), true, hostPlays, host);
+        PlayerState hostState = new PlayerState(hostId, host.getUsername(), true, hostPlays, host,
+                proctoringEnabled ? Payloads.CameraStatus.NOT_APPLICABLE
+                        : Payloads.CameraStatus.NOT_REQUIRED,
+                Payloads.CalibrationStatus.NOT_REQUIRED);
         members.put(hostId, hostState);
         host.setCurrentQuizRoom(this);
     }
@@ -70,7 +79,11 @@ public class QuizRoom {
         if (state != State.LOBBY) throw new QuizRoomException("ROOM_STARTED");
         if (playerCount() >= MAX_PLAYERS) throw new QuizRoomException("ROOM_FULL");
         PlayerState joined = new PlayerState(client.getPlayerId(), client.getUsername(),
-                false, true, client);
+                false, true, client,
+                proctoringEnabled ? Payloads.CameraStatus.INITIALIZING
+                        : Payloads.CameraStatus.NOT_REQUIRED,
+                proctoringEnabled ? Payloads.CalibrationStatus.PENDING
+                        : Payloads.CalibrationStatus.NOT_REQUIRED);
         members.put(joined.userId, joined);
         client.setCurrentQuizRoom(this);
         sendLobbyToAll();
@@ -90,7 +103,8 @@ public class QuizRoom {
             if (member.client != null) {
                 member.client.send(new Message(MessageType.QUIZ_ROOM_START,
                         Payloads.toJson(new Payloads.QuizRoomStarted(
-                                pin, title, durationSeconds, member.playing, member.host))));
+                                pin, title, durationSeconds, member.playing, member.host,
+                                proctoringEnabled))));
             }
         }
         broadcastLeaderboard(false, MessageType.QUIZ_LEADERBOARD);
@@ -136,6 +150,10 @@ public class QuizRoom {
         cancelQuestionTimer(player);
         player.client = null;
         client.clearCurrentQuizRoom(this);
+        if (proctoringEnabled && player.playing) {
+            updateCameraStatus(player, Payloads.CameraStatus.STOPPED,
+                    player.calibrationStatus, false);
+        }
         if (state == State.LOBBY) members.remove(player.userId);
         sendLobbyToAll();
         if (state == State.RUNNING) broadcastLeaderboard(false, MessageType.QUIZ_LEADERBOARD);
@@ -155,6 +173,10 @@ public class QuizRoom {
         if (player == null || player.client != client) return;
         player.client = null;
         client.clearCurrentQuizRoom(this);
+        if (proctoringEnabled && player.playing && !player.left) {
+            updateCameraStatus(player, Payloads.CameraStatus.LOST,
+                    player.calibrationStatus, true);
+        }
         if (state == State.LOBBY) sendLobbyToAll();
         if (state == State.RUNNING) broadcastLeaderboard(false, MessageType.QUIZ_LEADERBOARD);
     }
@@ -164,10 +186,15 @@ public class QuizRoom {
         if (state == State.FINISHED || player == null || player.left) return false;
         player.client = client;
         client.setCurrentQuizRoom(this);
+        if (proctoringEnabled && player.playing) {
+            updateCameraStatus(player, Payloads.CameraStatus.INITIALIZING,
+                    Payloads.CalibrationStatus.PENDING, false);
+        }
         boolean running = state == State.RUNNING;
         client.send(new Message(MessageType.QUIZ_REJOINED,
                 Payloads.toJson(new Payloads.QuizRejoinData(
                         lobbyData(player.userId), running, player.playing,
+                        proctoringEnabled,
                         running ? roomRemainingSeconds() : 0))));
         if (!running) {
             sendLobbyToAll();
@@ -186,6 +213,97 @@ public class QuizRoom {
             }
         }
         return true;
+    }
+
+    synchronized void reportProctorStatus(ClientHandler client,
+                                           Payloads.ProctorStatusReport report) {
+        if (report == null) throw new QuizRoomException("BAD_PROCTOR_STATUS");
+        PlayerState player = requireProctoredPlayer(client, report == null ? null : report.pin());
+        if (report.cameraStatus() == null || report.calibrationStatus() == null
+                || report.cameraStatus() == Payloads.CameraStatus.NOT_APPLICABLE
+                || report.cameraStatus() == Payloads.CameraStatus.NOT_REQUIRED) {
+            throw new QuizRoomException("BAD_PROCTOR_STATUS");
+        }
+        updateCameraStatus(player, report.cameraStatus(), report.calibrationStatus(), true);
+        if (state == State.LOBBY) sendLobbyToHost();
+    }
+
+    synchronized void reportProctorEvent(ClientHandler client,
+                                          Payloads.ProctorEventReport report) {
+        if (report == null) throw new QuizRoomException("BAD_PROCTOR_EVENT");
+        PlayerState player = requireProctoredPlayer(client, report == null ? null : report.pin());
+        if (state != State.RUNNING) throw new QuizRoomException("ROOM_NOT_RUNNING");
+        if (report.type() == null || report.severity() == null
+                || report.eventId() == null || report.eventId().length() > 64
+                || report.durationMillis() < 0 || report.durationMillis() > 300_000
+                || !Double.isFinite(report.confidence())
+                || report.confidence() < 0 || report.confidence() > 1) {
+            throw new QuizRoomException("BAD_PROCTOR_EVENT");
+        }
+        try {
+            UUID.fromString(report.eventId());
+        } catch (IllegalArgumentException error) {
+            throw new QuizRoomException("BAD_PROCTOR_EVENT");
+        }
+        if (!player.recentEventIds.add(report.eventId())) return;
+        while (player.recentEventIds.size() > 256) {
+            var iterator = player.recentEventIds.iterator();
+            iterator.next();
+            iterator.remove();
+        }
+        player.warningCount++;
+        ClientHandler host = hostClient();
+        if (host != null && host.isConnected()) {
+            long now = System.currentTimeMillis();
+            host.send(new Message(MessageType.PROCTOR_EVENT,
+                    Payloads.toJson(new Payloads.ProctorEventData(
+                            pin, report.eventId(), player.userId, player.username,
+                            report.type(), report.severity(), report.frameSequence(),
+                            report.occurredAtEpochMillis(), now, report.durationMillis(),
+                            report.confidence(), player.warningCount))));
+        }
+    }
+
+    private PlayerState requireProctoredPlayer(ClientHandler client, String reportPin) {
+        if (!proctoringEnabled) throw new QuizRoomException("PROCTORING_NOT_ENABLED");
+        if (!pin.equals(reportPin)) throw new QuizRoomException("NOT_IN_ROOM");
+        PlayerState player = members.get(client.getPlayerId());
+        if (player == null || player.left || !player.playing || player.host
+                || player.client != client) {
+            throw new QuizRoomException("NOT_PROCTORED_PLAYER");
+        }
+        return player;
+    }
+
+    private void updateCameraStatus(PlayerState player, Payloads.CameraStatus cameraStatus,
+                                    Payloads.CalibrationStatus calibrationStatus,
+                                    boolean countWarning) {
+        boolean changed = player.cameraStatus != cameraStatus;
+        player.cameraStatus = cameraStatus;
+        player.calibrationStatus = calibrationStatus;
+        if (changed && countWarning && abnormal(cameraStatus)) player.warningCount++;
+        ClientHandler host = hostClient();
+        if (host != null && host.isConnected() && player.userId != hostId) {
+            host.send(new Message(MessageType.PROCTOR_STATUS_UPDATE,
+                    Payloads.toJson(new Payloads.ProctorStatusUpdate(
+                            pin, player.userId, player.username, player.cameraStatus,
+                            player.calibrationStatus,
+                            player.client != null && player.client.isConnected(),
+                            player.warningCount, System.currentTimeMillis()))));
+        }
+    }
+
+    private static boolean abnormal(Payloads.CameraStatus status) {
+        return status == Payloads.CameraStatus.DENIED
+                || status == Payloads.CameraStatus.NOT_FOUND
+                || status == Payloads.CameraStatus.FAILED
+                || status == Payloads.CameraStatus.LOST
+                || status == Payloads.CameraStatus.BLOCKED;
+    }
+
+    private ClientHandler hostClient() {
+        PlayerState host = members.get(hostId);
+        return host == null ? null : host.client;
     }
 
     private void sendNextQuestion(PlayerState player) {
@@ -307,15 +425,31 @@ public class QuizRoom {
         }
     }
 
+    private void sendLobbyToHost() {
+        ClientHandler host = hostClient();
+        if (host != null && host.isConnected()) {
+            host.send(new Message(MessageType.QUIZ_LOBBY_UPDATE,
+                    Payloads.toJson(lobbyData(hostId))));
+        }
+    }
+
     private Payloads.QuizLobbyData lobbyData(long viewerId) {
         List<Payloads.QuizLobbyPlayer> data = members.values().stream()
                 .filter(member -> !member.left)
-                .map(member -> new Payloads.QuizLobbyPlayer(
+                .map(member -> {
+                    boolean mayViewProctorState = viewerId == hostId || viewerId == member.userId;
+                    return new Payloads.QuizLobbyPlayer(
                         member.userId, member.username, member.host, member.playing,
-                        member.client != null && member.client.isConnected()))
+                        member.client != null && member.client.isConnected(),
+                        mayViewProctorState ? member.cameraStatus
+                                : Payloads.CameraStatus.NOT_APPLICABLE,
+                        mayViewProctorState ? member.calibrationStatus
+                                : Payloads.CalibrationStatus.NOT_REQUIRED,
+                        mayViewProctorState ? member.warningCount : 0);
+                })
                 .toList();
         return new Payloads.QuizLobbyData(pin, title, hostUsername(), viewerId == hostId,
-                hostPlays, state != State.LOBBY, playerCount(), data);
+                hostPlays, proctoringEnabled, state != State.LOBBY, playerCount(), data);
     }
 
     private Payloads.QuizLeaderboardData leaderboard(boolean finished) {
@@ -390,6 +524,8 @@ public class QuizRoom {
     public synchronized boolean isRunning() { return state == State.RUNNING; }
     public synchronized boolean isLobby() { return state == State.LOBBY; }
     public boolean isHost(long userId) { return hostId == userId; }
+    public long getHostId() { return hostId; }
+    public boolean isProctoringEnabled() { return proctoringEnabled; }
     public synchronized boolean isFinished() { return state == State.FINISHED; }
     public synchronized List<Long> memberIds() { return List.copyOf(members.keySet()); }
 
@@ -407,14 +543,22 @@ public class QuizRoom {
         boolean left;
         long questionDeadlineNanos;
         ScheduledFuture<?> questionTimeout;
+        Payloads.CameraStatus cameraStatus;
+        Payloads.CalibrationStatus calibrationStatus;
+        int warningCount;
+        final Set<String> recentEventIds = new LinkedHashSet<>();
 
         PlayerState(long userId, String username, boolean host,
-                    boolean playing, ClientHandler client) {
+                    boolean playing, ClientHandler client,
+                    Payloads.CameraStatus cameraStatus,
+                    Payloads.CalibrationStatus calibrationStatus) {
             this.userId = userId;
             this.username = username;
             this.host = host;
             this.playing = playing;
             this.client = client;
+            this.cameraStatus = cameraStatus;
+            this.calibrationStatus = calibrationStatus;
         }
     }
 }

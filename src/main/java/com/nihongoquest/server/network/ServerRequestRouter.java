@@ -72,6 +72,8 @@ public class ServerRequestRouter {
             case QUIZ_ROOM_JOIN -> handleQuizRoomJoin(client, message);
             case QUIZ_ROOM_START -> handleQuizAction(client, quizRooms::start);
             case QUIZ_ANSWER -> handleQuizAnswer(client, message);
+            case PROCTOR_STATUS_REPORT -> handleProctorStatus(client, message);
+            case PROCTOR_EVENT_REPORT -> handleProctorEvent(client, message);
             case QUIZ_ROOM_LEAVE -> handleQuizAction(client, quizRooms::leave);
             case QUIZ_ROOM_CANCEL -> handleQuizAction(client, quizRooms::cancel);
             case DISCONNECT -> client.close();
@@ -395,6 +397,30 @@ public class ServerRequestRouter {
         } catch (QuizRoomException e) {
             sendQuizRoomError(client, e.getCode());
         } catch (IllegalArgumentException e) {
+            sendQuizRoomError(client, "BAD_REQUEST");
+        }
+    }
+
+    private void handleProctorStatus(ClientHandler client, Message message) {
+        try {
+            Payloads.ProctorStatusReport report = Payloads.fromJson(
+                    message.getPayload(), Payloads.ProctorStatusReport.class);
+            quizRooms.reportProctorStatus(client, report);
+        } catch (QuizRoomException e) {
+            sendQuizRoomError(client, e.getCode());
+        } catch (IllegalArgumentException | NullPointerException e) {
+            sendQuizRoomError(client, "BAD_REQUEST");
+        }
+    }
+
+    private void handleProctorEvent(ClientHandler client, Message message) {
+        try {
+            Payloads.ProctorEventReport report = Payloads.fromJson(
+                    message.getPayload(), Payloads.ProctorEventReport.class);
+            quizRooms.reportProctorEvent(client, report);
+        } catch (QuizRoomException e) {
+            sendQuizRoomError(client, e.getCode());
+        } catch (IllegalArgumentException | NullPointerException e) {
             sendQuizRoomError(client, "BAD_REQUEST");
         }
     }

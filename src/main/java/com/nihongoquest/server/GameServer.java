@@ -17,6 +17,7 @@ import com.nihongoquest.server.database.Database;
 import com.nihongoquest.server.player.PlayerRepository;
 import com.nihongoquest.server.friend.FriendshipRepository;
 import com.nihongoquest.server.friend.SocialService;
+import com.nihongoquest.server.media.ProctorMediaRelay;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -52,6 +53,7 @@ public class GameServer {
     private final ServerRequestRouter requestRouter;
     private final QuizRoomManager quizRoomManager;
     private final ScheduledExecutorService scheduler;
+    private final ProctorMediaRelay mediaRelay;
     private volatile boolean running;
     private ServerSocket serverSocket;
     private ExecutorService clientExecutor;
@@ -70,6 +72,7 @@ public class GameServer {
             return thread;
         });
         this.onlineUsers = new OnlineUserRegistry();
+        this.mediaRelay = new ProctorMediaRelay();
         this.matchmakingManager = new MatchmakingManager(
                 questionService, matchRepository, scheduler);
         QuizSetService quizSetService = new QuizSetService(new QuizSetRepository(database));
@@ -89,13 +92,17 @@ public class GameServer {
         running = true;
         try {
             serverSocket = new ServerSocket(port);
+            int mediaPort = port == 0 ? 0
+                    : (port == Protocol.DEFAULT_PORT ? Protocol.DEFAULT_MEDIA_PORT : port + 1);
+            mediaRelay.start(mediaPort);
             clientExecutor = Executors.newFixedThreadPool(50, task -> {
                 Thread thread = new Thread(task, "client-handler");
                 thread.setDaemon(true);
                 return thread;
             });
             LOGGER.info("GameServer đang lắng nghe tại cổng " + port);
-            publishActivity("Server đã khởi động tại cổng " + port);
+            publishActivity("Server đã khởi động tại cổng " + port
+                    + "; media tại cổng " + mediaRelay.getLocalPort());
             while (running) {
                 Socket clientSocket = serverSocket.accept();
                 ClientHandler handler = new ClientHandler(
@@ -111,6 +118,14 @@ public class GameServer {
             }
         } catch (IOException e) {
             if (running) {
+                mediaRelay.close();
+                if (serverSocket != null) {
+                    try {
+                        serverSocket.close();
+                    } catch (IOException ignored) {
+                        // Preserve the original startup failure.
+                    }
+                }
                 throw new IllegalStateException("Không thể chạy GameServer", e);
             }
         } finally {
@@ -124,6 +139,7 @@ public class GameServer {
     public void stop() {
         running = false;
         quizRoomManager.shutdown();
+        mediaRelay.close();
         clients.forEach(ClientHandler::close);
         clients.clear();
         if (serverSocket != null) {
@@ -147,6 +163,8 @@ public class GameServer {
     public QuestionService getQuestionService() {
         return questionService;
     }
+
+    public ProctorMediaRelay getMediaRelay() { return mediaRelay; }
 
     public boolean isRunning() {
         return running;

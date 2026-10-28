@@ -26,6 +26,8 @@ public class QuizLobbyController implements NavigationGuard {
     @FXML private ListView<Payloads.QuizLobbyPlayer> playerList;
     @FXML private Button startButton;
     @FXML private Button leaveButton;
+    @FXML private Button retryCameraButton;
+    @FXML private Label proctoringLabel;
 
     private ClientApp app;
     private GameClient gameClient;
@@ -40,7 +42,8 @@ public class QuizLobbyController implements NavigationGuard {
                 if (empty || item == null) setText(null);
                 else setText((item.host() ? "★ " : "") + item.username()
                         + (item.playing() ? " • Người chơi" : " • Điều khiển")
-                        + (item.connected() ? " • Online" : " • Mất kết nối"));
+                        + (item.connected() ? " • Online" : " • Mất kết nối")
+                        + cameraText(item));
             }
         });
     }
@@ -68,6 +71,11 @@ public class QuizLobbyController implements NavigationGuard {
         app.showMatchmaking();
     }
 
+    @FXML
+    private void onRetryCamera() {
+        app.getProctoringCoordinator().requestCameraConsent(true);
+    }
+
     private void handleMessage(Message message) {
         switch (message.getType()) {
             case QUIZ_LOBBY_UPDATE -> updateLobby(Payloads.fromJson(
@@ -86,6 +94,7 @@ public class QuizLobbyController implements NavigationGuard {
 
     private void updateLobby(Payloads.QuizLobbyData lobby) {
         host = lobby.currentUserHost();
+        app.getProctoringCoordinator().enterLobby(lobby);
         pinLabel.setText(lobby.pin());
         titleLabel.setText(lobby.title());
         countLabel.setText(lobby.playerCount() + "/20 người chơi");
@@ -94,9 +103,33 @@ public class QuizLobbyController implements NavigationGuard {
         startButton.setManaged(host);
         startButton.setDisable(!host || lobby.playerCount() < 2);
         leaveButton.setText(host ? "Hủy phòng" : "Rời phòng");
+        boolean monitored = lobby.proctoringEnabled();
+        proctoringLabel.setVisible(monitored);
+        proctoringLabel.setManaged(monitored);
+        proctoringLabel.setText(monitored
+                ? "Phòng này đang bật giám sát camera. Không thu microphone; cảnh báo có thể được lưu trên máy host."
+                : "");
+        retryCameraButton.setVisible(monitored && !host);
+        retryCameraButton.setManaged(monitored && !host);
         statusLabel.setText(host && lobby.playerCount() < 2
                 ? "Cần ít nhất 2 người chơi để bắt đầu."
                 : "Đang chờ host bắt đầu...");
+    }
+
+    private String cameraText(Payloads.QuizLobbyPlayer item) {
+        if (item.cameraStatus() == null || item.cameraStatus() == Payloads.CameraStatus.NOT_REQUIRED
+                || item.cameraStatus() == Payloads.CameraStatus.NOT_APPLICABLE) return "";
+        return " • Camera: " + switch (item.cameraStatus()) {
+            case READY -> "Sẵn sàng";
+            case INITIALIZING -> "Đang mở";
+            case DENIED -> "Từ chối";
+            case NOT_FOUND -> "Không tìm thấy";
+            case LOST -> "Mất tín hiệu";
+            case BLOCKED -> "Bị che";
+            case FAILED -> "Lỗi";
+            case STOPPED -> "Đã dừng";
+            default -> item.cameraStatus().name();
+        };
     }
 
     private void showError(String text) {

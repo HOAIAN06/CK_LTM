@@ -19,6 +19,7 @@
                     <Label text="phút (1–15)"/>
                 </HBox>
                 <CheckBox fx:id="hostPlaysCheck" text="Host cũng tham gia trả lời" selected="true"/>
+                <CheckBox fx:id="proctoringCheck" text="Bật giám sát camera (host không trả lời)"/>
                 <Button fx:id="createButton" text="TẠO PHÒNG VÀ LẤY PIN"
                         onAction="#onCreate" maxWidth="Infinity"/>
             </VBox>

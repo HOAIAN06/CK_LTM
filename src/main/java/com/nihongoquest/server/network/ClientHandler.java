@@ -104,11 +104,17 @@ public class ClientHandler implements Runnable {
     }
 
     private String safeWire(Message message) {
-        if (message.getType() != MessageType.LOGIN && message.getType() != MessageType.REGISTER) {
+        boolean credentials = message.getType() == MessageType.LOGIN
+                || message.getType() == MessageType.REGISTER;
+        boolean mediaSession = message.getType() == MessageType.PROCTOR_MEDIA_SESSION;
+        if (!credentials && !mediaSession) {
             return message.toWire();
         }
         JsonNode payload = message.getPayload().deepCopy();
-        if (payload instanceof ObjectNode object) object.put("password", "***");
+        if (payload instanceof ObjectNode object) {
+            if (credentials) object.put("password", "***");
+            if (mediaSession) object.put("ticket", "***");
+        }
         return new Message(message.getType(), payload).toWire();
     }
 

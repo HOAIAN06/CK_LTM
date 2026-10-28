@@ -69,7 +69,7 @@ public class LoginController {
         showStatus("Hãy kết nối server trước khi đăng nhập");
         setSubmitDisabled(true);
     }
- 
+    
     @FXML
     private void onConnect() {
         String host = serverHostField.getText().trim();
@@ -114,7 +114,7 @@ public class LoginController {
                 });
             }
         }, "server-connector");
-        connector.setDaemon(true);
+        connector.setDaemon(true); //Đảm bảo thread kết nối server sẽ tự động kết thúc khi chương trình kết thúc
         connector.start();
     }
 
@@ -186,7 +186,7 @@ public class LoginController {
                     app.showQuizBattle(new Payloads.QuizRoomStarted(
                             rejoin.lobby().pin(), rejoin.lobby().title(),
                             rejoin.remainingSeconds(), rejoin.playing(),
-                            rejoin.lobby().currentUserHost()));
+                            rejoin.lobby().currentUserHost(), rejoin.proctoringEnabled()));
                 } else {
                     app.showQuizLobby(rejoin.lobby());
                 }

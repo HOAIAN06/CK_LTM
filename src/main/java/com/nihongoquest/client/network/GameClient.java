@@ -24,6 +24,7 @@ public class GameClient {
     private PrintWriter writer;
     private ServerListener listener;
     private volatile boolean connected;
+    private volatile String serverHost;
     private Consumer<Message> messageHandler = message -> { };
     private Consumer<Message> globalMessageHandler = message -> { };
     private Consumer<String> errorHandler = error -> { };
@@ -39,6 +40,7 @@ public class GameClient {
             reader = new BufferedReader(new InputStreamReader(newSocket.getInputStream(), charset));
             writer = new PrintWriter(new OutputStreamWriter(newSocket.getOutputStream(), charset), true);
             socket = newSocket;
+            serverHost = host;
         } catch (IOException e) {
             try {
                 newSocket.close();
@@ -170,9 +172,19 @@ public class GameClient {
                 Payloads.toJson(new Payloads.QuizSetId(quizSetId)));
     }
 
-    public void createQuizRoom(long quizSetId, int durationMinutes, boolean hostPlays) {
+    public void createQuizRoom(long quizSetId, int durationMinutes, boolean hostPlays,
+                               boolean proctoringEnabled) {
         send(MessageType.QUIZ_ROOM_CREATE, Payloads.toJson(
-                new Payloads.QuizRoomCreateRequest(quizSetId, durationMinutes, hostPlays)));
+                new Payloads.QuizRoomCreateRequest(
+                        quizSetId, durationMinutes, hostPlays, proctoringEnabled)));
+    }
+
+    public void reportProctorStatus(Payloads.ProctorStatusReport report) {
+        send(MessageType.PROCTOR_STATUS_REPORT, Payloads.toJson(report));
+    }
+
+    public void reportProctorEvent(Payloads.ProctorEventReport report) {
+        send(MessageType.PROCTOR_EVENT_REPORT, Payloads.toJson(report));
     }
 
     public void joinQuizRoom(String pin) {
@@ -208,7 +220,7 @@ public class GameClient {
     void receive(Message message) {
         globalMessageHandler.accept(message);
         messageHandler.accept(message);
-    }
+    }   
 
     void connectionLost(String reason) {
         if (!connected) {
@@ -266,5 +278,9 @@ public class GameClient {
 
     public boolean isConnected() {
         return connected;
+    }
+
+    public String getServerHost() {
+        return serverHost;
     }
 }

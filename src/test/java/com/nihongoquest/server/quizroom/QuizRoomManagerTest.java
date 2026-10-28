@@ -28,8 +28,8 @@ class QuizRoomManagerTest {
         StubClient first = new StubClient(1);
         StubClient second = new StubClient(2);
         try {
-            manager.create(first, new Payloads.QuizRoomCreateRequest(5, 3, true));
-            manager.create(second, new Payloads.QuizRoomCreateRequest(5, 5, false));
+            manager.create(first, new Payloads.QuizRoomCreateRequest(5, 3, true, false));
+            manager.create(second, new Payloads.QuizRoomCreateRequest(5, 5, false, false));
 
             String firstPin = created(first).lobby().pin();
             String secondPin = created(second).lobby().pin();
@@ -46,6 +46,22 @@ class QuizRoomManagerTest {
         } finally {
             manager.cancel(first);
             manager.cancel(second);
+            scheduler.shutdownNow();
+        }
+    }
+
+    @Test
+    void rejectsProctoringWhenHostAlsoPlays() {
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        QuizRoomManager manager = new QuizRoomManager(
+                new FakeQuizSets(), scheduler, () -> 123456);
+        try {
+            QuizRoomException error = assertThrows(QuizRoomException.class,
+                    () -> manager.create(new StubClient(1),
+                            new Payloads.QuizRoomCreateRequest(5, 3, true, true)));
+            assertEquals("PROCTORING_HOST_CANNOT_PLAY", error.getCode());
+            assertEquals(0, manager.activeRoomCount());
+        } finally {
             scheduler.shutdownNow();
         }
     }
