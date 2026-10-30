@@ -14,7 +14,7 @@ JavaFX, TCP Socket, JSON line protocol, JDBC PostgreSQL/Supabase và BCrypt.
 ## Chuẩn bị database
 
 1. Chạy `sql/supabase_schema.sql` trong Supabase SQL Editor. Script này xóa dữ liệu cũ.
-2. Tùy chọn chạy `sql/seed_demo.sql` để tạo ba tài khoản và một bộ đề N5.
+2. Tùy chọn chạy `sql/seed_demo.sql` để tạo ba tài khoản và 6 bộ đề N5/N4 gồm 60 câu.
 3. Chạy `sql/verify_schema.sql` để kiểm tra.
 4. Sao chép `src/main/resources/db.properties.example` thành `~/.nihongoquest/db.properties`
    (Windows: `%USERPROFILE%\.nihongoquest\db.properties`) và điền thông tin PostgreSQL.
