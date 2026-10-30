@@ -19,6 +19,27 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.bytedeco</groupId><artifactId>javacv</artifactId><version>1.5.14</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bytedeco</groupId><artifactId>opencv</artifactId><version>4.14.0-1.5.14</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bytedeco</groupId><artifactId>opencv</artifactId><version>4.14.0-1.5.14</version>
+            <classifier>windows-x86_64</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.bytedeco</groupId><artifactId>openblas</artifactId><version>0.3.34-1.5.14</version>
+            <classifier>windows-x86_64</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.bytedeco</groupId><artifactId>ffmpeg</artifactId><version>8.1.2-1.5.14</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bytedeco</groupId><artifactId>ffmpeg</artifactId><version>8.1.2-1.5.14</version>
+            <classifier>windows-x86_64</classifier>
+        </dependency>
 
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -35,6 +56,11 @@
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-fxml</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-swing</artifactId>
             <version>${javafx.version}</version>
         </dependency>
 
@@ -60,7 +86,33 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <excludes><exclude>db.properties</exclude></excludes>
+            </resource>
+        </resources>
         <plugins>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>require-jdk-21</id>
+                        <goals><goal>enforce</goal></goals>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>[21,22)</version>
+                                    <message>NihongoQuest cần JDK 21; OpenCV camera không tương thích với JDK khác.</message>
+                                </requireJavaVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -91,6 +143,23 @@
     </build>
 
     <profiles>
+        <profile>
+            <id>linux-x86_64</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.bytedeco</groupId><artifactId>opencv</artifactId><version>4.14.0-1.5.14</version>
+                    <classifier>linux-x86_64</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId><artifactId>openblas</artifactId><version>0.3.34-1.5.14</version>
+                    <classifier>linux-x86_64</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.bytedeco</groupId><artifactId>ffmpeg</artifactId><version>8.1.2-1.5.14</version>
+                    <classifier>linux-x86_64</classifier>
+                </dependency>
+            </dependencies>
+        </profile>
         <profile>
             <id>server-dashboard</id>
             <build>

@@ -2,6 +2,8 @@ package com.nihongoquest.server.database;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -39,16 +41,30 @@ public class Database {
 
     private Properties loadProperties() {
         Properties properties = new Properties();
-        try (InputStream input = Database.class.getResourceAsStream("/db.properties")) {
-            if (input == null) {
-                throw new IllegalStateException(
-                        "Thiếu db.properties. Hãy sao chép db.properties.example và điền cấu hình Supabase.");
+        String explicit = System.getProperty("nihongoquest.db.config");
+        Path[] candidates = explicit == null ? new Path[]{
+                Path.of(System.getProperty("user.home"), ".nihongoquest", "db.properties"),
+                Path.of("db.properties"),
+                Path.of("src", "main", "resources", "db.properties")
+        } : new Path[]{Path.of(explicit)};
+        for (Path candidate : candidates) {
+            if (!Files.isRegularFile(candidate)) continue;
+            try (InputStream input = Files.newInputStream(candidate)) {
+                properties.load(input);
+                return properties;
+            } catch (IOException error) {
+                throw new IllegalStateException("Không thể đọc db.properties: " + candidate, error);
             }
-            properties.load(input);
-            return properties;
-        } catch (IOException e) {
-            throw new IllegalStateException("Không thể đọc db.properties", e);
         }
+        try (InputStream input = Database.class.getResourceAsStream("/db.properties")) {
+            if (input != null) {
+                properties.load(input);
+                return properties;
+            }
+        } catch (IOException error) {
+            throw new IllegalStateException("Không thể đọc db.properties", error);
+        }
+        throw new IllegalStateException("Thiếu db.properties. Đặt tại ~/.nihongoquest/db.properties hoặc truyền -Dnihongoquest.db.config.");
     }
 
     private String require(Properties properties, String key) {
