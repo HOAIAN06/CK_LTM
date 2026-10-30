@@ -15,11 +15,17 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
-/** Owns the default camera on one daemon thread and emits bounded 320x240 JPEG frames. */
+/** Owns the default camera on one daemon thread and emits latest-wins 720p/45 FPS frames. */
 public final class CameraCaptureService implements AutoCloseable {
+    public static final int WIDTH = 1280;
+    public static final int HEIGHT = 720;
+    public static final int TARGET_FPS = 45;
+    private static final long FRAME_INTERVAL_NANOS = 1_000_000_000L / TARGET_FPS;
     public enum Failure { NOT_FOUND, FAILED, LOST }
+    private static final AtomicLong NEXT_SEQUENCE = new AtomicLong();
     private final Consumer<CapturedFrame> frameConsumer;
     private final Consumer<Failure> failureConsumer;
     private final AtomicBoolean running = new AtomicBoolean();
@@ -37,13 +43,14 @@ public final class CameraCaptureService implements AutoCloseable {
     }
 
     private void captureLoop() {
-        long sequence = 0;
+        long framesCaptured = 0;
         try (Java2DFrameConverter converter = new Java2DFrameConverter()) {
             OpenCVFrameGrabber local = new OpenCVFrameGrabber(0);
             grabber = local;
-            local.setImageWidth(320);
-            local.setImageHeight(240);
-            local.setFrameRate(5);
+            local.setImageWidth(WIDTH);
+            local.setImageHeight(HEIGHT);
+            local.setFrameRate(TARGET_FPS);
+            local.setTimeout(2_000);
             try {
                 local.start();
             } catch (Exception startError) {
@@ -54,20 +61,27 @@ public final class CameraCaptureService implements AutoCloseable {
             while (running.get()) {
                 Frame frame = local.grab();
                 if (frame == null) {
-                    failureConsumer.accept(sequence == 0 ? Failure.NOT_FOUND : Failure.LOST);
+                    failureConsumer.accept(framesCaptured == 0 ? Failure.NOT_FOUND : Failure.LOST);
                     return;
                 }
+                long nowNanos = System.nanoTime();
+                if (nowNanos < nextFrame) continue;
+                nextFrame = nowNanos + FRAME_INTERVAL_NANOS;
                 long now = System.currentTimeMillis();
-                if (now < nextFrame) continue;
-                nextFrame = now + 200;
                 BufferedImage source = converter.convert(frame);
                 if (source == null) continue;
                 BufferedImage image = scale(source);
                 byte[] jpeg = encodeWithinLimit(image);
-                if (jpeg != null) frameConsumer.accept(
-                        new CapturedFrame(++sequence, now, jpeg, image));
+                if (jpeg != null) {
+                    framesCaptured++;
+                    frameConsumer.accept(new CapturedFrame(
+                            NEXT_SEQUENCE.incrementAndGet(), now, jpeg, image));
+                }
             }
-        } catch (Exception error) {
+        } catch (Throwable error) {
+            // Native OpenCV loading failures are Errors (for example UnsatisfiedLinkError),
+            // not Exceptions.  Letting one escape leaves the coordinator stuck forever in
+            // INITIALIZING even though the capture thread has already died.
             if (running.get()) failureConsumer.accept(Failure.FAILED);
         } finally {
             running.set(false);
@@ -78,18 +92,18 @@ public final class CameraCaptureService implements AutoCloseable {
     }
 
     private BufferedImage scale(BufferedImage source) {
-        BufferedImage target = new BufferedImage(320, 240, BufferedImage.TYPE_3BYTE_BGR);
+        BufferedImage target = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_3BYTE_BGR);
         Graphics2D graphics = target.createGraphics();
         graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
                 RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        graphics.drawImage(source, 0, 0, 320, 240, null);
+        graphics.drawImage(source, 0, 0, WIDTH, HEIGHT, null);
         graphics.dispose();
         return target;
     }
 
     private byte[] encodeWithinLimit(BufferedImage image) throws Exception {
-        for (float quality : new float[]{.60f, .50f, .40f}) {
-            ByteArrayOutputStream bytes = new ByteArrayOutputStream(32_768);
+        for (float quality : new float[]{.88f, .82f, .75f, .68f}) {
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream(196_608);
             Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpeg");
             if (!writers.hasNext()) return null;
             ImageWriter writer = writers.next();
@@ -102,7 +116,7 @@ public final class CameraCaptureService implements AutoCloseable {
             } finally {
                 writer.dispose();
             }
-            if (bytes.size() <= 65_536) return bytes.toByteArray();
+            if (bytes.size() <= 524_288) return bytes.toByteArray();
         }
         return null;
     }

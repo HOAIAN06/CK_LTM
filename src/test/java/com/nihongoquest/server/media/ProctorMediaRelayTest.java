@@ -14,6 +14,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
 import java.time.Duration;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -113,6 +115,28 @@ class ProctorMediaRelayTest {
             MediaProtocol.writeHandshake(output, Role.PUBLISHER, pendingTicket.token());
             assertEquals(MediaProtocol.ACK_INVALID_TICKET, input.readUnsignedByte());
         }
+    }
+
+    @Test
+    void revokingHostClosesSubscriberSocket() throws Exception {
+        relay.start(0);
+        var ticket = relay.issueTicket("123456", 1, Role.HOST_SUBSCRIBER);
+        try (Connection host = connect(ticket.token(), Role.HOST_SUBSCRIBER)) {
+            relay.revokeUser("123456", 1);
+            assertEquals(-1, host.input.read());
+        }
+    }
+
+    @Test
+    void publisherDisconnectRequestsFreshTicketForSameIdentity() throws Exception {
+        relay.start(0);
+        LinkedBlockingQueue<Long> disconnected = new LinkedBlockingQueue<>();
+        relay.setMediaDisconnectListener((pin, userId) -> disconnected.offer(userId));
+        var ticket = relay.issueTicket("123456", 2, Role.PUBLISHER);
+        try (Connection publisher = connect(ticket.token(), Role.PUBLISHER)) {
+            publisher.socket.close();
+        }
+        assertEquals(2L, disconnected.poll(2, TimeUnit.SECONDS));
     }
 
     private Connection connect(String ticket, Role role) throws Exception {

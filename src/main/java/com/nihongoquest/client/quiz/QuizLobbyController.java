@@ -14,6 +14,9 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import java.io.ByteArrayInputStream;
 
 import java.util.Optional;
 
@@ -28,6 +31,7 @@ public class QuizLobbyController implements NavigationGuard {
     @FXML private Button leaveButton;
     @FXML private Button retryCameraButton;
     @FXML private Label proctoringLabel;
+    @FXML private ImageView cameraPreview;
 
     private ClientApp app;
     private GameClient gameClient;
@@ -68,6 +72,7 @@ public class QuizLobbyController implements NavigationGuard {
         leaveButton.setDisable(true);
         if (host) gameClient.cancelQuizRoom();
         else gameClient.leaveQuizRoom();
+        app.getProctoringCoordinator().stopRoom();
         app.showMatchmaking();
     }
 
@@ -83,7 +88,7 @@ public class QuizLobbyController implements NavigationGuard {
             case QUIZ_ROOM_START -> app.showQuizBattle(Payloads.fromJson(
                     message.getPayload(), Payloads.QuizRoomStarted.class));
             case QUIZ_QUESTION, QUIZ_LEADERBOARD -> gameClient.redispatch(message);
-            case QUIZ_ROOM_CANCEL -> app.showMatchmaking();
+            case QUIZ_ROOM_CANCEL -> { app.getProctoringCoordinator().stopRoom(); app.showMatchmaking(); }
             case QUIZ_ERROR -> {
                 startButton.setDisable(false);
                 showError(QuizRoomUi.errorText(message.payloadText()));
@@ -97,13 +102,15 @@ public class QuizLobbyController implements NavigationGuard {
         app.getProctoringCoordinator().enterLobby(lobby);
         pinLabel.setText(lobby.pin());
         titleLabel.setText(lobby.title());
-        countLabel.setText(lobby.playerCount() + "/20 người chơi");
+        boolean monitored = lobby.proctoringEnabled();
+        countLabel.setText(lobby.playerCount() + (monitored ? "/6" : "/20") + " người chơi");
         playerList.setItems(FXCollections.observableArrayList(lobby.members()));
         startButton.setVisible(host);
         startButton.setManaged(host);
-        startButton.setDisable(!host || lobby.playerCount() < 2);
+        boolean camerasReady = lobby.members().stream().filter(Payloads.QuizLobbyPlayer::playing)
+                .allMatch(member -> member.cameraStatus() == Payloads.CameraStatus.READY);
+        startButton.setDisable(!host || lobby.playerCount() < 2 || monitored && !camerasReady);
         leaveButton.setText(host ? "Hủy phòng" : "Rời phòng");
-        boolean monitored = lobby.proctoringEnabled();
         proctoringLabel.setVisible(monitored);
         proctoringLabel.setManaged(monitored);
         proctoringLabel.setText(monitored
@@ -113,6 +120,8 @@ public class QuizLobbyController implements NavigationGuard {
         retryCameraButton.setManaged(monitored && !host);
         statusLabel.setText(host && lobby.playerCount() < 2
                 ? "Cần ít nhất 2 người chơi để bắt đầu."
+                : host && monitored && !camerasReady
+                ? "Đang kiểm tra camera HD 45 FPS của người chơi..."
                 : "Đang chờ host bắt đầu...");
     }
 

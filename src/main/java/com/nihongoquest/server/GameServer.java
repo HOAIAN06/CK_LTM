@@ -77,6 +77,8 @@ public class GameServer {
                 questionService, matchRepository, scheduler);
         QuizSetService quizSetService = new QuizSetService(new QuizSetRepository(database));
         this.quizRoomManager = new QuizRoomManager(quizSetService, scheduler);
+        this.quizRoomManager.setMediaRelay(mediaRelay);
+        this.mediaRelay.setMediaDisconnectListener(quizRoomManager::reissueMediaSession);
         SocialService socialService = new SocialService(new FriendshipRepository(database),
                 onlineUsers, matchmakingManager, quizRoomManager, scheduler);
         this.requestRouter = new ServerRequestRouter(

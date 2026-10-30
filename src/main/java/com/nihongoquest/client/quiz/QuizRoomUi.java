@@ -7,8 +7,9 @@ final class QuizRoomUi {
         return switch (code) {
             case "ROOM_NOT_FOUND", "INVALID_PIN" -> "Không tìm thấy phòng với PIN này.";
             case "ROOM_STARTED" -> "Phòng đã bắt đầu, không thể tham gia mới.";
-            case "ROOM_FULL" -> "Phòng đã đủ 20 người chơi.";
+            case "ROOM_FULL" -> "Phòng đã đủ số người chơi cho chế độ hiện tại (tối đa 6 khi giám sát HD).";
             case "NOT_ENOUGH_PLAYERS" -> "Cần ít nhất 2 người chơi để bắt đầu.";
+            case "CAMERA_PREFLIGHT_PENDING" -> "Đang chờ tất cả người chơi có camera HD sẵn sàng.";
             case "NOT_HOST" -> "Chỉ host mới được thực hiện thao tác này.";
             case "QUIZ_NOT_PUBLISHED" -> "Bộ đề chưa được xuất bản.";
             case "INVALID_DURATION" -> "Thời lượng phải từ 1 đến 15 phút.";

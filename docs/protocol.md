@@ -85,3 +85,26 @@ và rảnh. Lời mời nằm trong RAM tối đa 60 giây:
 
 - `RANKED`: mang thời lượng 180/300 giây; accept tạo trận trực tiếp, không qua hàng chờ.
 - `QUIZ`: mang PIN; người gửi phải là host của lobby, accept sẽ join nếu phòng còn hợp lệ.
+
+## Proctoring Quiz Room
+
+`QUIZ_ROOM_CREATE` thêm `proctoringEnabled`; giá trị thiếu mặc định `false`. Khi bật,
+`hostPlays=true` bị từ chối với `PROCTORING_HOST_CANNOT_PLAY`. Lobby, room start và
+rejoin đều có cờ này. Lobby player có `cameraStatus`, `calibrationStatus`, `warningCount`.
+
+Control channel 5000 có `PROCTOR_STATUS_REPORT` (player → server),
+`PROCTOR_STATUS_UPDATE` (server → host), `PROCTOR_EVENT_REPORT` (player → server),
+`PROCTOR_EVENT` (server → host) và `PROCTOR_MEDIA_SESSION` (server → publisher/host).
+Status/event chỉ được gửi từ người chơi trong phòng giám sát, server lấy user ID từ
+session. `eventId` là UUID tối đa 64 ký tự, `durationMillis` 0–300000 và `confidence`
+0–1. Ticket được che trong Server Dashboard traffic log.
+
+Media TCP 5001 v1 dùng network byte order: handshake `NQMP` (4 byte), version `1`
+(1 byte), role `1` publisher hoặc `2` host (1 byte), ticket length (2 byte), ticket
+UTF-8. ACK 0 OK, 1 magic sai, 2 version sai, 3 ticket sai, 4 ticket hết hạn, 5 phòng
+đóng. Publisher gửi type `0x10`, sequence (8), capture epoch millis (8), JPEG length
+(4), JPEG; host nhận type `0x11`, user ID (8), sequence (8), server receive millis
+(8), JPEG length (4), JPEG. JPEG tối đa 65.536 byte; ticket tối đa 512 byte.
+
+Nếu socket media rơi trong lúc control channel còn sống, relay yêu cầu server phát ticket
+mới cho đúng user/role qua `PROCTOR_MEDIA_SESSION`. Ticket cũ không được tái sử dụng.

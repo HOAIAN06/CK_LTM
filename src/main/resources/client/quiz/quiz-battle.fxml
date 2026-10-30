@@ -30,6 +30,10 @@
                                  prefWidth="220" styleClass="time-progress"/>
                     <Label fx:id="questionTimeLabel" text="--" styleClass="time-label"/>
                 </HBox>
+                <Label fx:id="cameraBanner" visible="false" managed="false"
+                       style="-fx-text-fill: #b71c1c;"/>
+                <Label fx:id="toastLabel" visible="false" managed="false"
+                       wrapText="true" style="-fx-background-color: #fff3cd; -fx-padding: 8;"/>
                 <VBox spacing="12" styleClass="question-card" VBox.vgrow="ALWAYS">
                     <Label fx:id="questionLabel" text="Đang chuẩn bị câu hỏi"
                            wrapText="true" styleClass="battle-question"/>
@@ -57,6 +61,8 @@
                         styleClass="danger-outline-button"/>
             </VBox>
             <VBox spacing="10" prefWidth="350" styleClass="quiz-side-panel">
+                <StackPane fx:id="cameraPreviewHolder" prefWidth="320" prefHeight="180"
+                           visible="false" managed="false" styleClass="camera-preview-shell"/>
                 <Label text="BẢNG XẾP HẠNG TRỰC TIẾP" styleClass="section-title"/>
                 <ListView fx:id="leaderboardList" VBox.vgrow="ALWAYS"/>
             </VBox>

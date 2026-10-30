@@ -3,12 +3,15 @@ package com.nihongoquest.client;
 import com.nihongoquest.client.layout.AuthenticatedRoute;
 import com.nihongoquest.client.layout.AuthenticatedShellController;
 import com.nihongoquest.server.dashboard.DashboardController;
+import com.nihongoquest.common.protocol.Payloads;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -17,6 +20,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 
@@ -53,6 +58,7 @@ class ClientFxmlTest {
             "/client/quiz/quiz-room-menu.fxml",
             "/client/quiz/quiz-lobby.fxml",
             "/client/quiz/quiz-battle.fxml",
+            "/client/quiz/proctor-dashboard.fxml",
             "/client/ranked/matchmaking/matchmaking.fxml",
             "/client/ranked/battle/battle.fxml",
             "/client/ranked/battle/result.fxml"
@@ -93,6 +99,41 @@ class ClientFxmlTest {
         assertTrue(result[0]);
         assertTrue(result[1]);
         assertTrue(result[2]);
+    }
+
+    @Test
+    void proctorDashboardRendersTwentyTilesAndFiltersAndZooms() throws Exception {
+        FutureTask<boolean[]> check = new FutureTask<>(() -> {
+            FXMLLoader loader = new FXMLLoader(ClientFxmlTest.class.getResource(
+                    "/client/quiz/proctor-dashboard.fxml"));
+            Parent root = loader.load();
+            new Scene(root, 980, 680); root.applyCss(); root.layout();
+            var controller = loader.getController();
+            List<Payloads.QuizLobbyPlayer> players = new ArrayList<>();
+            for (int i = 0; i < 20; i++) players.add(new Payloads.QuizLobbyPlayer(
+                    i + 2, "player" + i, false, true, true,
+                    Payloads.CameraStatus.READY, Payloads.CalibrationStatus.READY, i % 2));
+            Payloads.QuizLobbyData lobby = new Payloads.QuizLobbyData("123456", "Demo",
+                    "host", true, false, true, true, 20, players);
+            var update = controller.getClass().getDeclaredMethod("updateLobby",
+                    Payloads.QuizLobbyData.class);
+            update.setAccessible(true);
+            update.invoke(controller, lobby);
+            TilePane grid = (TilePane) root.lookup("#cameraGrid");
+            boolean twenty = grid.getChildren().size() == 20;
+            @SuppressWarnings("unchecked")
+            ComboBox<String> filter = (ComboBox<String>) root.lookup("#filterBox");
+            filter.getSelectionModel().select("Đang cảnh báo");
+            boolean filtered = grid.getChildren().size() == 10;
+            filter.getSelectionModel().select("Tất cả");
+            grid.getChildren().getFirst().getOnMouseClicked().handle(null);
+            boolean zoomed = grid.getChildren().size() == 1
+                    && grid.getPrefTileWidth() == 800;
+            return new boolean[]{twenty, filtered, zoomed};
+        });
+        Platform.runLater(check);
+        boolean[] result = check.get(10, TimeUnit.SECONDS);
+        assertTrue(result[0]); assertTrue(result[1]); assertTrue(result[2]);
     }
 
     private void loadScreen(String resource, String stylesheet) throws Exception {

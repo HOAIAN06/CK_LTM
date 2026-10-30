@@ -63,3 +63,20 @@ payload object, session registry, persistence đơn giản, quản lý bộ đ�
 và lịch sử thi đấu. `PlayerRepository` phục vụ hồ sơ/leaderboard; `MatchRepository` vừa lưu kết
 quả vừa đọc lịch sử theo user. `FriendshipRepository` lưu quan hệ bạn bè; `SocialService` giữ
 lời mời chơi 60 giây trong RAM và nối accept với direct Ranked hoặc join Quiz.
+
+## Giám sát Quiz Room
+
+`QuizRoom` giữ trạng thái camera, hiệu chuẩn và số cảnh báo trong RAM. Control channel
+TCP 5000 truyền status, event và media ticket; `ProctorMediaRelay` dùng TCP 5001 chỉ
+xác thực và chuyển JPEG, không giải mã hay lưu frame. Ticket ngẫu nhiên 32 byte gắn
+với PIN/user/role, dùng một lần và hết hạn handshake sau 60 giây.
+
+Trên máy player, `ProctoringCoordinator` sở hữu consent, camera, AI, media publisher và
+focus monitor. Camera phát tối đa 5 FPS ở 320×240; AI dùng queue kích thước một.
+Host có dashboard JavaFX riêng, media subscriber và `EvidenceRecorder`: buffer JPEG
+15 giây/8 MiB mỗi player, snapshot và MP4 pre/post trên executor hai worker. Server
+không chạy AI và không ghi bằng chứng. Toàn bộ model nằm trong resources để chạy offline.
+
+Bốn model Intel được chuyển từ OpenVINO IR sang ONNX khi chuẩn bị bản phát hành;
+YOLOX-tiny dùng ONNX chính thức. Runtime chỉ dùng OpenCV DNN CPU. Bản ONNX và SHA-256
+nằm trong `src/main/resources/models/proctoring/manifest.json`; không tải model khi chạy.

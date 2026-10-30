@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -44,6 +45,7 @@ public final class ProctorMediaRelay implements AutoCloseable {
     private final Map<String, TicketGrant> tickets = new ConcurrentHashMap<>();
     private final Map<String, RoomRelay> rooms = new ConcurrentHashMap<>();
     private final AtomicBoolean running = new AtomicBoolean();
+    private volatile BiConsumer<String, Long> mediaDisconnectListener = (pin, userId) -> { };
 
     private ServerSocket serverSocket;
     private Thread acceptThread;
@@ -71,6 +73,10 @@ public final class ProctorMediaRelay implements AutoCloseable {
 
     public boolean isRunning() { return running.get(); }
 
+    public void setMediaDisconnectListener(BiConsumer<String, Long> listener) {
+        mediaDisconnectListener = listener;
+    }
+
     public Ticket issueTicket(String roomPin, long userId, Role role) {
         return issueTicket(roomPin, userId, role, DEFAULT_TICKET_TTL);
     }
@@ -80,7 +86,8 @@ public final class ProctorMediaRelay implements AutoCloseable {
                 || ttl == null || ttl.isZero() || ttl.isNegative()) {
             throw new IllegalArgumentException("Invalid media ticket request");
         }
-        RoomRelay room = rooms.computeIfAbsent(roomPin, RoomRelay::new);
+        RoomRelay room = rooms.computeIfAbsent(roomPin,
+                pin -> new RoomRelay(pin, this::notifyMediaDisconnect));
         room.authorize(userId);
         // Reconnect always invalidates an unconsumed ticket for the same identity/role.
         tickets.entrySet().removeIf(entry -> {
@@ -130,6 +137,10 @@ public final class ProctorMediaRelay implements AutoCloseable {
         tickets.entrySet().removeIf(entry -> entry.getValue().roomPin.equals(roomPin));
         RoomRelay room = rooms.remove(roomPin);
         if (room != null) room.close();
+    }
+
+    private void notifyMediaDisconnect(String pin, long userId) {
+        if (running.get()) mediaDisconnectListener.accept(pin, userId);
     }
 
     private void acceptLoop() {
@@ -185,7 +196,7 @@ public final class ProctorMediaRelay implements AutoCloseable {
                 socket.setSoTimeout(0);
                 room.runPublisher(grant.userId, socket, input);
             } else {
-                if (!room.attachHost(socket)) {
+                if (!room.attachHost(grant.userId, socket)) {
                     acknowledge(output, MediaProtocol.ACK_ROOM_CLOSED);
                     return;
                 }
@@ -241,14 +252,18 @@ public final class ProctorMediaRelay implements AutoCloseable {
 
     private static final class RoomRelay {
         private final String pin;
+        private final BiConsumer<String, Long> onDisconnect;
         private final Object monitor = new Object();
         private final Map<Long, Socket> publishers = new HashMap<>();
         private final Map<Long, RelayedFrame> latestFrames = new HashMap<>();
         private final Set<Long> revokedUsers = new HashSet<>();
         private volatile Socket hostSocket;
+        private long hostUserId;
         private volatile boolean closed;
 
-        RoomRelay(String pin) { this.pin = pin; }
+        RoomRelay(String pin, BiConsumer<String, Long> onDisconnect) {
+            this.pin = pin; this.onDisconnect = onDisconnect;
+        }
 
         void authorize(long userId) {
             synchronized (monitor) {
@@ -272,24 +287,28 @@ public final class ProctorMediaRelay implements AutoCloseable {
                     synchronized (monitor) {
                         if (hostSocket != null && !hostSocket.isClosed()) {
                             latestFrames.put(userId, new RelayedFrame(userId, frame.sequence(),
-                                    System.currentTimeMillis(), frame.jpeg()));
+                                    System.currentTimeMillis(), frame.jpeg(), frame.vision()));
                             monitor.notifyAll();
                         }
                     }
                 }
             } finally {
+                boolean reissue;
                 synchronized (monitor) {
-                    publishers.remove(userId, socket);
-                    latestFrames.remove(userId);
+                    reissue = publishers.remove(userId, socket)
+                            && !closed && !revokedUsers.contains(userId);
+                    if (reissue) latestFrames.remove(userId);
                 }
+                if (reissue) onDisconnect.accept(pin, userId);
             }
         }
 
-        boolean attachHost(Socket socket) {
+        boolean attachHost(long userId, Socket socket) {
             synchronized (monitor) {
                 if (closed) return false;
                 Socket previous = hostSocket;
                 hostSocket = socket;
+                hostUserId = userId;
                 latestFrames.clear();
                 if (previous != socket) closeQuietly(previous);
                 return true;
@@ -320,11 +339,17 @@ public final class ProctorMediaRelay implements AutoCloseable {
                     if (!batch.isEmpty()) output.flush();
                 }
             } finally {
+                boolean reissue;
+                long disconnectedUserId;
                 synchronized (monitor) {
-                    if (hostSocket == socket) hostSocket = null;
+                    disconnectedUserId = hostUserId;
+                    reissue = hostSocket == socket && !closed
+                            && !revokedUsers.contains(disconnectedUserId);
+                    if (hostSocket == socket) { hostSocket = null; hostUserId = 0; }
                     latestFrames.clear();
                     monitor.notifyAll();
                 }
+                if (reissue) onDisconnect.accept(pin, disconnectedUserId);
             }
         }
 
@@ -333,6 +358,13 @@ public final class ProctorMediaRelay implements AutoCloseable {
                 revokedUsers.add(userId);
                 closeQuietly(publishers.remove(userId));
                 latestFrames.remove(userId);
+                if (hostUserId == userId) {
+                    closeQuietly(hostSocket);
+                    hostSocket = null;
+                    hostUserId = 0;
+                    latestFrames.clear();
+                    monitor.notifyAll();
+                }
             }
         }
 
@@ -342,6 +374,7 @@ public final class ProctorMediaRelay implements AutoCloseable {
                 closed = true;
                 closeQuietly(hostSocket);
                 hostSocket = null;
+                hostUserId = 0;
                 publishers.values().forEach(ProctorMediaRelay::closeQuietly);
                 publishers.clear();
                 latestFrames.clear();

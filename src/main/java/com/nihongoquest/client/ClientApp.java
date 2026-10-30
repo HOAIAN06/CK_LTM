@@ -12,6 +12,7 @@ import com.nihongoquest.client.profile.Player;
 import com.nihongoquest.client.profile.ProfileController;
 import com.nihongoquest.client.proctor.ProctoringCoordinator;
 import com.nihongoquest.client.quiz.QuizBattleController;
+import com.nihongoquest.client.quiz.ProctorDashboardController;
 import com.nihongoquest.client.quiz.QuizLobbyController;
 import com.nihongoquest.client.quiz.QuizRoomMenuController;
 import com.nihongoquest.client.quiz.QuizSetEditorController;
@@ -58,6 +59,9 @@ public class ClientApp extends Application {
         this.primaryStage = primaryStage;
         primaryStage.setTitle("NihongoQuest");
         gameClient.setGlobalMessageHandler(this::handleGlobalMessage);
+        gameClient.setConnectionLostListener(error -> {
+            if (proctoringCoordinator != null) proctoringCoordinator.stopRoom();
+        });
         proctoringCoordinator = new ProctoringCoordinator(gameClient, primaryStage);
         showLogin();
         primaryStage.show();
@@ -248,6 +252,11 @@ public class ClientApp extends Application {
     }
 
     public void showQuizBattle(Payloads.QuizRoomStarted room) {
+        proctoringCoordinator.setPreviewListener(ignored -> { });
+        if (room.proctoringEnabled() && room.host()) {
+            showProctorDashboard(room);
+            return;
+        }
         proctoringCoordinator.startRoom(room);
         try {
             FXMLLoader loader = loader("/client/quiz/quiz-battle.fxml");
@@ -258,6 +267,20 @@ public class ClientApp extends Application {
                     AuthenticatedRoute.QUIZ_BATTLE, false, false);
         } catch (IOException e) {
             throw screenError("Thi Quiz", e);
+        }
+    }
+
+    private void showProctorDashboard(Payloads.QuizRoomStarted room) {
+        proctoringCoordinator.startRoom(room);
+        try {
+            FXMLLoader loader = loader("/client/quiz/proctor-dashboard.fxml");
+            Parent root = loader.load();
+            ProctorDashboardController controller = loader.getController();
+            controller.setSession(this, gameClient, room);
+            showInShell(root, controller, "Giám sát Quiz", "PIN " + room.pin(),
+                    AuthenticatedRoute.QUIZ_BATTLE, false, false);
+        } catch (IOException e) {
+            throw screenError("Giám sát Quiz", e);
         }
     }
 

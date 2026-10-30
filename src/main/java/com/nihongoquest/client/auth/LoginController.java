@@ -183,6 +183,7 @@ public class LoginController {
                 Payloads.QuizRejoinData rejoin = Payloads.fromJson(
                         message.getPayload(), Payloads.QuizRejoinData.class);
                 if (rejoin.running()) {
+                    app.getProctoringCoordinator().enterLobby(rejoin.lobby());
                     app.showQuizBattle(new Payloads.QuizRoomStarted(
                             rejoin.lobby().pin(), rejoin.lobby().title(),
                             rejoin.remainingSeconds(), rejoin.playing(),

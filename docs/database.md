@@ -10,8 +10,9 @@ xóa schema NihongoQuest cũ rồi tạo lại `users`, `quiz_sets`, `questions`
 2. Chạy `sql/supabase_schema.sql` trong Supabase SQL Editor.
 3. Chạy `sql/seed_demo.sql` nếu cần bộ dữ liệu demo.
 4. Chạy `sql/verify_schema.sql` để kiểm tra read-only.
-5. Sao chép `src/main/resources/db.properties.example` thành `db.properties` và điền
-   host/user/password. File thật đã nằm trong `.gitignore`.
+5. Sao chép `src/main/resources/db.properties.example` thành `~/.nihongoquest/db.properties`
+   (Windows: `%USERPROFILE%\.nihongoquest\db.properties`) và điền host/user/password.
+   File cấu hình thật bị loại khỏi JAR và không nằm trong app-image.
 
 Ba tài khoản seed là `demo_host`, `demo_player1`, `demo_player2`, cùng mật khẩu
 `1234`. Password trong seed là BCrypt hash; server vẫn xác minh bằng BCrypt.
@@ -36,3 +37,8 @@ không được ghi vào database.
 Mỗi cặp chỉ có một dòng trong `friendships`, luôn thỏa `user_low_id < user_high_id`.
 `requested_by_id` cho biết người gửi khi trạng thái là `PENDING`; accept chuyển sang
 `ACCEPTED`, còn reject/remove xóa dòng. Presence và game invite không lưu database.
+
+## Giám sát
+
+Không có migration cho proctoring. Trạng thái camera/cảnh báo chỉ trong RAM; ảnh,
+clip và metadata được lưu thành file trên máy host. Database không chứa media.

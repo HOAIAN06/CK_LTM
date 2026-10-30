@@ -5,13 +5,18 @@ import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 /** Binary protocol used only for proctoring camera frames. */
 public final class MediaProtocol {
     public static final int MAGIC = 0x4E514D50; // NQMP
-    public static final int VERSION = 1;
+    /** Version 2 adds normalized vision metadata to every relayed frame. */
+    public static final int VERSION = 2;
     public static final int MAX_TICKET_BYTES = 512;
-    public static final int MAX_JPEG_BYTES = 65_536;
+    /** 720p high quality frames need more than the original 64 KiB ceiling. */
+    public static final int MAX_JPEG_BYTES = 524_288;
+    private static final int MAX_FACES = 6;
     public static final int HANDSHAKE_TIMEOUT_MILLIS = 10_000;
 
     public static final int FRAME_PUBLISH = 0x10;
@@ -41,9 +46,21 @@ public final class MediaProtocol {
     }
 
     public record Handshake(Role role, String ticket) { }
-    public record PublishedFrame(long sequence, long captureEpochMillis, byte[] jpeg) { }
+    public record PublishedFrame(long sequence, long captureEpochMillis, byte[] jpeg,
+                                 VisionMetadata vision) {
+        public PublishedFrame(long sequence, long captureEpochMillis, byte[] jpeg) {
+            this(sequence, captureEpochMillis, jpeg, VisionMetadata.unavailable(sequence));
+        }
+    }
     public record RelayedFrame(long userId, long sequence,
-                               long serverReceivedEpochMillis, byte[] jpeg) { }
+                               long serverReceivedEpochMillis, byte[] jpeg,
+                               VisionMetadata vision) {
+        public RelayedFrame(long userId, long sequence, long serverReceivedEpochMillis,
+                            byte[] jpeg) {
+            this(userId, sequence, serverReceivedEpochMillis, jpeg,
+                    VisionMetadata.unavailable(sequence));
+        }
+    }
 
     public static void writeHandshake(DataOutputStream output, Role role, String ticket)
             throws IOException {
@@ -83,6 +100,7 @@ public final class MediaProtocol {
         output.writeLong(frame.captureEpochMillis());
         output.writeInt(frame.jpeg().length);
         output.write(frame.jpeg());
+        writeVision(output, frame.vision());
         output.flush();
     }
 
@@ -92,7 +110,7 @@ public final class MediaProtocol {
         long sequence = input.readLong();
         long timestamp = input.readLong();
         byte[] jpeg = readJpeg(input);
-        return new PublishedFrame(sequence, timestamp, jpeg);
+        return new PublishedFrame(sequence, timestamp, jpeg, readVision(input, sequence));
     }
 
     public static void writeRelayedFrame(DataOutputStream output, RelayedFrame frame)
@@ -104,6 +122,7 @@ public final class MediaProtocol {
         output.writeLong(frame.serverReceivedEpochMillis());
         output.writeInt(frame.jpeg().length);
         output.write(frame.jpeg());
+        writeVision(output, frame.vision());
     }
 
     public static RelayedFrame readRelayedFrame(DataInputStream input) throws IOException {
@@ -112,7 +131,8 @@ public final class MediaProtocol {
         long userId = input.readLong();
         long sequence = input.readLong();
         long timestamp = input.readLong();
-        return new RelayedFrame(userId, sequence, timestamp, readJpeg(input));
+        byte[] jpeg = readJpeg(input);
+        return new RelayedFrame(userId, sequence, timestamp, jpeg, readVision(input, sequence));
     }
 
     private static byte[] readJpeg(DataInputStream input) throws IOException {
@@ -129,6 +149,48 @@ public final class MediaProtocol {
         if (jpeg == null || jpeg.length == 0 || jpeg.length > MAX_JPEG_BYTES) {
             throw new IllegalArgumentException("JPEG frame exceeds protocol limit");
         }
+    }
+
+    private static void writeVision(DataOutputStream output, VisionMetadata vision) throws IOException {
+        VisionMetadata value = vision == null ? VisionMetadata.unavailable(0) : vision;
+        output.writeLong(value.frameSequence());
+        output.writeLong(value.analysedAtEpochMillis());
+        output.writeByte(value.attention().ordinal());
+        output.writeDouble(value.gazeX());
+        output.writeDouble(value.gazeY());
+        output.writeFloat((float) value.confidence());
+        List<VisionMetadata.FaceBox> faces = value.faces();
+        output.writeByte(Math.min(MAX_FACES, faces.size()));
+        for (int index = 0; index < Math.min(MAX_FACES, faces.size()); index++) {
+            VisionMetadata.FaceBox face = faces.get(index);
+            output.writeFloat((float) face.x()); output.writeFloat((float) face.y());
+            output.writeFloat((float) face.width()); output.writeFloat((float) face.height());
+            output.writeFloat((float) face.leftEyeX()); output.writeFloat((float) face.leftEyeY());
+            output.writeFloat((float) face.rightEyeX()); output.writeFloat((float) face.rightEyeY());
+        }
+    }
+
+    private static VisionMetadata readVision(DataInputStream input, long fallbackSequence)
+            throws IOException {
+        long sequence = input.readLong();
+        long analysedAt = input.readLong();
+        int attention = input.readUnsignedByte();
+        VisionMetadata.Attention[] values = VisionMetadata.Attention.values();
+        VisionMetadata.Attention state = attention < values.length ? values[attention]
+                : VisionMetadata.Attention.UNKNOWN;
+        double gazeX = input.readDouble();
+        double gazeY = input.readDouble();
+        double confidence = input.readFloat();
+        int count = input.readUnsignedByte();
+        if (count > MAX_FACES) throw new IOException("Too many vision face boxes");
+        List<VisionMetadata.FaceBox> faces = new ArrayList<>(count);
+        for (int index = 0; index < count; index++) {
+            faces.add(new VisionMetadata.FaceBox(input.readFloat(), input.readFloat(),
+                    input.readFloat(), input.readFloat(), input.readFloat(), input.readFloat(),
+                    input.readFloat(), input.readFloat()));
+        }
+        return new VisionMetadata(sequence <= 0 ? fallbackSequence : sequence, analysedAt, faces,
+                gazeX, gazeY, state, confidence);
     }
 
     public static final class HandshakeException extends IOException {

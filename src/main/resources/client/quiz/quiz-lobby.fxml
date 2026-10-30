@@ -2,6 +2,7 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.image.*?>
 
 <BorderPane styleClass="root,app-shell"
             xmlns="http://javafx.com/javafx/21"
@@ -12,7 +13,7 @@
             <HBox alignment="CENTER_LEFT">
                 <VBox spacing="3" HBox.hgrow="ALWAYS">
                     <Label fx:id="titleLabel" text="Bộ đề" styleClass="section-title"/>
-                    <Label text="Phòng khóa khi host bắt đầu; tối đa 20 người chơi."
+                    <Label text="Phòng giám sát HD tối đa 6 người chơi; phòng thường tối đa 20."
                            styleClass="helper-text"/>
                 </VBox>
                 <VBox alignment="CENTER_RIGHT" spacing="2">
@@ -21,6 +22,8 @@
                 </VBox>
                 <Label fx:id="countLabel" text="0/20 người chơi" styleClass="helper-text"/>
             </HBox>
+            <ImageView fx:id="cameraPreview" fitWidth="160" fitHeight="120"
+                       preserveRatio="true" visible="false" managed="false"/>
             <ListView fx:id="playerList" VBox.vgrow="ALWAYS" styleClass="quiz-list"/>
             <Label fx:id="proctoringLabel" visible="false" managed="false"
                    wrapText="true" styleClass="status-label"/>

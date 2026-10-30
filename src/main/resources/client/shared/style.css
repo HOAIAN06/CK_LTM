@@ -165,6 +165,14 @@
     -fx-min-width: 34px;
 }
 
+.camera-preview-shell {
+    -fx-background-color: #101827;
+    -fx-background-radius: 10px;
+    -fx-border-color: #365a84;
+    -fx-border-radius: 10px;
+    -fx-padding: 2px;
+}
+
 /* Shared authenticated layout */
 .app-shell {
     -fx-background-color: linear-gradient(to bottom right, #f8fbff, #eef3fb);

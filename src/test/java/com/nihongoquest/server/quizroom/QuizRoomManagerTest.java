@@ -4,6 +4,7 @@ import com.nihongoquest.common.protocol.Message;
 import com.nihongoquest.common.protocol.MessageType;
 import com.nihongoquest.common.protocol.Payloads;
 import com.nihongoquest.server.network.ClientHandler;
+import com.nihongoquest.server.media.ProctorMediaRelay;
 import com.nihongoquest.server.quiz.QuizSetRepository;
 import com.nihongoquest.server.quiz.QuizSetService;
 import org.junit.jupiter.api.Test;
@@ -64,6 +65,40 @@ class QuizRoomManagerTest {
         } finally {
             scheduler.shutdownNow();
         }
+    }
+
+    @Test
+    void startsMonitoredRoomWithSeparateMediaTicketsAndNoHostQuestion() throws Exception {
+        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+        ProctorMediaRelay relay = new ProctorMediaRelay();
+        QuizRoomManager manager = new QuizRoomManager(new FakeQuizSets(), scheduler, () -> 123456);
+        manager.setMediaRelay(relay);
+        StubClient host = new StubClient(1);
+        StubClient first = new StubClient(2);
+        StubClient second = new StubClient(3);
+        try {
+            relay.start(0);
+            manager.create(host, new Payloads.QuizRoomCreateRequest(5, 3, false, true));
+            manager.join(first, "123456");
+            manager.join(second, "123456");
+            manager.start(host);
+            assertFalse(host.messages.stream().anyMatch(m -> m.getType() == MessageType.QUIZ_QUESTION));
+            assertTrue(first.messages.stream().anyMatch(m -> m.getType() == MessageType.QUIZ_QUESTION));
+            Payloads.ProctorMediaSession hostSession = session(host);
+            Payloads.ProctorMediaSession playerSession = session(first);
+            assertEquals(Payloads.MediaRole.HOST_SUBSCRIBER, hostSession.role());
+            assertEquals(Payloads.MediaRole.PUBLISHER, playerSession.role());
+            assertNotEquals(hostSession.ticket(), playerSession.ticket());
+            assertEquals(relay.getLocalPort(), hostSession.mediaPort());
+        } finally {
+            manager.shutdown(); relay.close(); scheduler.shutdownNow();
+        }
+    }
+
+    private static Payloads.ProctorMediaSession session(StubClient client) {
+        return client.messages.stream().filter(m -> m.getType() == MessageType.PROCTOR_MEDIA_SESSION)
+                .map(m -> Payloads.fromJson(m.getPayload(), Payloads.ProctorMediaSession.class))
+                .findFirst().orElseThrow();
     }
 
     private static Payloads.QuizRoomCreated created(StubClient client) {

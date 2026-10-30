@@ -25,6 +25,7 @@ import java.util.function.Consumer;
 public class QuizRoom {
     static final int MIN_PLAYERS = 2;
     static final int MAX_PLAYERS = 20;
+    static final int MAX_HD_PROCTORED_PLAYERS = 6;
     static final int QUESTION_SECONDS = 30;
 
     private enum State { LOBBY, RUNNING, FINISHED }
@@ -77,7 +78,8 @@ public class QuizRoom {
             return;
         }
         if (state != State.LOBBY) throw new QuizRoomException("ROOM_STARTED");
-        if (playerCount() >= MAX_PLAYERS) throw new QuizRoomException("ROOM_FULL");
+        int capacity = proctoringEnabled ? MAX_HD_PROCTORED_PLAYERS : MAX_PLAYERS;
+        if (playerCount() >= capacity) throw new QuizRoomException("ROOM_FULL");
         PlayerState joined = new PlayerState(client.getPlayerId(), client.getUsername(),
                 false, true, client,
                 proctoringEnabled ? Payloads.CameraStatus.INITIALIZING
@@ -520,6 +522,10 @@ public class QuizRoom {
     }
 
     public String getPin() { return pin; }
+    public synchronized ClientHandler connectedMember(long userId) {
+        PlayerState member = members.get(userId);
+        return member == null || member.left ? null : member.client;
+    }
     synchronized Payloads.QuizLobbyData lobbyFor(long viewerId) { return lobbyData(viewerId); }
     public synchronized boolean isRunning() { return state == State.RUNNING; }
     public synchronized boolean isLobby() { return state == State.LOBBY; }

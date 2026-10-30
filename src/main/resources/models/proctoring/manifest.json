@@ -1,0 +1,30 @@
+{
+  "format": "ONNX",
+  "runtime": "OpenCV DNN CPU",
+  "models": {
+    "face-detection-retail-0005.onnx": {
+      "sha256": "cfa2da0824e8db405c219588e18838fd460cd082603df3b780a12e7486b0e953",
+      "bytes": 4213995
+    },
+    "facial-landmarks-35-adas-0002.onnx": {
+      "sha256": "dd98ed8b53261b14dbd1a785de4f10f7a45b9e45ec29ba6b000e074cfc8ada48",
+      "bytes": 18448277
+    },
+    "gaze-estimation-adas-0002.onnx": {
+      "sha256": "31434da1a45d859c9d116839e00fc8f27daf095a036a2e8efac8f25f84addb53",
+      "bytes": 7541174
+    },
+    "head-pose-estimation-adas-0001.onnx": {
+      "sha256": "c3fa297a6c5fffbe02b4142c4477bbc2b00f3fb3f6ca629a29d79850f1210770",
+      "bytes": 7658536
+    },
+    "yolox_tiny.onnx": {
+      "sha256": "427cc366d34e27ff7a03e2899b5e3671425c262ea2291f88bb942bc1cc70b0f7",
+      "bytes": 20219662
+    }
+  },
+  "sources": {
+    "intel": "https://github.com/openvinotoolkit/open_model_zoo",
+    "yolox": "https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_tiny.onnx"
+  }
+}

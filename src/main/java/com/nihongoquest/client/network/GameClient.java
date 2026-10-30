@@ -28,6 +28,7 @@ public class GameClient {
     private Consumer<Message> messageHandler = message -> { };
     private Consumer<Message> globalMessageHandler = message -> { };
     private Consumer<String> errorHandler = error -> { };
+    private Consumer<String> connectionLostListener = ignored -> { };
 
     public synchronized void connect(String host, int port) throws IOException {
         if (connected) {
@@ -227,6 +228,7 @@ public class GameClient {
             return;
         }
         closeSocket();
+        connectionLostListener.accept(reason);
         errorHandler.accept(reason);
     }
 
@@ -271,6 +273,8 @@ public class GameClient {
     public void setGlobalMessageHandler(Consumer<Message> handler) {
         globalMessageHandler = handler != null ? handler : message -> { };
     }
+
+    public void setConnectionLostListener(Consumer<String> listener) { connectionLostListener = listener; }
 
     public void setConnectionErrorHandler(Consumer<String> handler) {
         errorHandler = handler != null ? handler : error -> { };

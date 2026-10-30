@@ -3,9 +3,12 @@ package com.nihongoquest.client.quiz;
 import com.nihongoquest.client.ClientApp;
 import com.nihongoquest.client.network.GameClient;
 import com.nihongoquest.client.profile.Player;
+import com.nihongoquest.client.proctor.VideoCanvas;
+import com.nihongoquest.common.media.VisionMetadata;
 import com.nihongoquest.common.protocol.Message;
 import com.nihongoquest.common.protocol.Payloads;
 import javafx.animation.KeyFrame;
+import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -16,6 +19,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 
 import java.util.List;
@@ -29,6 +33,8 @@ public class QuizBattleController {
     @FXML private Label questionLabel;
     @FXML private Label questionTimeLabel;
     @FXML private Label statusLabel;
+    @FXML private Label cameraBanner;
+    @FXML private Label toastLabel;
     @FXML private ProgressBar questionProgress;
     @FXML private Button answerAButton;
     @FXML private Button answerBButton;
@@ -36,6 +42,7 @@ public class QuizBattleController {
     @FXML private Button answerDButton;
     @FXML private Button leaveButton;
     @FXML private ListView<Payloads.QuizLeaderboardEntry> leaderboardList;
+    @FXML private StackPane cameraPreviewHolder;
 
     private ClientApp app;
     private GameClient gameClient;
@@ -71,6 +78,24 @@ public class QuizBattleController {
         this.gameClient = gameClient;
         this.player = player;
         this.room = room;
+        if (room.proctoringEnabled() && room.playing()) {
+            app.getProctoringCoordinator().setToastListener(this::showToast);
+            app.getProctoringCoordinator().setCameraStatusListener(status -> Platform.runLater(() -> {
+                boolean problem = status != Payloads.CameraStatus.READY
+                        && status != Payloads.CameraStatus.INITIALIZING;
+                cameraBanner.setVisible(problem); cameraBanner.setManaged(problem);
+                cameraBanner.setText(problem ? "Camera: " + status : "");
+            }));
+            if (!room.host()) {
+                VideoCanvas preview = new VideoCanvas(320, 180);
+                cameraPreviewHolder.getChildren().setAll(preview);
+                cameraPreviewHolder.setVisible(true);
+                cameraPreviewHolder.setManaged(true);
+                app.getProctoringCoordinator().setPreviewListener(frame -> preview.setFrame(frame.image()));
+                app.getProctoringCoordinator().setVisionListener(preview::setVision);
+                preview.setHud("Camera của bạn • HD 45 FPS");
+            }
+        }
         titleLabel.setText(room.title());
         pinLabel.setText("PIN " + room.pin());
         roomTimeLabel.setText(formatSeconds(room.durationSeconds()));
@@ -86,6 +111,15 @@ public class QuizBattleController {
             setAnswersDisabled(true);
             showError("Mất kết nối. Đăng nhập lại trước khi hết giờ để tiếp tục.");
         }));
+    }
+
+    private void showToast(String text) {
+        toastLabel.setText(text);
+        toastLabel.setVisible(true);
+        toastLabel.setManaged(true);
+        PauseTransition hide = new PauseTransition(Duration.seconds(4));
+        hide.setOnFinished(ignored -> { toastLabel.setVisible(false); toastLabel.setManaged(false); });
+        hide.play();
     }
 
     @FXML
@@ -107,6 +141,7 @@ public class QuizBattleController {
         }
         if (room.host()) gameClient.cancelQuizRoom();
         else gameClient.leaveQuizRoom();
+        app.getProctoringCoordinator().stopRoom();
         app.showMatchmaking();
     }
 
@@ -120,7 +155,7 @@ public class QuizBattleController {
                     message.getPayload(), Payloads.QuizLeaderboardData.class));
             case QUIZ_ROOM_FINISHED -> showFinished(Payloads.fromJson(
                     message.getPayload(), Payloads.QuizLeaderboardData.class));
-            case QUIZ_ROOM_CANCEL -> app.showMatchmaking();
+            case QUIZ_ROOM_CANCEL -> { app.getProctoringCoordinator().stopRoom(); app.showMatchmaking(); }
             case QUIZ_ERROR -> showError(QuizRoomUi.errorText(message.payloadText()));
             default -> { }
         }
@@ -167,6 +202,7 @@ public class QuizBattleController {
 
     private void showFinished(Payloads.QuizLeaderboardData board) {
         finished = true;
+        app.getProctoringCoordinator().stopRoom();
         stopCountdown();
         setAnswersDisabled(true);
         showLeaderboard(board);

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.nihongoquest.client.quiz.ProctorDashboardController">
+    <top><VBox spacing="8" styleClass="page-content">
+        <HBox spacing="16"><Label fx:id="titleLabel" styleClass="section-title"/>
+            <Label fx:id="timeLabel"/><Label fx:id="onlineLabel"/><Label fx:id="warningsLabel"/></HBox>
+        <HBox spacing="8"><ComboBox fx:id="filterBox" prefWidth="180"/>
+            <TextField fx:id="searchField" promptText="Tìm username" prefWidth="220"/>
+            <Button text="Mở thư mục bằng chứng" onAction="#openEvidence"/>
+            <Button text="Chọn thư mục lưu" onAction="#chooseEvidence"/>
+            <Button fx:id="finishButton" text="Hủy phòng" onAction="#finishRoom"/></HBox>
+        <Label fx:id="errorLabel" visible="false" managed="false" style="-fx-text-fill: #c62828;"/>
+    </VBox></top>
+    <center><ScrollPane fitToWidth="true"><content><TilePane fx:id="cameraGrid"
+            hgap="12" vgap="12" prefTileWidth="250" prefTileHeight="220" style="-fx-padding: 16;"/></content></ScrollPane></center>
+    <bottom><VBox spacing="5" styleClass="page-content">
+        <Label text="Dòng thời gian cảnh báo" styleClass="section-title"/>
+        <ListView fx:id="eventList" prefHeight="150"/>
+    </VBox></bottom>
+</BorderPane>

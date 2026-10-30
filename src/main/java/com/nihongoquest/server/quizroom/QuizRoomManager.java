@@ -4,6 +4,8 @@ import com.nihongoquest.common.protocol.Message;
 import com.nihongoquest.common.protocol.MessageType;
 import com.nihongoquest.common.protocol.Payloads;
 import com.nihongoquest.server.network.ClientHandler;
+import com.nihongoquest.server.media.ProctorMediaRelay;
+import com.nihongoquest.common.media.MediaProtocol;
 import com.nihongoquest.server.question.Choice;
 import com.nihongoquest.server.question.Question;
 import com.nihongoquest.server.quiz.QuizSetException;
@@ -23,6 +25,7 @@ public class QuizRoomManager {
     private final QuizSetService quizSets;
     private final ScheduledExecutorService scheduler;
     private final IntSupplier pinSupplier;
+    private ProctorMediaRelay mediaRelay;
     private final Map<String, QuizRoom> rooms = new ConcurrentHashMap<>();
     private final Map<Long, QuizRoom> userRooms = new ConcurrentHashMap<>();
 
@@ -37,6 +40,8 @@ public class QuizRoomManager {
         this.scheduler = scheduler;
         this.pinSupplier = pinSupplier;
     }
+
+    public void setMediaRelay(ProctorMediaRelay mediaRelay) { this.mediaRelay = mediaRelay; }
 
     public synchronized void create(ClientHandler host, Payloads.QuizRoomCreateRequest request)
             throws SQLException {
@@ -76,7 +81,11 @@ public class QuizRoomManager {
     }
 
     public void start(ClientHandler client) {
-        requireCurrent(client).start(client);
+        QuizRoom room = requireCurrent(client);
+        room.start(client);
+        if (room.isProctoringEnabled()) {
+            for (long userId : room.memberIds()) issueMediaSession(room, userId);
+        }
     }
 
     public void answer(ClientHandler client, Payloads.QuizAnswerData answer) {
@@ -94,6 +103,7 @@ public class QuizRoomManager {
     public synchronized void leave(ClientHandler client) {
         QuizRoom room = requireCurrent(client);
         room.leave(client);
+        if (mediaRelay != null) mediaRelay.revokeUser(room.getPin(), client.getPlayerId());
         userRooms.remove(client.getPlayerId(), room);
     }
 
@@ -103,14 +113,20 @@ public class QuizRoomManager {
 
     public void disconnected(ClientHandler client) {
         QuizRoom room = userRooms.get(client.getPlayerId());
-        if (room != null) room.disconnected(client);
+        if (room != null) {
+            room.disconnected(client);
+            if (mediaRelay != null) mediaRelay.revokeUser(room.getPin(), client.getPlayerId());
+        }
     }
 
     /** Gọi sau LOGIN_OK; room tự gửi snapshot lobby hoặc câu hiện tại. */
     public boolean reconnect(ClientHandler client) {
         QuizRoom room = userRooms.get(client.getPlayerId());
         if (room == null) return false;
-        if (room.reconnect(client)) return true;
+        if (room.reconnect(client)) {
+            if (room.isRunning() && room.isProctoringEnabled()) issueMediaSession(room, client.getPlayerId());
+            return true;
+        }
         userRooms.remove(client.getPlayerId(), room);
         return false;
     }
@@ -187,7 +203,26 @@ public class QuizRoomManager {
 
     private synchronized void cleanup(QuizRoom room) {
         rooms.remove(room.getPin(), room);
+        if (mediaRelay != null) mediaRelay.closeRoom(room.getPin());
         for (long userId : room.memberIds()) userRooms.remove(userId, room);
+    }
+
+    public void reissueMediaSession(String pin, long userId) {
+        QuizRoom room = rooms.get(pin);
+        if (room != null && room.isRunning() && room.isProctoringEnabled()
+                && room.connectedMember(userId) != null) issueMediaSession(room, userId);
+    }
+
+    private void issueMediaSession(QuizRoom room, long userId) {
+        if (mediaRelay == null || !mediaRelay.isRunning()) return;
+        ClientHandler member = room.connectedMember(userId);
+        if (member == null || !member.isConnected()) return;
+        Payloads.MediaRole role = room.isHost(userId)
+                ? Payloads.MediaRole.HOST_SUBSCRIBER : Payloads.MediaRole.PUBLISHER;
+        ProctorMediaRelay.Ticket ticket = mediaRelay.issueTicket(room.getPin(), userId, role);
+        member.send(new Message(MessageType.PROCTOR_MEDIA_SESSION,
+                Payloads.toJson(new Payloads.ProctorMediaSession(room.getPin(), role,
+                        mediaRelay.getLocalPort(), ticket.token(), ticket.expiresAtEpochMillis()))));
     }
 
     public int activeRoomCount() { return rooms.size(); }
@@ -195,6 +230,7 @@ public class QuizRoomManager {
     public void shutdown() {
         List<QuizRoom> active = List.copyOf(rooms.values());
         active.forEach(QuizRoom::shutdown);
+        if (mediaRelay != null) active.forEach(room -> mediaRelay.closeRoom(room.getPin()));
         rooms.clear();
         userRooms.clear();
     }
