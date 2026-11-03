@@ -20,23 +20,36 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import static com.nihongoquest.common.logging.RuntimeLog.maskPin;
 
 /** App-scoped lifecycle owner for camera, media transport and automatic warning events. */
 public final class ProctoringCoordinator implements AutoCloseable {
+    private static final Logger LOGGER = Logger.getLogger(ProctoringCoordinator.class.getName());
+    private static final long CAMERA_INITIALIZATION_TIMEOUT_SECONDS = 10;
+    static final int MAX_AUTOMATIC_CAMERA_RETRIES = 3;
     private final GameClient client;
     private final Stage stage;
     private final ChangeListener<Boolean> focusListener;
     private final ChangeListener<Boolean> iconifiedListener;
     private final ProctorMediaPublisher publisher = new ProctorMediaPublisher();
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+    private final ScheduledExecutorService scheduler;
+    private final CameraSourceFactory cameraFactory;
+    private final long cameraInitializationTimeoutMillis;
+    private static ScheduledExecutorService newScheduler() {
+        return Executors.newSingleThreadScheduledExecutor(r -> {
         Thread thread = new Thread(r, "proctor-monitor"); thread.setDaemon(true); return thread;
-    });
+        });
+    }
     private final Map<Payloads.ProctorEventType, Long> lastEvents = new ConcurrentHashMap<>();
     private volatile Payloads.QuizLobbyData lobby;
     private volatile Payloads.QuizRoomStarted room;
-    private volatile CameraCaptureService camera;
+    private volatile CameraSource camera;
     private volatile ProctorAiEngine ai;
     private volatile CapturedFrame latestFrame;
     private volatile VisionMetadata latestVision = VisionMetadata.unavailable(0);
@@ -44,6 +57,10 @@ public final class ProctoringCoordinator implements AutoCloseable {
     private volatile Payloads.ProctorMediaSession pendingHostSession;
     private volatile int cameraRetryCount;
     private long lifecycleGeneration;
+    private long cameraAttemptSequence;
+    private volatile long activeCameraAttempt;
+    private volatile ScheduledFuture<?> cameraInitializationTimeout;
+    private volatile ScheduledFuture<?> cameraRetryFuture;
     private volatile long calibrationStartedAt;
     private volatile long lastFrameAtMillis;
     private volatile long blockedStartedAt;
@@ -64,8 +81,19 @@ public final class ProctoringCoordinator implements AutoCloseable {
     private volatile Consumer<VisionMetadata> visionListener = ignored -> { };
 
     public ProctoringCoordinator(GameClient client, Stage stage) {
+        this(client, stage, newScheduler(), CameraCaptureService::new,
+                TimeUnit.SECONDS.toMillis(CAMERA_INITIALIZATION_TIMEOUT_SECONDS));
+    }
+
+    ProctoringCoordinator(GameClient client, Stage stage,
+                          ScheduledExecutorService scheduler,
+                          CameraSourceFactory cameraFactory,
+                          long cameraInitializationTimeoutMillis) {
         this.client = client;
         this.stage = stage;
+        this.scheduler = scheduler;
+        this.cameraFactory = cameraFactory;
+        this.cameraInitializationTimeoutMillis = cameraInitializationTimeoutMillis;
         focusListener = (ignored, oldValue, focused) -> onFocusChanged(focused);
         iconifiedListener = (ignored, oldValue, iconified) -> {
             if (iconified && isPlayerRunning()) emitEvent(Payloads.ProctorEventType.APP_MINIMIZED,
@@ -76,14 +104,19 @@ public final class ProctoringCoordinator implements AutoCloseable {
                 Platform.runLater(() -> toastListener.accept(toast));
             }
         };
-        stage.focusedProperty().addListener(focusListener);
-        stage.iconifiedProperty().addListener(iconifiedListener);
+        if (stage != null) {
+            stage.focusedProperty().addListener(focusListener);
+            stage.iconifiedProperty().addListener(iconifiedListener);
+        }
         scheduler.scheduleAtFixedRate(this::checkFocusDuration, 250, 250, TimeUnit.MILLISECONDS);
         scheduler.scheduleAtFixedRate(this::checkCameraHealth, 1, 1, TimeUnit.SECONDS);
     }
 
     public void enterLobby(Payloads.QuizLobbyData data) {
         lobby = data;
+        LOGGER.info(() -> "proctor_lobby_entered pin=" + maskPin(data.pin())
+                + " host=" + data.currentUserHost()
+                + " enabled=" + data.proctoringEnabled());
         if (!data.proctoringEnabled() || data.currentUserHost()) return;
         if (camera == null && !consentDenied && consentPromptPending.compareAndSet(false, true)) {
             Platform.runLater(() -> {
@@ -107,11 +140,13 @@ public final class ProctoringCoordinator implements AutoCloseable {
         Optional<ButtonType> result = dialog.showAndWait();
         if (result.isEmpty() || result.get() != allow) {
             consentDenied = true;
+            LOGGER.info(() -> "camera_consent_denied pin=" + maskPin(current.pin()));
             reportStatus(Payloads.CameraStatus.DENIED, Payloads.CalibrationStatus.PENDING,
                     "Người chơi từ chối quyền camera");
             return;
         }
         consentDenied = false;
+        LOGGER.info(() -> "camera_consent_allowed pin=" + maskPin(current.pin()));
         cameraRetryCount = 0;
         long generation;
         synchronized (this) { generation = lifecycleGeneration; }
@@ -124,7 +159,11 @@ public final class ProctoringCoordinator implements AutoCloseable {
                     publisher.offerVision(vision);
                     visionListener.accept(vision);
                 });
-            } catch (Throwable ignored) { /* Camera remains usable without AI. */ }
+            } catch (Throwable error) {
+                LOGGER.log(Level.WARNING, "proctor_ai_initialization_failed pin="
+                        + maskPin(current.pin()), error);
+                // Camera remains usable without AI.
+            }
             synchronized (this) {
                 if (generation != lifecycleGeneration || lobby == null || consentDenied) {
                     if (engine != null) engine.close();
@@ -142,36 +181,53 @@ public final class ProctoringCoordinator implements AutoCloseable {
 
     private synchronized void startCamera() {
         if (lobby == null || consentDenied || camera != null) return;
+        cancelFuture(cameraInitializationTimeout);
+        cameraInitializationTimeout = null;
+        long attempt = ++cameraAttemptSequence;
+        activeCameraAttempt = attempt;
+        lastFrameAtMillis = 0;
         reportStatus(Payloads.CameraStatus.INITIALIZING, Payloads.CalibrationStatus.PENDING,
                 "Đang mở camera mặc định");
+        LOGGER.info(() -> "camera_attempt_started pin=" + maskPin(lobby.pin())
+                + " attempt=" + attempt);
         calibrationStartedAt = System.currentTimeMillis();
         if (ai != null) ai.startCalibration();
         calibrationReported = false;
         reportedCalibration = Payloads.CalibrationStatus.PENDING;
         blockedStartedAt = 0; blockClearAt = 0; blockedStatusReported = false;
-        CameraCaptureService[] holder = new CameraCaptureService[1];
-        CameraCaptureService service = new CameraCaptureService(this::onFrame, failure -> {
-            if (camera != holder[0] || lobby == null) return;
-            Payloads.CameraStatus status = switch (failure) {
-                case NOT_FOUND -> Payloads.CameraStatus.NOT_FOUND;
-                case LOST -> Payloads.CameraStatus.LOST;
-                case FAILED -> Payloads.CameraStatus.FAILED;
-            };
-            reportStatus(status, Payloads.CalibrationStatus.FAILED, "Không thể đọc camera");
-            camera = null;
-            scheduleCameraRetry();
-        });
+        CameraSource[] holder = new CameraSource[1];
+        CameraSource service = cameraFactory.create(
+                frame -> onFrame(attempt, holder[0], frame),
+                failure -> onCameraFailure(attempt, holder[0], failure));
         holder[0] = service;
         camera = service;
+        cameraInitializationTimeout = scheduler.schedule(
+                () -> onCameraInitializationTimeout(attempt, service),
+                cameraInitializationTimeoutMillis, TimeUnit.MILLISECONDS);
         service.start();
         Payloads.ProctorMediaSession pending = pendingPublisherSession;
         if (pending != null && room != null) publisher.connect(client.getServerHost(), pending);
     }
 
-    private void onFrame(CapturedFrame frame) {
+    private void onFrame(long attempt, CameraSource source, CapturedFrame frame) {
+        boolean firstFrame;
+        synchronized (this) {
+            if (attempt != activeCameraAttempt || camera != source || lobby == null) return;
+            firstFrame = lastFrameAtMillis == 0;
+            lastFrameAtMillis = System.currentTimeMillis();
+            if (firstFrame) {
+                cancelFuture(cameraInitializationTimeout);
+                cameraInitializationTimeout = null;
+            }
+        }
+        if (firstFrame) {
+            Payloads.QuizLobbyData current = lobby;
+            LOGGER.info(() -> "camera_first_frame pin="
+                    + maskPin(current == null ? null : current.pin())
+                    + " attempt=" + attempt + " sequence=" + frame.sequence());
+        }
         CapturedFrame previousFrame = latestFrame;
         latestFrame = frame;
-        lastFrameAtMillis = System.currentTimeMillis();
         previewListener.accept(frame);
         if (ai != null) ai.offer(frame);
         if (room != null && room.playing()) publisher.offer(frame);
@@ -188,6 +244,9 @@ public final class ProctoringCoordinator implements AutoCloseable {
                                 : Payloads.CameraStatus.READY, reportedCalibration,
                         result == Payloads.CalibrationStatus.READY
                                 ? "Camera và AI sẵn sàng" : "Camera sẵn sàng; hiệu chuẩn AI thất bại");
+                LOGGER.info(() -> "camera_calibration_finished pin="
+                        + maskPin(lobby == null ? null : lobby.pin())
+                        + " attempt=" + attempt + " calibration=" + reportedCalibration);
             }
         }
         if (calibrationReported && reportedCalibration == Payloads.CalibrationStatus.FAILED
@@ -225,26 +284,100 @@ public final class ProctoringCoordinator implements AutoCloseable {
     }
 
     private void checkCameraHealth() {
-        CameraCaptureService current = camera;
-        if (current == null || lobby == null || !calibrationReported
+        CameraSource current = camera;
+        if (current == null || lobby == null || lastFrameAtMillis == 0
                 || System.currentTimeMillis() - lastFrameAtMillis < 2_000) return;
-        camera = null;
+        long attempt;
+        synchronized (this) {
+            if (camera != current || System.currentTimeMillis() - lastFrameAtMillis < 2_000) return;
+            attempt = activeCameraAttempt;
+            camera = null;
+            activeCameraAttempt = ++cameraAttemptSequence;
+            cancelFuture(cameraInitializationTimeout);
+            cameraInitializationTimeout = null;
+        }
         current.close();
+        LOGGER.warning(() -> "camera_health_lost pin=" + maskPin(lobby.pin())
+                + " attempt=" + attempt);
         reportStatus(Payloads.CameraStatus.LOST, Payloads.CalibrationStatus.FAILED,
                 "Camera không gửi frame trong 2 giây");
         scheduleCameraRetry();
     }
 
-    private void scheduleCameraRetry() {
+    private synchronized void scheduleCameraRetry() {
         if (consentDenied || lobby == null) return;
-        long delay = cameraRetryCount++ < 3 ? 5 : 30;
-        scheduler.schedule(() -> {
+        if (!shouldScheduleCameraRetry(cameraRetryCount)) {
+            LOGGER.warning(() -> "camera_retry_exhausted pin=" + maskPin(lobby.pin())
+                    + " attempts=" + cameraRetryCount);
+            reportStatus(Payloads.CameraStatus.FAILED, Payloads.CalibrationStatus.FAILED,
+                    "Đã dừng tự thử camera sau " + cameraRetryCount
+                            + " lần; bạn có thể bấm Thử lại camera");
+            return;
+        }
+        long delay = 5;
+        cameraRetryCount++;
+        cancelFuture(cameraRetryFuture);
+        long generation = lifecycleGeneration;
+        LOGGER.info(() -> "camera_retry_scheduled pin=" + maskPin(lobby.pin())
+                + " delaySeconds=" + delay);
+        cameraRetryFuture = scheduler.schedule(() -> {
+            synchronized (ProctoringCoordinator.this) {
+                cameraRetryFuture = null;
+                if (generation != lifecycleGeneration) return;
+            }
             if (!consentDenied && camera == null && lobby != null) startCamera();
         }, delay, TimeUnit.SECONDS);
     }
 
+    static boolean shouldScheduleCameraRetry(int retriesAlreadyScheduled) {
+        return retriesAlreadyScheduled < MAX_AUTOMATIC_CAMERA_RETRIES;
+    }
+
+    private synchronized void onCameraFailure(long attempt, CameraSource source,
+                                               CameraCaptureService.Failure failure) {
+        if (attempt != activeCameraAttempt || camera != source || lobby == null) return;
+        camera = null;
+        activeCameraAttempt = ++cameraAttemptSequence;
+        cancelFuture(cameraInitializationTimeout);
+        cameraInitializationTimeout = null;
+        source.close();
+        Payloads.CameraStatus status = switch (failure) {
+            case NOT_FOUND -> Payloads.CameraStatus.NOT_FOUND;
+            case LOST -> Payloads.CameraStatus.LOST;
+            case FAILED -> Payloads.CameraStatus.FAILED;
+        };
+        LOGGER.warning(() -> "camera_attempt_failed pin=" + maskPin(lobby.pin())
+                + " attempt=" + attempt + " failure=" + failure);
+        reportStatus(status, Payloads.CalibrationStatus.FAILED, "Không thể đọc camera");
+        scheduleCameraRetry();
+    }
+
+    private synchronized void onCameraInitializationTimeout(long attempt,
+                                                             CameraSource source) {
+        if (attempt != activeCameraAttempt || camera != source || lobby == null
+                || lastFrameAtMillis != 0) return;
+        cameraInitializationTimeout = null;
+        camera = null;
+        activeCameraAttempt = ++cameraAttemptSequence;
+        source.close();
+        LOGGER.warning(() -> "camera_initialization_timeout pin=" + maskPin(lobby.pin())
+                + " attempt=" + attempt + " timeoutSeconds="
+                + TimeUnit.MILLISECONDS.toSeconds(cameraInitializationTimeoutMillis));
+        reportStatus(Payloads.CameraStatus.FAILED, Payloads.CalibrationStatus.FAILED,
+                "Camera không gửi frame đầu tiên trong "
+                        + TimeUnit.MILLISECONDS.toSeconds(cameraInitializationTimeoutMillis)
+                        + " giây");
+        scheduleCameraRetry();
+    }
+
+    private static void cancelFuture(ScheduledFuture<?> future) {
+        if (future != null) future.cancel(false);
+    }
+
     public void startRoom(Payloads.QuizRoomStarted started) {
         room = started;
+        LOGGER.info(() -> "quiz_room_started pin=" + maskPin(started.pin())
+                + " playing=" + started.playing() + " host=" + started.host());
         if (ai != null) ai.setActive(started.playing());
         if (started.playing() && camera != null && pendingPublisherSession != null)
             publisher.connect(client.getServerHost(), pendingPublisherSession);
@@ -261,6 +394,8 @@ public final class ProctoringCoordinator implements AutoCloseable {
                 pendingHostSession = session;
                 mediaSessionListener.accept(session);
             }
+            LOGGER.info(() -> "proctor_media_session_received pin=" + maskPin(session.pin())
+                    + " role=" + session.role() + " port=" + session.mediaPort());
             return true;
         }
         if (message.getType() == MessageType.PROCTOR_STATUS_UPDATE) {
@@ -281,10 +416,16 @@ public final class ProctoringCoordinator implements AutoCloseable {
         cameraStatusListener.accept(cameraStatus);
         Payloads.QuizLobbyData current = lobby;
         if (current == null || !client.isConnected()) return;
+        LOGGER.info(() -> "camera_status_report pin=" + maskPin(current.pin())
+                + " attempt=" + activeCameraAttempt + " camera=" + cameraStatus
+                + " calibration=" + calibration + " detail=" + detail);
         try {
             client.reportProctorStatus(new Payloads.ProctorStatusReport(
                     current.pin(), cameraStatus, calibration, detail, System.currentTimeMillis()));
-        } catch (IllegalStateException ignored) { }
+        } catch (IllegalStateException error) {
+            LOGGER.log(Level.WARNING, "camera_status_send_failed pin=" + maskPin(current.pin())
+                    + " camera=" + cameraStatus, error);
+        }
     }
 
     private void onFocusChanged(boolean focused) {
@@ -376,6 +517,12 @@ public final class ProctoringCoordinator implements AutoCloseable {
 
     public synchronized void stopRoom() {
         lifecycleGeneration++;
+        activeCameraAttempt = ++cameraAttemptSequence;
+        cancelFuture(cameraInitializationTimeout);
+        cancelFuture(cameraRetryFuture);
+        cameraInitializationTimeout = null;
+        cameraRetryFuture = null;
+        LOGGER.info("proctor_room_stopped");
         room = null; lobby = null; pendingPublisherSession = null; pendingHostSession = null;
         latestFrame = null;
         latestVision = VisionMetadata.unavailable(0);
@@ -389,7 +536,7 @@ public final class ProctoringCoordinator implements AutoCloseable {
         mediaSessionListener = ignored -> { };
         publisher.close(); lastEvents.clear(); focusDebouncer.reset(); blockedStartedAt = 0; blockClearAt = 0;
         blockedStatusReported = false;
-        CameraCaptureService current = camera;
+        CameraSource current = camera;
         camera = null;
         if (current != null) current.close();
         ProctorAiEngine engine = ai; ai = null;
@@ -399,7 +546,9 @@ public final class ProctoringCoordinator implements AutoCloseable {
     @Override public void close() {
         stopRoom();
         scheduler.shutdownNow();
-        stage.focusedProperty().removeListener(focusListener);
-        stage.iconifiedProperty().removeListener(iconifiedListener);
+        if (stage != null) {
+            stage.focusedProperty().removeListener(focusListener);
+            stage.iconifiedProperty().removeListener(iconifiedListener);
+        }
     }
 }

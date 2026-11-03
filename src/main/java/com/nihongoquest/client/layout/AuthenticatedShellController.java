@@ -1,6 +1,7 @@
 package com.nihongoquest.client.layout;
 
 import com.nihongoquest.client.ClientApp;
+import com.nihongoquest.client.ui.UiMotion;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -57,6 +58,7 @@ public class AuthenticatedShellController {
         pageSubtitleLabel.setVisible(pageSubtitleLabel.isManaged());
         setChromeVisible(chromeVisible);
         setActiveRoute(route);
+        UiMotion.enter(content);
     }
 
     public void updateHeader(String title, String subtitle) {

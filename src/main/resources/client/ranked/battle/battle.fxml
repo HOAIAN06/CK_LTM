@@ -8,7 +8,7 @@
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.nihongoquest.client.ranked.battle.BattleController">
     <center>
-        <VBox alignment="TOP_CENTER" spacing="16" styleClass="battle-content">
+        <VBox alignment="TOP_CENTER" spacing="16" styleClass="battle-content,page-surface">
             <HBox alignment="CENTER" spacing="28" styleClass="scoreboard-card">
                 <VBox alignment="CENTER" spacing="4" styleClass="player-panel">
                     <Label text="BẠN" styleClass="player-role"/>

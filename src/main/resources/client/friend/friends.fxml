@@ -8,11 +8,11 @@
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.nihongoquest.client.friend.FriendsController">
     <center>
-        <VBox spacing="12" styleClass="page-content">
+        <VBox spacing="12" styleClass="page-content,page-surface">
             <HBox alignment="CENTER_RIGHT" styleClass="page-action-row">
                 <Button text="LÀM MỚI" onAction="#onRefresh" styleClass="primary-button"/>
             </HBox>
-            <TabPane VBox.vgrow="ALWAYS" tabClosingPolicy="UNAVAILABLE">
+            <TabPane VBox.vgrow="ALWAYS" tabClosingPolicy="UNAVAILABLE" styleClass="data-card">
                 <tabs>
                     <Tab text="BẠN BÈ">
                         <VBox spacing="12" styleClass="tab-content">

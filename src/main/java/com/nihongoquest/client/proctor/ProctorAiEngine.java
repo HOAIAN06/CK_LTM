@@ -20,6 +20,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static org.bytedeco.opencv.global.opencv_core.CV_8UC3;
 import static org.bytedeco.opencv.global.opencv_core.CV_32F;
@@ -30,15 +32,16 @@ import static org.bytedeco.opencv.global.opencv_dnn.readNetFromONNX;
 
 /** CPU-only OpenCV DNN analysis; one worker and one replace-old-frame slot. */
 public final class ProctorAiEngine implements AutoCloseable {
+    private static final Logger LOGGER = Logger.getLogger(ProctorAiEngine.class.getName());
     private final ArrayBlockingQueue<CapturedFrame> queue = new ArrayBlockingQueue<>(1);
     private final AtomicBoolean running = new AtomicBoolean();
+    private final PipelineStageMetrics inferenceMetrics = new PipelineStageMetrics("ai-inference");
     private final BiConsumer<Payloads.ProctorEventType, CapturedFrame> events;
     private final Consumer<VisionMetadata> vision;
     private final Net face, landmarks, head, gaze, phone;
     private final Rule noFace = new Rule(2_000, 1_000);
     private final Rule multiple = new Rule(1_000, 2_000);
     private final Rule looking = new Rule(2_000, 1_000);
-    private final Rule blocked = new Rule(3_000, 2_000);
     private final List<Double> yawCalibration = new ArrayList<>();
     private final List<Double> pitchCalibration = new ArrayList<>();
     private final List<Double> headYawCalibration = new ArrayList<>();
@@ -104,15 +107,35 @@ public final class ProctorAiEngine implements AutoCloseable {
     public void setActive(boolean active) { this.active = active; }
 
     public void offer(CapturedFrame frame) {
-        if (!queue.offer(frame)) { queue.poll(); queue.offer(frame); }
+        inferenceMetrics.offered();
+        if (!queue.offer(frame)) {
+            queue.poll();
+            inferenceMetrics.dropped();
+            queue.offer(frame);
+        }
     }
 
     private void loop() {
+        long nextMetricsLog = System.nanoTime() + 5_000_000_000L;
         try {
             while (running.get()) {
-                try { analyze(queue.take()); }
+                try {
+                    CapturedFrame frame = queue.take();
+                    long started = System.nanoTime();
+                    analyze(frame);
+                    inferenceMetrics.completed(System.nanoTime() - started, 0);
+                    if (System.nanoTime() >= nextMetricsLog) {
+                        PipelineStageMetrics.Snapshot snapshot = inferenceMetrics.snapshotAndReset();
+                        if (snapshot.hasActivity()) LOGGER.info(() -> "proctor_pipeline " + snapshot.logLine());
+                        nextMetricsLog = System.nanoTime() + 5_000_000_000L;
+                    }
+                }
                 catch (InterruptedException error) { Thread.currentThread().interrupt(); return; }
-                catch (Exception ignored) { calibration = Payloads.CalibrationStatus.FAILED; ready = true; }
+                catch (Exception error) {
+                    LOGGER.log(Level.WARNING, "proctor_ai_inference_failed", error);
+                    calibration = Payloads.CalibrationStatus.FAILED;
+                    ready = true;
+                }
             }
         } finally {
             face.close(); landmarks.close(); head.close(); gaze.close(); phone.close();
@@ -146,6 +169,13 @@ public final class ProctorAiEngine implements AutoCloseable {
                 publishVision(frame, image, faces, angles, VisionMetadata.Attention.UNKNOWN);
                 return;
             }
+            if (!hasUsableEvidence(frame.image())) {
+                noFace.update(Rule.Evidence.UNKNOWN, now);
+                multiple.update(Rule.Evidence.UNKNOWN, now);
+                looking.update(Rule.Evidence.UNKNOWN, now);
+                publishVision(frame, image, faces, angles, VisionMetadata.Attention.UNKNOWN);
+                return;
+            }
             fire(noFace.update(faces.isEmpty(), now), Payloads.ProctorEventType.NO_FACE, frame);
             fire(multiple.update(faces.size() >= 2, now), Payloads.ProctorEventType.MULTIPLE_FACES, frame);
             VisionMetadata.Attention attention = faces.isEmpty() ? VisionMetadata.Attention.NO_FACE
@@ -166,6 +196,25 @@ public final class ProctorAiEngine implements AutoCloseable {
             if (phoneActive) attention = VisionMetadata.Attention.PHONE;
             publishVision(frame, image, faces, angles, attention);
         }
+    }
+
+    static boolean hasUsableEvidence(BufferedImage image) {
+        long total = 0, totalSquared = 0;
+        int samples = 0;
+        for (int y = 0; y < image.getHeight(); y += 12) {
+            for (int x = 0; x < image.getWidth(); x += 12) {
+                int rgb = image.getRGB(x, y);
+                int value = (((rgb >> 16) & 255) * 30 + ((rgb >> 8) & 255) * 59
+                        + (rgb & 255) * 11) / 100;
+                total += value;
+                totalSquared += (long) value * value;
+                samples++;
+            }
+        }
+        if (samples == 0) return false;
+        double mean = total / (double) samples;
+        double variance = totalSquared / (double) samples - mean * mean;
+        return mean >= 20 && Math.sqrt(Math.max(0, variance)) >= 8;
     }
 
     private void publishVision(CapturedFrame frame, Mat image, List<Rect> faces, double[] angles,
@@ -322,12 +371,21 @@ public final class ProctorAiEngine implements AutoCloseable {
     }
 
     static final class Rule {
+        enum Evidence { PRESENT, ABSENT, UNKNOWN }
         private final long triggerMs, clearMs;
         private long activeSince, clearSince, lastFired = -1;
         private boolean active;
         Rule(long triggerMs, long clearMs) { this.triggerMs = triggerMs; this.clearMs = clearMs; }
         boolean update(boolean condition, long now) {
-            if (condition) {
+            return update(condition ? Evidence.PRESENT : Evidence.ABSENT, now);
+        }
+        boolean update(Evidence evidence, long now) {
+            if (evidence == Evidence.UNKNOWN) {
+                activeSince = 0;
+                clearSince = 0;
+                return false;
+            }
+            if (evidence == Evidence.PRESENT) {
                 clearSince = 0;
                 if (activeSince == 0) activeSince = now;
                 if (now - activeSince >= triggerMs

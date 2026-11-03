@@ -19,9 +19,13 @@ import javafx.scene.image.ImageView;
 import java.io.ByteArrayInputStream;
 
 import java.util.Optional;
+import java.util.logging.Logger;
+
+import static com.nihongoquest.common.logging.RuntimeLog.maskPin;
 
 /** Sảnh chờ hiển thị PIN, host và trạng thái kết nối thành viên. */
 public class QuizLobbyController implements NavigationGuard {
+    private static final Logger LOGGER = Logger.getLogger(QuizLobbyController.class.getName());
     @FXML private Label pinLabel;
     @FXML private Label titleLabel;
     @FXML private Label countLabel;
@@ -36,9 +40,14 @@ public class QuizLobbyController implements NavigationGuard {
     private ClientApp app;
     private GameClient gameClient;
     private boolean host;
+    private boolean startRequestPending;
+    private Payloads.QuizLobbyData currentLobby;
 
     @FXML
     private void initialize() {
+        Label empty = new Label("Đang chờ người chơi tham gia bằng mã PIN...");
+        empty.getStyleClass().add("empty-state");
+        playerList.setPlaceholder(empty);
         playerList.setCellFactory(ignored -> new ListCell<>() {
             @Override
             protected void updateItem(Payloads.QuizLobbyPlayer item, boolean empty) {
@@ -62,9 +71,23 @@ public class QuizLobbyController implements NavigationGuard {
 
     @FXML
     private void onStart() {
+        if (currentLobby == null || !QuizRoomUi.canHostStart(currentLobby, startRequestPending)) {
+            return;
+        }
+        startRequestPending = true;
         startButton.setDisable(true);
         statusLabel.setText("Đang bắt đầu phòng...");
-        gameClient.startQuizRoom();
+        LOGGER.info(() -> "quiz_start_requested pin=" + maskPin(currentLobby.pin())
+                + " connectedPlayers=" + QuizRoomUi.connectedPlayerCount(currentLobby.members()));
+        try {
+            gameClient.startQuizRoom();
+        } catch (IllegalStateException error) {
+            startRequestPending = false;
+            startButton.setDisable(!QuizRoomUi.canHostStart(currentLobby, false));
+            LOGGER.log(java.util.logging.Level.WARNING,
+                    "quiz_start_send_failed pin=" + maskPin(currentLobby.pin()), error);
+            showError("Không thể gửi yêu cầu bắt đầu phòng. Hãy kiểm tra kết nối.");
+        }
     }
 
     @FXML
@@ -90,7 +113,13 @@ public class QuizLobbyController implements NavigationGuard {
             case QUIZ_QUESTION, QUIZ_LEADERBOARD -> gameClient.redispatch(message);
             case QUIZ_ROOM_CANCEL -> { app.getProctoringCoordinator().stopRoom(); app.showMatchmaking(); }
             case QUIZ_ERROR -> {
-                startButton.setDisable(false);
+                startRequestPending = false;
+                if (currentLobby != null) {
+                    startButton.setDisable(!QuizRoomUi.canHostStart(currentLobby, false));
+                }
+                LOGGER.warning(() -> "quiz_start_failed pin="
+                        + maskPin(currentLobby == null ? null : currentLobby.pin())
+                        + " code=" + message.payloadText());
                 showError(QuizRoomUi.errorText(message.payloadText()));
             }
             default -> { }
@@ -98,6 +127,7 @@ public class QuizLobbyController implements NavigationGuard {
     }
 
     private void updateLobby(Payloads.QuizLobbyData lobby) {
+        currentLobby = lobby;
         host = lobby.currentUserHost();
         app.getProctoringCoordinator().enterLobby(lobby);
         pinLabel.setText(lobby.pin());
@@ -107,9 +137,7 @@ public class QuizLobbyController implements NavigationGuard {
         playerList.setItems(FXCollections.observableArrayList(lobby.members()));
         startButton.setVisible(host);
         startButton.setManaged(host);
-        boolean camerasReady = lobby.members().stream().filter(Payloads.QuizLobbyPlayer::playing)
-                .allMatch(member -> member.cameraStatus() == Payloads.CameraStatus.READY);
-        startButton.setDisable(!host || lobby.playerCount() < 2 || monitored && !camerasReady);
+        startButton.setDisable(!QuizRoomUi.canHostStart(lobby, startRequestPending));
         leaveButton.setText(host ? "Hủy phòng" : "Rời phòng");
         proctoringLabel.setVisible(monitored);
         proctoringLabel.setManaged(monitored);
@@ -118,11 +146,11 @@ public class QuizLobbyController implements NavigationGuard {
                 : "");
         retryCameraButton.setVisible(monitored && !host);
         retryCameraButton.setManaged(monitored && !host);
-        statusLabel.setText(host && lobby.playerCount() < 2
-                ? "Cần ít nhất 2 người chơi để bắt đầu."
-                : host && monitored && !camerasReady
-                ? "Đang kiểm tra camera HD 45 FPS của người chơi..."
-                : "Đang chờ host bắt đầu...");
+        statusLabel.setText(QuizRoomUi.lobbyStatus(lobby, startRequestPending));
+        LOGGER.info(() -> "quiz_lobby_updated pin=" + maskPin(lobby.pin())
+                + " host=" + host
+                + " connectedPlayers=" + QuizRoomUi.connectedPlayerCount(lobby.members())
+                + " proctoring=" + monitored);
     }
 
     private String cameraText(Payloads.QuizLobbyPlayer item) {

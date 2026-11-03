@@ -16,4 +16,14 @@ class ProctorAiRuleTest {
         assertFalse(rule.update(true, 6_200));
         assertTrue(rule.update(true, 13_000));
     }
+
+    @Test
+    void unknownEvidenceDoesNotCompletePendingWarningWindow() {
+        ProctorAiEngine.Rule rule = new ProctorAiEngine.Rule(2_000, 1_000);
+        assertFalse(rule.update(true, 1_000));
+        assertFalse(rule.update(ProctorAiEngine.Rule.Evidence.UNKNOWN, 2_500));
+        assertFalse(rule.update(true, 3_000));
+        assertFalse(rule.update(true, 4_999));
+        assertTrue(rule.update(true, 5_000));
+    }
 }

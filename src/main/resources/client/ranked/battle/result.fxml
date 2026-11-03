@@ -8,7 +8,7 @@
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.nihongoquest.client.ranked.battle.ResultController">
     <center>
-        <VBox alignment="CENTER" spacing="20" styleClass="page-content">
+        <VBox alignment="CENTER" spacing="20" styleClass="page-content,page-surface">
             <VBox alignment="CENTER" spacing="14" styleClass="result-card">
                 <Label text="KẾT QUẢ TRẬN ĐẤU" styleClass="result-eyebrow"/>
                 <Label fx:id="resultLabel" text="CHIẾN THẮNG" styleClass="result-title"/>

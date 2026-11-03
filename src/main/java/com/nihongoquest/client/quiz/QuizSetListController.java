@@ -30,6 +30,9 @@ public class QuizSetListController {
 
     @FXML
     private void initialize() {
+        Label empty = new Label("Chưa có bộ đề trong mục này");
+        empty.getStyleClass().add("empty-state");
+        quizSetList.setPlaceholder(empty);
         quizSetList.setCellFactory(ignored -> new ListCell<>() {
             @Override
             protected void updateItem(Payloads.QuizSetSummary item, boolean empty) {

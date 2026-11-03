@@ -2,6 +2,7 @@ package com.nihongoquest.client.history;
 
 import com.nihongoquest.client.ClientApp;
 import com.nihongoquest.client.network.GameClient;
+import com.nihongoquest.client.ui.UiMotion;
 import com.nihongoquest.common.protocol.Message;
 import com.nihongoquest.common.protocol.MessageType;
 import com.nihongoquest.common.protocol.Payloads;
@@ -45,7 +46,9 @@ public class MatchHistoryController {
                 "DISCONNECT".equals(row.getValue().endReason()) ? "Mất kết nối" : "Bình thường"));
         historyTable.setColumnResizePolicy(
                 TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-        historyTable.setPlaceholder(new Label("Bạn chưa có trận Ranked nào"));
+        Label empty = new Label("Bạn chưa có trận Ranked nào");
+        empty.getStyleClass().add("empty-state");
+        historyTable.setPlaceholder(empty);
     }
 
     public void setSession(ClientApp app, GameClient gameClient) {
@@ -67,6 +70,7 @@ public class MatchHistoryController {
             Payloads.MatchHistoryData data = Payloads.fromJson(
                     message.getPayload(), Payloads.MatchHistoryData.class);
             historyTable.getItems().setAll(data.matches());
+            UiMotion.enter(historyTable);
             statusLabel.setText("Hiển thị " + data.matches().size() + " trận Ranked gần nhất");
         } else if (message.getType() == MessageType.QUERY_ERROR) {
             statusLabel.setText("Không thể tải lịch sử: " + message.payloadText());

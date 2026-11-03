@@ -1,22 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+<BorderPane styleClass="root,app-shell" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.nihongoquest.client.quiz.ProctorDashboardController">
-    <top><VBox spacing="8" styleClass="page-content">
-        <HBox spacing="16"><Label fx:id="titleLabel" styleClass="section-title"/>
-            <Label fx:id="timeLabel"/><Label fx:id="onlineLabel"/><Label fx:id="warningsLabel"/></HBox>
-        <HBox spacing="8"><ComboBox fx:id="filterBox" prefWidth="180"/>
+    <top><VBox spacing="12" styleClass="page-content,content-card">
+        <HBox spacing="16" alignment="CENTER_LEFT"><Label fx:id="titleLabel" styleClass="section-title"/>
+            <Region HBox.hgrow="ALWAYS"/><Label fx:id="timeLabel" styleClass="status-label"/>
+            <Label fx:id="onlineLabel" styleClass="status-label,status-success"/>
+            <Label fx:id="warningsLabel" styleClass="status-label"/></HBox>
+        <HBox spacing="8" alignment="CENTER_LEFT"><ComboBox fx:id="filterBox" prefWidth="180"/>
             <TextField fx:id="searchField" promptText="Tìm username" prefWidth="220"/>
-            <Button text="Mở thư mục bằng chứng" onAction="#openEvidence"/>
-            <Button text="Chọn thư mục lưu" onAction="#chooseEvidence"/>
-            <Button fx:id="finishButton" text="Hủy phòng" onAction="#finishRoom"/></HBox>
-        <Label fx:id="errorLabel" visible="false" managed="false" style="-fx-text-fill: #c62828;"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="Mở thư mục bằng chứng" onAction="#openEvidence" styleClass="secondary-button"/>
+            <Button text="Chọn thư mục lưu" onAction="#chooseEvidence" styleClass="secondary-button"/>
+            <Button fx:id="finishButton" text="Hủy phòng" onAction="#finishRoom" styleClass="danger-outline-button"/></HBox>
+        <Label fx:id="errorLabel" visible="false" managed="false" styleClass="error-banner"/>
     </VBox></top>
     <center><ScrollPane fitToWidth="true"><content><TilePane fx:id="cameraGrid"
-            hgap="12" vgap="12" prefTileWidth="250" prefTileHeight="220" style="-fx-padding: 16;"/></content></ScrollPane></center>
-    <bottom><VBox spacing="5" styleClass="page-content">
+            hgap="14" vgap="14" prefTileWidth="250" prefTileHeight="220" styleClass="camera-grid"/></content></ScrollPane></center>
+    <bottom><VBox spacing="8" styleClass="page-content,content-card">
         <Label text="Dòng thời gian cảnh báo" styleClass="section-title"/>
-        <ListView fx:id="eventList" prefHeight="150"/>
+        <ListView fx:id="eventList" prefHeight="150" styleClass="data-card"/>
     </VBox></bottom>
 </BorderPane>

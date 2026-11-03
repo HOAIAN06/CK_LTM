@@ -6,6 +6,7 @@ import com.nihongoquest.client.proctor.EvidenceRecorder;
 import com.nihongoquest.client.proctor.EvidenceViewer;
 import com.nihongoquest.client.proctor.ProctorMediaSubscriber;
 import com.nihongoquest.client.proctor.VideoCanvas;
+import com.nihongoquest.client.ui.UiMotion;
 import com.nihongoquest.common.media.MediaProtocol;
 import com.nihongoquest.common.protocol.Message;
 import com.nihongoquest.common.protocol.Payloads;
@@ -20,7 +21,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
-import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.event.EventHandler;
@@ -30,7 +30,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.ZoneId;
@@ -53,7 +52,7 @@ public final class ProctorDashboardController {
     private final ProctorMediaSubscriber subscriber = new ProctorMediaSubscriber();
     private final EvidenceViewer evidenceViewer = new EvidenceViewer(
             error -> Platform.runLater(() -> showError(error)));
-    private final Map<Long, MediaProtocol.RelayedFrame> latest = new ConcurrentHashMap<>();
+    private final Map<Long, ProctorMediaSubscriber.DecodedFrame> latest = new ConcurrentHashMap<>();
     private final Map<Long, Tile> tiles = new HashMap<>();
     private volatile EvidenceRecorder evidence;
     private final List<EvidenceRecorder> previousEvidence = new CopyOnWriteArrayList<>();
@@ -71,6 +70,9 @@ public final class ProctorDashboardController {
     };
 
     @FXML private void initialize() {
+        Label empty = new Label("Chưa có cảnh báo. Các sự kiện đáng chú ý sẽ xuất hiện tại đây.");
+        empty.getStyleClass().add("empty-state");
+        eventList.setPlaceholder(empty);
         eventList.setCellFactory(ignored -> new ListCell<>() {
             @Override protected void updateItem(Payloads.ProctorEventData event, boolean empty) {
                 super.updateItem(event, empty);
@@ -108,7 +110,7 @@ public final class ProctorDashboardController {
         Payloads.QuizLobbyData lobby = app.getProctoringCoordinator().getLobby();
         if (lobby != null) updateLobby(lobby);
         app.getProctoringCoordinator().setMediaSessionListener(session -> {
-            if (session.pin().equals(room.pin())) subscriber.connect(client.getServerHost(),
+            if (session.pin().equals(room.pin())) subscriber.connectDecoded(client.getServerHost(),
                     session, this::onFrame,
                     error -> Platform.runLater(() -> showError(error)));
         });
@@ -139,10 +141,10 @@ public final class ProctorDashboardController {
         Tile tile = tiles.computeIfAbsent(update.userId(), id -> new Tile(id, update.username()));
         tile.camera = update.cameraStatus();
         tile.count = update.warningCount();
-        if (evidence != null && (update.cameraStatus() == Payloads.CameraStatus.LOST
+        boolean dropped = update.cameraStatus() == Payloads.CameraStatus.LOST
                 || update.cameraStatus() == Payloads.CameraStatus.FAILED
-                || update.cameraStatus() == Payloads.CameraStatus.STOPPED))
-            evidence.finishUser(update.userId());
+                || update.cameraStatus() == Payloads.CameraStatus.STOPPED;
+        if (evidence != null && dropped) evidence.finishUser(update.userId());
         renderTiles();
     }
 
@@ -151,11 +153,14 @@ public final class ProctorDashboardController {
         tile.count = event.warningCount();
         eventList.getItems().add(0, event);
         if (evidence != null) evidence.addEvent(event);
+        // Cảnh báo proctoring: chỉ animation toast (không phát âm thanh).
+        UiMotion.toastIn(eventList);
         renderTiles();
     }
 
-    private void onFrame(MediaProtocol.RelayedFrame frame) {
-        latest.put(frame.userId(), frame);
+    private void onFrame(ProctorMediaSubscriber.DecodedFrame decoded) {
+        MediaProtocol.RelayedFrame frame = decoded.frame();
+        latest.put(frame.userId(), decoded);
         EvidenceRecorder recorder = evidence;
         if (recorder != null) recorder.addFrame(frame);
     }
@@ -163,15 +168,18 @@ public final class ProctorDashboardController {
     private void paint() {
         timeLabel.setText("Còn " + Math.max(0, (endAt - System.currentTimeMillis() + 999) / 1000) + "s");
         for (Tile tile : tiles.values()) {
-            MediaProtocol.RelayedFrame frame = latest.get(tile.id);
+            ProctorMediaSubscriber.DecodedFrame decoded = latest.get(tile.id);
+            if (decoded == null) continue;
+            MediaProtocol.RelayedFrame frame = decoded.frame();
             if (frame == null || frame.sequence() == tile.sequence) continue;
             try {
-                Image image = new Image(new ByteArrayInputStream(frame.jpeg()));
-                tile.video.setFrame(image);
+                tile.video.setFrame(decoded.image());
                 tile.video.setVision(frame.vision());
                 tile.sequence = frame.sequence();
                 tile.recordFrame();
-            } catch (RuntimeException ignored) { }
+            } catch (RuntimeException error) {
+                showError("Không thể hiển thị frame camera: " + error.getMessage());
+            }
         }
     }
 
@@ -188,9 +196,9 @@ public final class ProctorDashboardController {
             tile.label.setText(tile.username + " • " + tile.camera + " • " + tile.count + " cảnh báo");
             tile.video.setHud(tile.username + " • " + tile.camera + " • "
                     + tile.sourceFps + " nguồn • " + tile.count + " cảnh báo");
-            tile.box.setStyle("-fx-border-color: " + (tile.camera == Payloads.CameraStatus.READY
-                    ? tile.count > 0 ? "#f9a825" : "#2e7d32" : "#c62828")
-                    + "; -fx-border-width: 2; -fx-padding: 8;");
+            tile.box.getStyleClass().removeAll("camera-ok", "camera-warning", "camera-error");
+            tile.box.getStyleClass().add(tile.camera == Payloads.CameraStatus.READY
+                    ? tile.count > 0 ? "camera-warning" : "camera-ok" : "camera-error");
             if (tile.camera == Payloads.CameraStatus.READY
                     || tile.camera == Payloads.CameraStatus.BLOCKED) online++;
             warnings += tile.count;
@@ -316,6 +324,7 @@ public final class ProctorDashboardController {
         int sourceFps;
         Tile(long id, String username) {
             this.id = id; this.username = username;
+            box.getStyleClass().add("camera-tile");
             box.getChildren().addAll(video, label);
             box.setOnMouseClicked(ignored -> { expanded = expanded == id ? -1 : id; renderTiles(); });
         }

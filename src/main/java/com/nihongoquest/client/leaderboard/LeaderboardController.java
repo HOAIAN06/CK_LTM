@@ -2,6 +2,7 @@ package com.nihongoquest.client.leaderboard;
 
 import com.nihongoquest.client.ClientApp;
 import com.nihongoquest.client.network.GameClient;
+import com.nihongoquest.client.ui.UiMotion;
 import com.nihongoquest.common.protocol.Message;
 import com.nihongoquest.common.protocol.MessageType;
 import com.nihongoquest.common.protocol.Payloads;
@@ -34,7 +35,9 @@ public class LeaderboardController {
         scoreColumn.setCellValueFactory(row -> new ReadOnlyIntegerWrapper(row.getValue().totalScore()));
         leaderboardTable.setColumnResizePolicy(
                 TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-        leaderboardTable.setPlaceholder(new Label("Chưa có dữ liệu xếp hạng"));
+        Label empty = new Label("Chưa có dữ liệu xếp hạng");
+        empty.getStyleClass().add("empty-state");
+        leaderboardTable.setPlaceholder(empty);
     }
 
     public void setSession(ClientApp app, GameClient gameClient) {
@@ -56,6 +59,7 @@ public class LeaderboardController {
             Payloads.LeaderboardData data = Payloads.fromJson(
                     message.getPayload(), Payloads.LeaderboardData.class);
             leaderboardTable.getItems().setAll(data.players());
+            UiMotion.enter(leaderboardTable);
             statusLabel.setText("Top " + data.players().size()
                     + " người chơi theo số trận thắng và tổng điểm Ranked");
         } else if (message.getType() == MessageType.QUERY_ERROR) {

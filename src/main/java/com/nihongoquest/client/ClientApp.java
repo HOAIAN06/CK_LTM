@@ -17,12 +17,14 @@ import com.nihongoquest.client.quiz.QuizLobbyController;
 import com.nihongoquest.client.quiz.QuizRoomMenuController;
 import com.nihongoquest.client.quiz.QuizSetEditorController;
 import com.nihongoquest.client.quiz.QuizSetListController;
+import com.nihongoquest.client.ui.UiMotion;
 import com.nihongoquest.client.ranked.battle.BattleController;
 import com.nihongoquest.client.ranked.battle.ResultController;
 import com.nihongoquest.client.ranked.matchmaking.MatchmakingController;
 import com.nihongoquest.common.protocol.Message;
 import com.nihongoquest.common.protocol.MessageType;
 import com.nihongoquest.common.protocol.Payloads;
+import com.nihongoquest.common.logging.RuntimeLog;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -35,9 +37,13 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.logging.Logger;
+
+import static com.nihongoquest.common.logging.RuntimeLog.maskPin;
 
 /** Entry point và bộ điều phối điều hướng duy nhất của client JavaFX. */
 public class ClientApp extends Application {
+    private static final Logger LOGGER = Logger.getLogger(ClientApp.class.getName());
 
     private static final double AUTHENTICATED_WIDTH = 1180;
     private static final double AUTHENTICATED_HEIGHT = 760;
@@ -56,6 +62,7 @@ public class ClientApp extends Application {
 
     @Override
     public void start(Stage primaryStage) throws IOException {
+        RuntimeLog.configure("client");
         this.primaryStage = primaryStage;
         primaryStage.setTitle("NihongoQuest");
         gameClient.setGlobalMessageHandler(this::handleGlobalMessage);
@@ -237,6 +244,8 @@ public class ClientApp extends Application {
     }
 
     public void showQuizLobby(Payloads.QuizLobbyData lobby) {
+        LOGGER.info(() -> "route_quiz_lobby pin=" + maskPin(lobby.pin())
+                + " host=" + lobby.currentUserHost());
         proctoringCoordinator.enterLobby(lobby);
         try {
             FXMLLoader loader = loader("/client/quiz/quiz-lobby.fxml");
@@ -252,6 +261,8 @@ public class ClientApp extends Application {
     }
 
     public void showQuizBattle(Payloads.QuizRoomStarted room) {
+        LOGGER.info(() -> "route_quiz_started pin=" + maskPin(room.pin())
+                + " host=" + room.host() + " playing=" + room.playing());
         proctoringCoordinator.setPreviewListener(ignored -> { });
         if (room.proctoringEnabled() && room.host()) {
             showProctorDashboard(room);
@@ -367,6 +378,7 @@ public class ClientApp extends Application {
         scene.getStylesheets().add(
                 getClass().getResource("/client/shared/style.css").toExternalForm());
         primaryStage.setScene(scene);
+        UiMotion.enter(root);
     }
 
     /** Ghi nhận client đang chờ chuyển màn hình từ một lời mời đã gửi hoặc chấp nhận. */

@@ -20,9 +20,13 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.LongSupplier;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
+
+import static com.nihongoquest.common.logging.RuntimeLog.maskPin;
 
 /** Phòng Quiz trong RAM: lobby chung, tiến độ câu hỏi riêng cho từng người chơi. */
 public class QuizRoom {
+    private static final Logger LOGGER = Logger.getLogger(QuizRoom.class.getName());
     static final int MIN_PLAYERS = 2;
     static final int MAX_PLAYERS = 20;
     static final int MAX_HD_PROCTORED_PLAYERS = 6;
@@ -88,6 +92,8 @@ public class QuizRoom {
                         : Payloads.CalibrationStatus.NOT_REQUIRED);
         members.put(joined.userId, joined);
         client.setCurrentQuizRoom(this);
+        LOGGER.info(() -> "quiz_player_joined pin=" + maskPin(pin)
+                + " userId=" + joined.userId + " proctoring=" + proctoringEnabled);
         sendLobbyToAll();
     }
 
@@ -95,8 +101,13 @@ public class QuizRoom {
         requireHost(requester);
         if (state != State.LOBBY) throw new QuizRoomException("ROOM_STARTED");
         if (connectedPlayerCount() < MIN_PLAYERS) {
+            LOGGER.warning(() -> "quiz_start_rejected pin=" + maskPin(pin)
+                    + " reason=NOT_ENOUGH_PLAYERS connectedPlayers=" + connectedPlayerCount());
             throw new QuizRoomException("NOT_ENOUGH_PLAYERS");
         }
+        LOGGER.info(() -> "quiz_start_accepted pin=" + maskPin(pin)
+                + " connectedPlayers=" + connectedPlayerCount()
+                + " cameraStates=" + cameraStateSummary());
         state = State.RUNNING;
         roomDeadlineNanos = nanoTime.getAsLong() + TimeUnit.SECONDS.toNanos(durationSeconds);
         roomTimeout = scheduler.schedule(this::finishNormally, durationSeconds, TimeUnit.SECONDS);
@@ -226,6 +237,9 @@ public class QuizRoom {
                 || report.cameraStatus() == Payloads.CameraStatus.NOT_REQUIRED) {
             throw new QuizRoomException("BAD_PROCTOR_STATUS");
         }
+        LOGGER.info(() -> "proctor_status_received pin=" + maskPin(pin)
+                + " userId=" + player.userId + " camera=" + report.cameraStatus()
+                + " calibration=" + report.calibrationStatus());
         updateCameraStatus(player, report.cameraStatus(), report.calibrationStatus(), true);
         if (state == State.LOBBY) sendLobbyToHost();
     }
@@ -501,6 +515,14 @@ public class QuizRoom {
         return (int) members.values().stream()
                 .filter(member -> member.playing && !member.left
                         && member.client != null && member.client.isConnected()).count();
+    }
+
+    private String cameraStateSummary() {
+        if (!proctoringEnabled) return "not-required";
+        return members.values().stream()
+                .filter(member -> member.playing && !member.left)
+                .map(member -> member.userId + ":" + member.cameraStatus)
+                .toList().toString();
     }
 
     private int roomRemainingSeconds() {

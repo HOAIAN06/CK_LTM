@@ -9,7 +9,7 @@
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.nihongoquest.client.quiz.QuizSetEditorController">
     <center>
-        <SplitPane dividerPositions="0.34" styleClass="quiz-editor-split">
+        <SplitPane dividerPositions="0.34" styleClass="quiz-editor-split,page-surface">
             <VBox spacing="10" styleClass="quiz-side-panel">
                 <Label text="Danh sách câu hỏi" styleClass="section-title"/>
                 <ListView fx:id="questionList" VBox.vgrow="ALWAYS"/>

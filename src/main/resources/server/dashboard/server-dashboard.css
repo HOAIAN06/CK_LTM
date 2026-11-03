@@ -1,20 +1,42 @@
+/* ==========================================================================
+   NihongoQuest — Server Dashboard
+   Dùng CHUNG Design Tokens với client (client/shared/style.css) để toàn hệ
+   thống thống nhất một hệ màu: Indigo nhận diện, Cyan nhấn, nền sáng.
+   ========================================================================== */
 .dashboard-root {
+    -ndq-primary: #4F46E5;
+    -ndq-primary-dark: #3730A3;
+    -ndq-primary-hover: #4338CA;
+    -ndq-accent: #06B6D4;
+    -ndq-bg: #F5F7FB;
+    -ndq-surface: #FFFFFF;
+    -ndq-text: #172033;
+    -ndq-text-secondary: #64748B;
+    -ndq-border: #E2E8F0;
+    -ndq-success: #16A34A;
+    -ndq-warning: #D97706;
+    -ndq-error: #DC2626;
+    -ndq-primary-soft: #EEF2FF;
+    -ndq-primary-border: #C7D2FE;
+    -ndq-neutral-soft: #F1F5F9;
+    -ndq-neutral-border: #CBD5E1;
+    -ndq-text-muted: #94A3B8;
+
     -fx-font-family: "Segoe UI", Arial, sans-serif;
-    -fx-background-color: #f1f5f9;
+    -fx-background-color: -ndq-bg;
 }
 
 .header {
-    -fx-background-color: linear-gradient(to right, #0f172a, #1e3a5f);
+    -fx-background-color: linear-gradient(to right, -ndq-primary-dark, -ndq-primary);
 }
-
-.brand { -fx-text-fill: #7dd3fc; -fx-font-size: 13px; -fx-font-weight: bold; }
+.brand { -fx-text-fill: #A5F3FC; -fx-font-size: 13px; -fx-font-weight: bold; }
 .page-title { -fx-text-fill: white; -fx-font-size: 25px; -fx-font-weight: bold; }
-.field-label { -fx-text-fill: #cbd5e1; }
+.field-label { -fx-text-fill: #C7D2FE; }
 
 .text-field {
-    -fx-background-color: rgba(255,255,255,0.12);
+    -fx-background-color: rgba(255,255,255,0.14);
     -fx-text-fill: white;
-    -fx-border-color: #475569;
+    -fx-border-color: #6366F1;
     -fx-border-radius: 7px;
     -fx-background-radius: 7px;
     -fx-padding: 8px 10px;
@@ -26,16 +48,16 @@
     -fx-background-radius: 7px;
     -fx-padding: 9px 15px;
 }
-.primary-button { -fx-background-color: #0284c7; -fx-text-fill: white; }
-.primary-button:hover { -fx-background-color: #0369a1; }
-.danger-button { -fx-background-color: #dc2626; -fx-text-fill: white; }
-.danger-button:hover { -fx-background-color: #b91c1c; }
-.secondary-button { -fx-background-color: #e2e8f0; -fx-text-fill: #334155; }
+.primary-button { -fx-background-color: -ndq-success; -fx-text-fill: white; }
+.primary-button:hover { -fx-background-color: derive(-ndq-success, -10%); }
+.danger-button { -fx-background-color: -ndq-error; -fx-text-fill: white; }
+.danger-button:hover { -fx-background-color: #B91C1C; }
+.secondary-button { -fx-background-color: -ndq-border; -fx-text-fill: #334155; }
 .outline-danger-button {
     -fx-background-color: transparent;
-    -fx-border-color: #ef4444;
+    -fx-border-color: -ndq-error;
     -fx-border-radius: 7px;
-    -fx-text-fill: #dc2626;
+    -fx-text-fill: -ndq-error;
 }
 .button:disabled { -fx-opacity: 0.48; }
 
@@ -45,52 +67,52 @@
     -fx-font-size: 12px;
     -fx-font-weight: bold;
 }
-.status-running { -fx-background-color: #166534; -fx-text-fill: #bbf7d0; }
-.status-stopped { -fx-background-color: #475569; -fx-text-fill: #e2e8f0; }
-.status-starting { -fx-background-color: #854d0e; -fx-text-fill: #fef08a; }
+.status-running { -fx-background-color: -ndq-success; -fx-text-fill: white; }
+.status-stopped { -fx-background-color: #475569; -fx-text-fill: #E2E8F0; }
+.status-starting { -fx-background-color: -ndq-warning; -fx-text-fill: white; }
 
 .metric-card {
-    -fx-background-color: rgba(255,255,255,0.08);
+    -fx-background-color: rgba(255,255,255,0.10);
     -fx-background-radius: 10px;
     -fx-padding: 13px 16px;
     -fx-min-width: 160px;
 }
-.metric-title { -fx-text-fill: #94a3b8; -fx-font-size: 11px; -fx-font-weight: bold; }
-.metric-value { -fx-text-fill: #ffffff; -fx-font-size: 25px; -fx-font-weight: bold; }
+.metric-title { -fx-text-fill: #C7D2FE; -fx-font-size: 11px; -fx-font-weight: bold; }
+.metric-value { -fx-text-fill: white; -fx-font-size: 25px; -fx-font-weight: bold; }
 
-.content-panel { -fx-padding: 18px 28px; -fx-background-color: #f8fafc; }
-.log-panel { -fx-background-color: #eef2f7; }
-.section-title { -fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: #0f172a; }
+.content-panel { -fx-padding: 18px 28px; -fx-background-color: -ndq-bg; }
+.log-panel { -fx-background-color: -ndq-neutral-soft; }
+.section-title { -fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: -ndq-text; }
 
 .table-view {
-    -fx-background-color: white;
-    -fx-border-color: #dbe3ed;
+    -fx-background-color: -ndq-surface;
+    -fx-border-color: -ndq-border;
     -fx-border-radius: 8px;
     -fx-background-radius: 8px;
 }
-.table-view .column-header-background { -fx-background-color: #eaf0f6; }
+.table-view .column-header-background { -fx-background-color: -ndq-neutral-soft; }
 .table-view .column-header { -fx-background-color: transparent; -fx-padding: 9px; }
-.table-row-cell { -fx-cell-size: 39px; -fx-background-color: white; }
-.table-row-cell:odd { -fx-background-color: #f8fafc; }
-.table-row-cell:selected { -fx-background-color: #bae6fd; -fx-text-background-color: #0c4a6e; }
+.table-row-cell { -fx-cell-size: 39px; -fx-background-color: -ndq-surface; }
+.table-row-cell:odd { -fx-background-color: #FAFBFF; }
+.table-row-cell:selected { -fx-background-color: -ndq-primary-soft; -fx-text-background-color: -ndq-primary-dark; }
 
 .activity-list {
-    -fx-background-color: #0f172a;
+    -fx-background-color: #0F172A;
     -fx-background-radius: 8px;
     -fx-border-radius: 8px;
     -fx-font-family: Consolas, monospace;
     -fx-font-size: 12px;
 }
-.activity-list .list-cell { -fx-background-color: #0f172a; -fx-text-fill: #cbd5e1; -fx-padding: 5px 10px; }
-.activity-list .list-cell:filled:selected { -fx-background-color: #1e3a5f; }
-.dashboard-tabs { -fx-background-color: #eef2f7; -fx-tab-min-height: 30px; }
-.dashboard-tabs .tab-content-area { -fx-background-color: #eef2f7; }
-.json-panel { -fx-background-color: #eef2f7; }
+.activity-list .list-cell { -fx-background-color: #0F172A; -fx-text-fill: #CBD5E1; -fx-padding: 5px 10px; }
+.activity-list .list-cell:filled:selected { -fx-background-color: -ndq-primary-dark; }
+.dashboard-tabs { -fx-background-color: -ndq-neutral-soft; -fx-tab-min-height: 30px; }
+.dashboard-tabs .tab-content-area { -fx-background-color: -ndq-neutral-soft; }
+.json-panel { -fx-background-color: -ndq-neutral-soft; }
 .json-column-title { -fx-text-fill: #334155; -fx-font-size: 12px; -fx-font-weight: bold; }
 .json-area {
-    -fx-control-inner-background: #0f172a;
-    -fx-text-fill: #e2e8f0;
-    -fx-highlight-fill: #1e3a5f;
+    -fx-control-inner-background: #0F172A;
+    -fx-text-fill: #E2E8F0;
+    -fx-highlight-fill: -ndq-primary-dark;
     -fx-highlight-text-fill: white;
     -fx-font-family: Consolas, monospace;
     -fx-font-size: 12px;
@@ -98,6 +120,7 @@
     -fx-border-radius: 8px;
     -fx-background-radius: 8px;
 }
-.json-area .content { -fx-background-color: #0f172a; }
+.json-area .content { -fx-background-color: #0F172A; }
 .split-pane { -fx-background-color: transparent; -fx-padding: 0; }
-.split-pane-divider { -fx-background-color: #cbd5e1; -fx-padding: 1px; }
+.split-pane-divider { -fx-background-color: -ndq-neutral-border; -fx-padding: 1px; }
+

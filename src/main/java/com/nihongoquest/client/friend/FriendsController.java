@@ -29,6 +29,9 @@ public class FriendsController {
 
     @FXML
     private void initialize() {
+        friendList.setPlaceholder(emptyLabel("Chưa có bạn bè. Hãy tìm một người chơi mới!"));
+        requestList.setPlaceholder(emptyLabel("Không có lời mời kết bạn đang chờ"));
+        searchResults.setPlaceholder(emptyLabel("Nhập username để bắt đầu tìm kiếm"));
         searchResults.setCellFactory(ignored -> textCell(item -> item.username()
                 + (item.online() ? "  •  Trực tuyến" : "  •  Ngoại tuyến")));
         requestList.setCellFactory(ignored -> textCell(Payloads.FriendRequestItem::username));
@@ -42,6 +45,12 @@ public class FriendsController {
             }
             @Override public Integer fromString(String value) { return Integer.valueOf(value); }
         });
+    }
+
+    private static Label emptyLabel(String text) {
+        Label label = new Label(text);
+        label.getStyleClass().add("empty-state");
+        return label;
     }
 
     public void setSession(ClientApp app, GameClient gameClient) {

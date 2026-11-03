@@ -1,5 +1,7 @@
 package com.nihongoquest.client.ranked.battle;
 
+import com.nihongoquest.client.ui.UiMotion;
+
 import com.nihongoquest.client.ClientApp;
 import com.nihongoquest.client.profile.Player;
 import com.nihongoquest.client.network.GameClient;
@@ -184,11 +186,13 @@ public class BattleController {
                 timeLabel.setText("Hết giờ");
             } else if (!correct) {
                 answerButtons.get(chosenIndex).getStyleClass().add("answer-wrong");
+                UiMotion.feedback(answerButtons.get(chosenIndex));
                 timeLabel.setText("Sai");
             } else {
                 timeLabel.setText("Đúng");
             }
             answerButtons.get(correctIndex).getStyleClass().add("answer-correct");
+            UiMotion.feedback(answerButtons.get(correctIndex));
         } catch (RuntimeException e) {
             showProtocolError();
         }

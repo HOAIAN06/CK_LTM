@@ -1,5 +1,6 @@
 package com.nihongoquest.client.ranked.battle;
 
+import com.nihongoquest.client.ui.UiMotion;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 
@@ -34,5 +35,11 @@ public class ResultController {
         });
         scoreLabel.setText(myScore + " - " + opponentScore);
         opponentLabel.setText("Đối thủ: " + opponentName);
+        // Phản hồi kết quả: thắng thì rank up, thua/hòa thì fade in.
+        if ("WIN".equals(result)) {
+            UiMotion.rankUp(resultLabel);
+        } else {
+            UiMotion.fadeIn(resultLabel);
+        }
     }
 }

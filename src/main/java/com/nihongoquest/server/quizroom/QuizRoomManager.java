@@ -19,9 +19,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.IntSupplier;
+import java.util.logging.Logger;
+
+import static com.nihongoquest.common.logging.RuntimeLog.maskPin;
 
 /** Quản lý PIN và ánh xạ tài khoản vào phòng Quiz đang hoạt động. */
 public class QuizRoomManager {
+    private static final Logger LOGGER = Logger.getLogger(QuizRoomManager.class.getName());
     private final QuizSetService quizSets;
     private final ScheduledExecutorService scheduler;
     private final IntSupplier pinSupplier;
@@ -66,6 +70,9 @@ public class QuizRoomManager {
                 this::scheduleCleanup);
         rooms.put(pin, room);
         userRooms.put(host.getPlayerId(), room);
+        LOGGER.info(() -> "quiz_room_created pin=" + maskPin(pin)
+                + " hostId=" + host.getPlayerId()
+                + " proctoring=" + request.proctoringEnabled());
         host.send(new Message(MessageType.QUIZ_ROOM_CREATED,
                 Payloads.toJson(new Payloads.QuizRoomCreated(
                         room.lobbyFor(host.getPlayerId())))));
@@ -78,6 +85,8 @@ public class QuizRoomManager {
         if (room == null || room.isFinished()) throw new QuizRoomException("ROOM_NOT_FOUND");
         room.join(client);
         userRooms.put(client.getPlayerId(), room);
+        LOGGER.info(() -> "quiz_join_completed pin=" + maskPin(pin)
+                + " userId=" + client.getPlayerId());
     }
 
     public void start(ClientHandler client) {

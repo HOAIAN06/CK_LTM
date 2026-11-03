@@ -20,7 +20,7 @@
         </HBox>
     </top>
     <center>
-        <HBox spacing="18" styleClass="battle-content">
+        <HBox spacing="18" styleClass="battle-content,page-surface">
             <VBox spacing="14" HBox.hgrow="ALWAYS">
                 <HBox alignment="CENTER_LEFT" spacing="12">
                     <Label fx:id="scoreLabel" text="0 điểm" styleClass="section-title"/>
@@ -31,9 +31,9 @@
                     <Label fx:id="questionTimeLabel" text="--" styleClass="time-label"/>
                 </HBox>
                 <Label fx:id="cameraBanner" visible="false" managed="false"
-                       style="-fx-text-fill: #b71c1c;"/>
+                       styleClass="error-banner"/>
                 <Label fx:id="toastLabel" visible="false" managed="false"
-                       wrapText="true" style="-fx-background-color: #fff3cd; -fx-padding: 8;"/>
+                       wrapText="true" styleClass="toast-banner"/>
                 <VBox spacing="12" styleClass="question-card" VBox.vgrow="ALWAYS">
                     <Label fx:id="questionLabel" text="Đang chuẩn bị câu hỏi"
                            wrapText="true" styleClass="battle-question"/>

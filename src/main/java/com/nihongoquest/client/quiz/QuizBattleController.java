@@ -1,5 +1,7 @@
 package com.nihongoquest.client.quiz;
 
+import com.nihongoquest.client.ui.UiMotion;
+
 import com.nihongoquest.client.ClientApp;
 import com.nihongoquest.client.network.GameClient;
 import com.nihongoquest.client.profile.Player;
@@ -54,6 +56,7 @@ public class QuizBattleController {
     private long countdownStartedNanos;
     private long questionDurationMillis;
     private long roomDurationMillis;
+    private long lastCountdownSecond = -1;
     private boolean finished;
 
     @FXML
@@ -85,6 +88,10 @@ public class QuizBattleController {
                         && status != Payloads.CameraStatus.INITIALIZING;
                 cameraBanner.setVisible(problem); cameraBanner.setManaged(problem);
                 cameraBanner.setText(problem ? "Camera: " + status : "");
+                // Phản hồi theo trạng thái camera (chỉ animation, không phát âm thanh).
+                if (status == Payloads.CameraStatus.READY) {
+                    UiMotion.fadeIn(cameraPreviewHolder);
+                }
             }));
             if (!room.host()) {
                 VideoCanvas preview = new VideoCanvas(320, 180);
@@ -176,6 +183,7 @@ public class QuizBattleController {
         setAnswersDisabled(false);
         statusLabel.setText("Chọn đáp án đúng nhanh nhất có thể.");
         startCountdown(question.questionDurationSeconds(), question.roomRemainingSeconds());
+        UiMotion.fadeIn(questionLabel);
     }
 
     private void showResult(Payloads.QuizAnswerResult result) {
@@ -185,10 +193,15 @@ public class QuizBattleController {
         setAnswersDisabled(true);
         int correctIndex = choiceIndex(result.correctChoiceId());
         int chosenIndex = choiceIndex(result.chosenChoiceId());
-        if (correctIndex >= 0) answerButtons.get(correctIndex).getStyleClass().add("answer-correct");
+        if (correctIndex >= 0) {
+            answerButtons.get(correctIndex).getStyleClass().add("answer-correct");
+            UiMotion.pulse(answerButtons.get(correctIndex));
+        }
         if (!result.correct() && chosenIndex >= 0) {
             answerButtons.get(chosenIndex).getStyleClass().add("answer-wrong");
+            UiMotion.shake(answerButtons.get(chosenIndex));
         }
+        // Phản hồi theo trạng thái nghiệp vụ (chỉ animation): đúng pulse, sai shake.
         scoreLabel.setText(result.totalScore() + " điểm");
         statusLabel.setText(result.chosenChoiceId() == null ? "Hết giờ"
                 : result.correct() ? "Đúng! +" + result.scoreAwarded() + " điểm" : "Chưa đúng");
@@ -210,10 +223,12 @@ public class QuizBattleController {
         questionLabel.setText("Phòng Quiz đã kết thúc");
         statusLabel.setText("Bảng xếp hạng cuối cùng");
         leaveButton.setText("Về trang chủ");
+        UiMotion.rankUp(leaderboardList);
     }
 
     private void startCountdown(int questionSeconds, int roomSeconds) {
         stopCountdown();
+        lastCountdownSecond = -1;
         countdownStartedNanos = System.nanoTime();
         questionDurationMillis = questionSeconds * 1_000L;
         roomDurationMillis = roomSeconds * 1_000L;
@@ -231,8 +246,14 @@ public class QuizBattleController {
         long roomRemaining = Math.max(0, roomDurationMillis - elapsed);
         questionProgress.setProgress(questionDurationMillis == 0
                 ? 0 : (double) questionRemaining / questionDurationMillis);
-        questionTimeLabel.setText(((questionRemaining + 999) / 1_000) + "s");
+        long secondsLeft = (questionRemaining + 999) / 1_000;
+        questionTimeLabel.setText(secondsLeft + "s");
         roomTimeLabel.setText(formatSeconds((int) ((roomRemaining + 999) / 1_000)));
+        // Countdown gấp: chỉ pulse ở mốc giây thay đổi và khi còn <= 5 giây.
+        if (secondsLeft <= 5 && secondsLeft != lastCountdownSecond) {
+            lastCountdownSecond = secondsLeft;
+            UiMotion.countdown(questionTimeLabel);
+        }
         if (questionRemaining == 0) {
             stopCountdown();
             setAnswersDisabled(true);

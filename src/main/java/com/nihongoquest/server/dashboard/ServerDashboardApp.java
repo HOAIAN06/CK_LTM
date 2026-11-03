@@ -1,5 +1,6 @@
 package com.nihongoquest.server.dashboard;
 
+import com.nihongoquest.common.logging.RuntimeLog;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -15,6 +16,7 @@ public class ServerDashboardApp extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
+        RuntimeLog.configure("server");
         FXMLLoader loader = new FXMLLoader(
                 getClass().getResource("/server/dashboard/server-dashboard.fxml"));
         Parent root = loader.load();

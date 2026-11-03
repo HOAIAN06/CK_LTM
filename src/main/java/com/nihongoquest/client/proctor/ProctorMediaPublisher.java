@@ -22,6 +22,7 @@ public final class ProctorMediaPublisher implements AutoCloseable {
     private final ArrayBlockingQueue<CapturedFrame> latest = new ArrayBlockingQueue<>(1);
     private final AtomicBoolean running = new AtomicBoolean();
     private final AtomicLong generation = new AtomicLong();
+    private final PipelineStageMetrics sendMetrics = new PipelineStageMetrics("network-send");
     private volatile Socket socket;
     private volatile String activeTicket;
     private volatile VisionMetadata latestVision = VisionMetadata.unavailable(0);
@@ -36,8 +37,10 @@ public final class ProctorMediaPublisher implements AutoCloseable {
     }
 
     public void offer(CapturedFrame frame) {
+        sendMetrics.offered();
         if (!latest.offer(frame)) {
             latest.poll();
+            sendMetrics.dropped();
             latest.offer(frame);
         }
     }
@@ -59,11 +62,19 @@ public final class ProctorMediaPublisher implements AutoCloseable {
             MediaProtocol.writeHandshake(out, MediaProtocol.Role.PUBLISHER, session.ticket());
             if (in.readUnsignedByte() != 0) throw new IllegalStateException("Media ticket bị từ chối");
             local.setSoTimeout(0);
+            long nextMetricsLog = System.nanoTime() + 5_000_000_000L;
             while (running.get() && generation.get() == id) {
                 CapturedFrame frame = latest.take();
                 VisionMetadata vision = latestVision;
+                long started = System.nanoTime();
                 MediaProtocol.writePublishedFrame(out, new MediaProtocol.PublishedFrame(
                         frame.sequence(), frame.capturedAtEpochMillis(), frame.jpeg(), vision));
+                sendMetrics.completed(System.nanoTime() - started, frame.jpeg().length);
+                if (System.nanoTime() >= nextMetricsLog) {
+                    PipelineStageMetrics.Snapshot snapshot = sendMetrics.snapshotAndReset();
+                    if (snapshot.hasActivity()) LOGGER.info(() -> "proctor_pipeline " + snapshot.logLine());
+                    nextMetricsLog = System.nanoTime() + 5_000_000_000L;
+                }
             }
         } catch (Exception error) {
             if (generation.get() == id && running.get()) {

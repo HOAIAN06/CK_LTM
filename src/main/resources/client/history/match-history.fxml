@@ -8,11 +8,11 @@
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.nihongoquest.client.history.MatchHistoryController">
     <center>
-        <VBox spacing="14" styleClass="page-content">
+        <VBox spacing="14" styleClass="page-content,page-surface">
             <HBox alignment="CENTER_RIGHT" styleClass="page-action-row">
                 <Button text="LÀM MỚI" onAction="#onRefresh" styleClass="primary-button"/>
             </HBox>
-            <TableView fx:id="historyTable" VBox.vgrow="ALWAYS">
+            <TableView fx:id="historyTable" VBox.vgrow="ALWAYS" styleClass="data-card">
                 <columns>
                     <TableColumn fx:id="timeColumn" text="THỜI GIAN" prefWidth="180"/>
                     <TableColumn fx:id="opponentColumn" text="ĐỐI THỦ" prefWidth="210"/>

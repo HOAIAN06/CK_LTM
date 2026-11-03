@@ -9,14 +9,14 @@
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.nihongoquest.client.quiz.QuizSetListController">
     <center>
-        <VBox spacing="14" styleClass="page-content">
+        <VBox spacing="14" styleClass="page-content,page-surface">
             <HBox spacing="10" alignment="CENTER_LEFT">
                 <Button text="Bộ đề của tôi" onAction="#onOwned"/>
                 <Button text="Bộ đề công khai" onAction="#onPublished" styleClass="secondary-button"/>
                 <Region HBox.hgrow="ALWAYS"/>
                 <Button text="Tạo bộ đề mới" onAction="#onCreate" styleClass="primary-button"/>
             </HBox>
-            <ListView fx:id="quizSetList" VBox.vgrow="ALWAYS" styleClass="quiz-list"/>
+            <ListView fx:id="quizSetList" VBox.vgrow="ALWAYS" styleClass="quiz-list,data-card"/>
             <HBox spacing="10" alignment="CENTER_LEFT">
                 <Button fx:id="viewButton" text="Xem" onAction="#onView" styleClass="secondary-button"/>
                 <Button fx:id="editButton" text="Sửa" onAction="#onEdit"/>

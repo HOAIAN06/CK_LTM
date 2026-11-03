@@ -276,6 +276,40 @@ class QuizRoomTest {
     }
 
     @Test
+    void monitoredRoomStartsRegardlessOfCameraState() {
+        List<Payloads.CameraStatus> states = List.of(
+                Payloads.CameraStatus.READY,
+                Payloads.CameraStatus.INITIALIZING,
+                Payloads.CameraStatus.DENIED,
+                Payloads.CameraStatus.NOT_FOUND,
+                Payloads.CameraStatus.FAILED,
+                Payloads.CameraStatus.LOST,
+                Payloads.CameraStatus.BLOCKED,
+                Payloads.CameraStatus.STOPPED);
+
+        for (Payloads.CameraStatus state : states) {
+            ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+            StubClient host = new StubClient(1);
+            StubClient first = new StubClient(2);
+            StubClient second = new StubClient(3);
+            QuizRoom room = room(host, false, true, scheduler,
+                    new AtomicLong(), new AtomicInteger());
+            try {
+                room.join(first);
+                room.join(second);
+                room.reportProctorStatus(first, new Payloads.ProctorStatusReport(
+                        "123456", state, Payloads.CalibrationStatus.PENDING,
+                        "test", System.currentTimeMillis()));
+                room.start(host);
+                assertTrue(room.isRunning(), () -> "Camera state blocked start: " + state);
+            } finally {
+                if (!room.isFinished()) room.cancelByHost(host);
+                scheduler.shutdownNow();
+            }
+        }
+    }
+
+    @Test
     void proctorDisconnectAndReconnectPublishCameraTransitions() {
         ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
         StubClient host = new StubClient(1);

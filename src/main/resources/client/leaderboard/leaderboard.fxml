@@ -9,11 +9,11 @@
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.nihongoquest.client.leaderboard.LeaderboardController">
     <center>
-        <VBox spacing="14" styleClass="page-content">
+        <VBox spacing="14" styleClass="page-content,page-surface">
             <HBox alignment="CENTER_RIGHT" styleClass="page-action-row">
                 <Button text="LÀM MỚI" onAction="#onRefresh" styleClass="primary-button"/>
             </HBox>
-            <TableView fx:id="leaderboardTable" VBox.vgrow="ALWAYS">
+            <TableView fx:id="leaderboardTable" VBox.vgrow="ALWAYS" styleClass="data-card">
                 <columns>
                     <TableColumn fx:id="rankColumn" text="HẠNG" prefWidth="90"/>
                     <TableColumn fx:id="usernameColumn" text="NGƯỜI CHƠI" prefWidth="300"/>

@@ -17,9 +17,12 @@ import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /** Owns the default camera on one daemon thread and emits latest-wins 720p/45 FPS frames. */
-public final class CameraCaptureService implements AutoCloseable {
+public final class CameraCaptureService implements CameraSource {
+    private static final Logger LOGGER = Logger.getLogger(CameraCaptureService.class.getName());
     public static final int WIDTH = 1280;
     public static final int HEIGHT = 720;
     public static final int TARGET_FPS = 45;
@@ -29,6 +32,8 @@ public final class CameraCaptureService implements AutoCloseable {
     private final Consumer<CapturedFrame> frameConsumer;
     private final Consumer<Failure> failureConsumer;
     private final AtomicBoolean running = new AtomicBoolean();
+    private final PipelineStageMetrics captureMetrics = new PipelineStageMetrics("camera-capture");
+    private final PipelineStageMetrics encodeMetrics = new PipelineStageMetrics("jpeg-encode");
     private volatile OpenCVFrameGrabber grabber;
     private Thread thread;
 
@@ -44,6 +49,7 @@ public final class CameraCaptureService implements AutoCloseable {
 
     private void captureLoop() {
         long framesCaptured = 0;
+        long nextMetricsLog = System.nanoTime() + 5_000_000_000L;
         try (Java2DFrameConverter converter = new Java2DFrameConverter()) {
             OpenCVFrameGrabber local = new OpenCVFrameGrabber(0);
             grabber = local;
@@ -59,11 +65,14 @@ public final class CameraCaptureService implements AutoCloseable {
             }
             long nextFrame = 0;
             while (running.get()) {
+                captureMetrics.offered();
+                long captureStarted = System.nanoTime();
                 Frame frame = local.grab();
                 if (frame == null) {
                     failureConsumer.accept(framesCaptured == 0 ? Failure.NOT_FOUND : Failure.LOST);
                     return;
                 }
+                captureMetrics.completed(System.nanoTime() - captureStarted, 0);
                 long nowNanos = System.nanoTime();
                 if (nowNanos < nextFrame) continue;
                 nextFrame = nowNanos + FRAME_INTERVAL_NANOS;
@@ -71,24 +80,41 @@ public final class CameraCaptureService implements AutoCloseable {
                 BufferedImage source = converter.convert(frame);
                 if (source == null) continue;
                 BufferedImage image = scale(source);
+                encodeMetrics.offered();
+                long encodeStarted = System.nanoTime();
                 byte[] jpeg = encodeWithinLimit(image);
                 if (jpeg != null) {
+                    encodeMetrics.completed(System.nanoTime() - encodeStarted, jpeg.length);
                     framesCaptured++;
                     frameConsumer.accept(new CapturedFrame(
                             NEXT_SEQUENCE.incrementAndGet(), now, jpeg, image));
+                } else {
+                    encodeMetrics.dropped();
+                }
+                if (System.nanoTime() >= nextMetricsLog) {
+                    logMetrics(captureMetrics.snapshotAndReset());
+                    logMetrics(encodeMetrics.snapshotAndReset());
+                    nextMetricsLog = System.nanoTime() + 5_000_000_000L;
                 }
             }
         } catch (Throwable error) {
             // Native OpenCV loading failures are Errors (for example UnsatisfiedLinkError),
             // not Exceptions.  Letting one escape leaves the coordinator stuck forever in
             // INITIALIZING even though the capture thread has already died.
-            if (running.get()) failureConsumer.accept(Failure.FAILED);
+            if (running.get()) {
+                LOGGER.log(Level.WARNING, "camera_capture_failed", error);
+                failureConsumer.accept(Failure.FAILED);
+            }
         } finally {
             running.set(false);
             OpenCVFrameGrabber local = grabber;
             grabber = null;
             if (local != null) try { local.stop(); local.close(); } catch (Exception ignored) { }
         }
+    }
+
+    private static void logMetrics(PipelineStageMetrics.Snapshot snapshot) {
+        if (snapshot.hasActivity()) LOGGER.info(() -> "proctor_pipeline " + snapshot.logLine());
     }
 
     private BufferedImage scale(BufferedImage source) {

@@ -1,77 +1,77 @@
 # NihongoQuest
 
-Hệ thống thi đấu tiếng Nhật thời gian thực theo mô hình client-server, dùng Java 21,
-JavaFX, TCP Socket, JSON line protocol, JDBC PostgreSQL/Supabase và BCrypt.
+NihongoQuest là ứng dụng thi đấu và luyện tiếng Nhật realtime theo mô hình client–server, dùng Java 21, JavaFX, TCP Socket, JSON line protocol, JDBC PostgreSQL/Supabase và BCrypt.
 
-## Nguyên tắc chính
+## Mục tiêu hiện tại
 
-- Client chỉ hiển thị UI và gửi/nhận TCP qua `GameClient`.
-- Server giữ đáp án, timer, chấm điểm và quyết định kết quả.
-- Mỗi frame là một JSON object UTF-8 kết thúc bằng xuống dòng.
-- Câu hỏi chỉ được đọc từ PostgreSQL; không có ngân hàng JSON trong source.
-- Không dùng Spring Boot, Hibernate, HTTP gameplay, WebSocket, RMI, TLS hoặc JWT.
+- Ổn định luồng player vào Quiz Room và host bắt đầu phòng.
+- Camera/proctoring mượt, không khóa lobby hoặc JavaFX UI.
+- Khi camera lỗi, player vẫn vào quiz và nhận thông báo rõ ràng.
+- Phát hiện gian lận có trạng thái, bằng chứng và giới hạn false positive rõ ràng; AI chỉ cảnh báo, không tự kết luận thay host.
+- Làm lại UI toàn bộ theo cảm giác Duolingo, có loading, feedback, transition và animation nhẹ.
 
-## Chuẩn bị database
+## Chạy dự án
 
-1. Chạy `sql/supabase_schema.sql` trong Supabase SQL Editor. Script này xóa dữ liệu cũ.
-2. Tùy chọn chạy `sql/seed_demo.sql` để tạo ba tài khoản và 6 bộ đề N5/N4 gồm 60 câu.
-3. Chạy `sql/verify_schema.sql` để kiểm tra.
-4. Sao chép `src/main/resources/db.properties.example` thành `~/.nihongoquest/db.properties`
-   (Windows: `%USERPROFILE%\.nihongoquest\db.properties`) và điền thông tin PostgreSQL.
-   Khi chạy từ source, `src/main/resources/db.properties` vẫn được đọc. File cấu hình
-   thật không được đóng vào JAR hoặc app-image.
-
-Chi tiết schema: [docs/database.md](docs/database.md).
-
-## Chạy chương trình
-
-Yêu cầu JDK 21.
+Yêu cầu JDK 21 và Windows 10/11 nếu chạy camera.
 
 ```powershell
 .\mvnw.cmd clean test
 .\scripts\run-server.ps1
-```
-
-Mở terminal khác để chạy client:
-
-```powershell
 .\scripts\run-client.ps1
 ```
 
-Hai script chạy tự tìm và ép dùng **JDK 21**. Không chạy camera bằng JDK 25: native
-OpenCV sẽ không nạp được và client sẽ không gửi hình tới host.
+Cách nhanh bằng một script menu:
 
-Dashboard hiển thị IP LAN và mặc định mở TCP port `5000`. Client nhập IP đó để kết nối.
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\scripts\run.ps1
+```
 
-## Tài liệu
+Hoặc chạy trực tiếp:
 
-- [Kiến trúc](docs/architecture.md)
-- [Giao thức TCP](docs/protocol.md)
-- [Database](docs/database.md)
-- [Lộ trình MVP](docs/roadmap.md)
+```powershell
+.\scripts\run.ps1 -Mode server
+.\scripts\run.ps1 -Mode client
+.\scripts\run.ps1 -Mode test
+```
 
-## Trạng thái
+Mặc định client kết nối `localhost:5000`. Khi chạy client ở máy khác trong LAN,
+dùng IP của máy server:
 
-Nền tảng hiện có đăng ký/đăng nhập BCrypt, dashboard, Ranked 1v1 theo chế độ 3/5 phút,
-quản lý bộ đề, Quiz Room nhiều người bằng PIN, Top 10 Ranked, lịch sử 100 trận gần nhất,
-bạn bè/presence và lời mời trực tiếp vào Ranked hoặc Quiz Room.
+```powershell
+.\scripts\run.ps1 -Mode client -ServerHost 192.168.1.100 -ServerPort 5000
+```
 
-## Giám sát Quiz Room (Windows 10/11 x64)
+Trình tự demo: mở `server` trước trên máy host, chờ Server Dashboard báo đang chạy,
+sau đó mở `client` trên từng máy người chơi. Nếu Windows Firewall hỏi quyền mạng,
+cho phép Java/Maven ở mạng Private. Log runtime nằm trong `logs/server.log*` và
+`logs/client.log*`.
 
-Host có thể chọn **Bật giám sát camera** khi tạo phòng Quiz; host giám sát không tham gia
-trả lời. Người chơi có quyền từ chối camera mà vẫn được thi. Ứng dụng chỉ mở camera sau
-khi người chơi đồng ý; không thu microphone. Cảnh báo AI là nghi vấn để host xem xét,
-không tự trừ điểm hay loại người chơi.
+Database dùng các script trong `sql/`. Cấu hình thật không commit vào Git. Chi tiết kiến trúc, protocol, camera, UI và kiểm thử nằm trong thư mục `docs/`.
 
-Máy chạy server cần mở inbound TCP **5000** (gameplay JSON) và **5001** (JPEG media).
-Máy host/player chỉ cần outbound tới hai cổng này. Media v1 truyền plaintext trong LAN.
-Bằng chứng mặc định ở `%USERPROFILE%\Documents\NihongoQuest-Proctoring`; mỗi cảnh báo
-có ảnh JPEG và clip MP4 không âm thanh khi host có video.
+Khi chạy từ source, client và server ghi log xoay vòng trong `logs/client.log*` và
+`logs/server.log*`. Bản đóng gói ghi tại `%USERPROFILE%\.nihongoquest\logs`.
 
-Build bản Windows app-image offline bằng JDK 21 và `scripts/package-windows.ps1`.
-Model AI, native OpenCV/FFmpeg và license được đóng trong bản build. Chưa có MSI/EXE.
+## Trạng thái triển khai
 
-Nguồn model và mã kiểm tra SHA-256 nằm trong `src/main/resources/models/proctoring/manifest.json`.
-Bốn model Intel trong gói là bản ONNX chuyển từ [Open Model Zoo](https://github.com/openvinotoolkit/open_model_zoo),
-để OpenCV DNN CPU đọc được mà không cần OpenVINO runtime. YOLOX-tiny lấy từ
-[release chính thức](https://github.com/Megvii-BaseDetection/YOLOX/releases/tag/0.1.1rc0).
+- P0 lobby/camera gate: đã hoàn thành bằng code và test; còn kiểm tra webcam thật Windows 10/11.
+- P1 pipeline camera: đã có metrics 5 giây, latest-frame/drop policy, retry tối đa 3 lần,
+  decode ngoài JavaFX thread và evidence `UNKNOWN`; còn benchmark 2 rồi 6 client để chốt FPS.
+- P2 UI: đã áp dụng theme Duolingo-inspired, semantic state và animation ngắn cho toàn client;
+  còn kiểm tra trực quan Windows 10/11 và DPI cao.
+- Baseline: `mvnw.cmd clean test` trên JDK 21 đạt 120 test, không có failure/error/skip.
+
+## Tài liệu điều khiển dự án
+
+- [AGENTS.md](AGENTS.md): quy tắc cho AI/người phát triển.
+- [PROGRESS.md](PROGRESS.md): trạng thái sau mỗi phiên AI.
+- [TASKS.md](TASKS.md): backlog và tiêu chí hoàn thành.
+- [DESIGN.md](DESIGN.md): mục tiêu sản phẩm và định hướng kỹ thuật.
+- [DECISIONS.md](DECISIONS.md): các quyết định có lý do.
+- [docs/AI_LOG.md](docs/AI_LOG.md): nhật ký lỗi và bằng chứng chẩn đoán.
+- [docs/architecture.md](docs/architecture.md): bản đồ module.
+- [docs/protocol.md](docs/protocol.md): hợp đồng TCP.
+- [docs/proctoring.md](docs/proctoring.md): camera và phát hiện gian lận.
+- [docs/ui-design.md](docs/ui-design.md): hệ thống giao diện Duolingo-inspired.
+- [docs/testing.md](docs/testing.md): chiến lược test.
+- [docs/execution-plan.md](docs/execution-plan.md): kế hoạch triển khai theo task.
