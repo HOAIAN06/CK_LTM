@@ -3,10 +3,12 @@ package com.nihongoquest.client.quiz;
 import com.nihongoquest.client.ClientApp;
 import com.nihongoquest.client.layout.NavigationGuard;
 import com.nihongoquest.client.network.GameClient;
+import com.nihongoquest.client.proctor.CapturedFrame;
 import com.nihongoquest.common.protocol.Message;
 import com.nihongoquest.common.protocol.Payloads;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Alert;
@@ -16,9 +18,10 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import java.io.ByteArrayInputStream;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 
 import static com.nihongoquest.common.logging.RuntimeLog.maskPin;
@@ -42,6 +45,8 @@ public class QuizLobbyController implements NavigationGuard {
     private boolean host;
     private boolean startRequestPending;
     private Payloads.QuizLobbyData currentLobby;
+    private final AtomicReference<Image> latestPreview = new AtomicReference<>();
+    private final AtomicBoolean previewPaintPending = new AtomicBoolean();
 
     @FXML
     private void initialize() {
@@ -67,6 +72,7 @@ public class QuizLobbyController implements NavigationGuard {
         gameClient.setMessageHandler(message -> Platform.runLater(() -> handleMessage(message)));
         gameClient.setConnectionErrorHandler(error -> Platform.runLater(() -> showError(error)));
         updateLobby(lobby);
+        configureCameraPreview(lobby);
     }
 
     @FXML
@@ -151,6 +157,38 @@ public class QuizLobbyController implements NavigationGuard {
                 + " host=" + host
                 + " connectedPlayers=" + QuizRoomUi.connectedPlayerCount(lobby.members())
                 + " proctoring=" + monitored);
+    }
+
+    private void configureCameraPreview(Payloads.QuizLobbyData lobby) {
+        boolean showLocalCamera = lobby.proctoringEnabled() && !lobby.currentUserHost();
+        cameraPreview.setVisible(showLocalCamera);
+        cameraPreview.setManaged(showLocalCamera);
+        if (!showLocalCamera) {
+            cameraPreview.setImage(null);
+            return;
+        }
+        app.getProctoringCoordinator().setPreviewListener(this::onPreviewFrame);
+        CapturedFrame current = app.getProctoringCoordinator().getLatestFrame();
+        if (current != null) onPreviewFrame(current);
+    }
+
+    /** Convert off the JavaFX thread and only queue the newest image for painting. */
+    private void onPreviewFrame(CapturedFrame frame) {
+        latestPreview.set(SwingFXUtils.toFXImage(frame.image(), null));
+        schedulePreviewPaint();
+    }
+
+    private void schedulePreviewPaint() {
+        if (previewPaintPending.compareAndSet(false, true)) {
+            Platform.runLater(this::paintLatestPreview);
+        }
+    }
+
+    private void paintLatestPreview() {
+        Image image = latestPreview.getAndSet(null);
+        if (image != null) cameraPreview.setImage(image);
+        previewPaintPending.set(false);
+        if (latestPreview.get() != null) schedulePreviewPaint();
     }
 
     private String cameraText(Payloads.QuizLobbyPlayer item) {

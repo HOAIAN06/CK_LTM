@@ -2,9 +2,30 @@
 
 ## Cập nhật gần nhất
 
-- Ngày: 2026-11-03
-- Phiên: Design System thống nhất "Modern EdTech Gaming" (Indigo/Cyan) + Design Tokens tập trung.
+- Ngày: 2026-11-14
+- Phiên: Chốt bản sửa preview camera đen và ổn định capture cho demo LAN hai máy.
 - Người thực hiện: AI + người dùng
+
+## P0.1 — Camera preview đen khi demo LAN (phiên này)
+
+- Bản sửa được hoàn thiện trên nhánh `codex/fix-quiz-camera-black`; kiểm tra webcam thật
+  trên hai máy Windows vẫn là bước xác nhận runtime còn lại sau khi tích hợp.
+- Nguyên nhân UI: `quiz-lobby.fxml` có `cameraPreview` nhưng `QuizLobbyController`
+  chưa đăng ký `previewListener`, nên player không bao giờ nhận frame vào preview lobby.
+  Host không capture camera nhưng dùng cùng layout, dễ bị hiểu nhầm là camera host bị đen.
+- Nguyên nhân khởi tạo: capture ép `1280×720 @ 45 FPS`; runtime log cho thấy máy
+  mở được cũng mất 8,6 giây mới có frame đầu, sát timeout 10 giây, còn các lần
+  demo sau liên tục `camera_initialization_timeout`.
+- Sửa lobby player hiển thị frame local thật. Chuyển ảnh ngoài JavaFX Application Thread,
+  chỉ xếp một lệnh render và luôn thay bằng frame mới nhất; host không hiển preview local.
+- Đổi profile capture mặc định thành `640×480 @ 15 FPS`, MJPG trên Windows và một
+  buffer. Thêm log profile yêu cầu/thực tế và stack trace nếu webcam không mở được.
+- Không đổi gameplay protocol, media framing, server authority, timeout 10 giây hoặc policy
+  camera lỗi không chặn quiz.
+- Kiểm thử ngày 2026-11-14: `clean test` trên JDK 21 đạt **124 test**,
+  0 failure/error/skip và `BUILD SUCCESS`. Môi trường Linux phải dùng bản LF tạm của
+  `mvnw` vì wrapper trong repository dùng CRLF cho Windows; không sửa wrapper nguồn.
+- Còn chờ người dùng demo webcam thật trên hai máy Windows để xác nhận thiết bị/runtime.
 
 ## P2.3 — Design System thống nhất & Design Tokens (phiên này)
 

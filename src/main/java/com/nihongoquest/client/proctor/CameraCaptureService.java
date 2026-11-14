@@ -20,12 +20,21 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/** Owns the default camera on one daemon thread and emits latest-wins 720p/45 FPS frames. */
+import static org.bytedeco.opencv.global.opencv_videoio.CAP_PROP_BUFFERSIZE;
+
+/** Owns the default camera on one daemon thread and emits latest-wins LAN-friendly frames. */
 public final class CameraCaptureService implements CameraSource {
     private static final Logger LOGGER = Logger.getLogger(CameraCaptureService.class.getName());
-    public static final int WIDTH = 1280;
-    public static final int HEIGHT = 720;
-    public static final int TARGET_FPS = 45;
+    /*
+     * 720p/45 made OpenCV's Windows backend spend almost the whole ten-second
+     * initialization window negotiating unsupported webcam modes. 640x480/15 is
+     * supported by common integrated/USB cameras and is sufficient for the host
+     * dashboard and the face detector. The media pipeline still drops old frames.
+     */
+    public static final int WIDTH = 640;
+    public static final int HEIGHT = 480;
+    public static final int TARGET_FPS = 15;
+    static final String WINDOWS_CAPTURE_FORMAT = "MJPG";
     private static final long FRAME_INTERVAL_NANOS = 1_000_000_000L / TARGET_FPS;
     public enum Failure { NOT_FOUND, FAILED, LOST }
     private static final AtomicLong NEXT_SEQUENCE = new AtomicLong();
@@ -56,13 +65,23 @@ public final class CameraCaptureService implements CameraSource {
             local.setImageWidth(WIDTH);
             local.setImageHeight(HEIGHT);
             local.setFrameRate(TARGET_FPS);
+            local.setOption(CAP_PROP_BUFFERSIZE, 1);
+            if (isWindows()) local.setFormat(WINDOWS_CAPTURE_FORMAT);
             local.setTimeout(2_000);
             try {
                 local.start();
             } catch (Exception startError) {
+                LOGGER.log(Level.WARNING, "camera_open_failed device=0 requested="
+                        + WIDTH + "x" + HEIGHT + "@" + TARGET_FPS
+                        + " format=" + (isWindows() ? WINDOWS_CAPTURE_FORMAT : "auto"),
+                        startError);
                 failureConsumer.accept(Failure.NOT_FOUND);
                 return;
             }
+            LOGGER.info(() -> "camera_opened device=0 requested=" + WIDTH + "x" + HEIGHT
+                    + "@" + TARGET_FPS + " actual=" + local.getImageWidth() + "x"
+                    + local.getImageHeight() + "@" + Math.round(local.getFrameRate())
+                    + " format=" + local.getFormat());
             long nextFrame = 0;
             while (running.get()) {
                 captureMetrics.offered();
@@ -115,6 +134,11 @@ public final class CameraCaptureService implements CameraSource {
 
     private static void logMetrics(PipelineStageMetrics.Snapshot snapshot) {
         if (snapshot.hasActivity()) LOGGER.info(() -> "proctor_pipeline " + snapshot.logLine());
+    }
+
+    static boolean isWindows() {
+        return System.getProperty("os.name", "").toLowerCase(java.util.Locale.ROOT)
+                .contains("win");
     }
 
     private BufferedImage scale(BufferedImage source) {

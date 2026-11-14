@@ -101,3 +101,13 @@
   hình ảnh, icon và model proctoring được giữ nguyên; logic nghiệp vụ không thay đổi.
 - Lịch sử (đã lỗi thời): trước đây dùng `AudioManager` singleton + `SoundEvent` mapping, thêm
   `org.openjfx:javafx-media`, sinh sound effect WAV PCM 16-bit mono bằng `AudioManager.PcmTone`.
+
+## D-014 — Profile camera mặc định ưu tiên độ ổn định khi demo LAN
+
+- Trạng thái: đã quyết định và triển khai; chờ xác nhận webcam thật hai máy.
+- Lý do: profile cũ `1280×720 @ 45 FPS` mất 8,6 giây để có frame đầu trên máy
+  mở được và timeout trên các lần demo khác; băng thông đo được xấp xỉ 12–14 Mbps/player.
+- Quyết định: mặc định `640×480 @ 15 FPS`, MJPG trên Windows và latest-frame/buffer 1.
+  Đây là profile an toàn cho demo, không phải kết luận hiệu năng cuối cùng.
+- Hệ quả: phải benchmark hai rồi sáu client trước khi tăng resolution/FPS; mọi thay đổi
+  sau này phải giữ timeout, drop policy và JavaFX thread boundary hiện tại.

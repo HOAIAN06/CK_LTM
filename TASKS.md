@@ -2,6 +2,9 @@
 
 ## P0 — Chặn lỗi chính
 
+- [x] Sửa camera preview đen khi demo LAN: hiển thị frame local trong lobby, không hiện
+  preview camera giả cho host, và dùng cấu hình capture Windows ổn định thay cho 720p/45 FPS.
+- [ ] Xác nhận bản sửa camera bằng demo thật: 1 server + host + 2 player trên 2 máy Windows.
 - [x] Xác định lỗi player join → lobby bị giữ do UI chờ mọi camera `READY`.
 - [x] Ghi create/join/lobby/camera/start/route transition vào runtime log theo room và attempt.
 - [x] Bỏ điều kiện camera khỏi quyền bắt đầu của host; chống gửi start trùng.
