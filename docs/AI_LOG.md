@@ -26,6 +26,25 @@ Mỗi lỗi thêm entry mới nhất lên đầu file:
 
 ## Entry hiện tại
 
+## [2026-11-04 12:38 Asia/Saigon] [INVESTIGATING]
+- Task/commit: sửa camera đen khi demo 1 server + host + 2 player trên hai máy; nhánh
+  `codex/fix-quiz-camera-black`, chưa commit/merge/push theo yêu cầu người dùng.
+- Bước tái hiện: player vào Quiz Room có proctoring, cho phép camera; preview đen,
+  host không thấy hình player.
+- Kết quả mong đợi: mỗi player thấy preview local trong lobby/battle; host nhận hai
+  luồng qua media relay. Host không bị hiểu là có camera local.
+- Bằng chứng runtime: một client cũ có `camera_first_frame` sau 8,6 giây và gửi 11–13 FPS,
+  12–14 Mbps; các lần 2026-11-04 không có `camera_first_frame` và liên tục
+  `camera_initialization_timeout` sau 10 giây. Host chỉ nhận frame khi player capture thành công.
+- Nguyên nhân code: lobby khai báo `cameraPreview` nhưng không gắn `previewListener`;
+  capture ép `1280×720 @ 45 FPS`, không phù hợp nhiều webcam Windows và demo LAN.
+- Thay đổi đã thử: gắn preview latest-frame cho player lobby, ẩn preview local của host;
+  đổi capture sang `640×480 @ 15 FPS`, MJPG Windows, buffer 1; thêm log open profile/lỗi.
+- Kiểm thử: targeted 25 test pass; `mvnw.cmd clean test` JDK 21 đạt **124 test pass**,
+  0 failure/error/skip.
+- Kết luận/bước tiếp theo: code và test tự động đã xong; giữ trạng thái
+  `INVESTIGATING` cho tới khi người dùng chạy demo webcam thật hai máy và xác nhận hình.
+
 ## [2026-11-03 16:05 Asia/Saigon] [FIXED]
 - Task/commit: thống nhất Design System "Modern EdTech Gaming" (Clean, Professional, Minimal)
   theo palette Indigo/Cyan; xây dựng Design Tokens tập trung, loại bỏ phối màu tùy tiện.

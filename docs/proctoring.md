@@ -30,7 +30,9 @@ JPEG decode và AI inference theo cửa sổ 5 giây. Mỗi dòng có `offered`,
 `dropped`, `fps`, `avgMs`, `maxMs` và `mbps`. VideoCanvas hiển thị render FPS.
 
 Kiểm thử trước với 2 client trên Windows 10/11, sau đó 6 client. Chưa xem 45 FPS
-là cấu hình cuối cho tới khi có số đo camera thật.
+là cấu hình cuối cho tới khi có số đo camera thật. Profile demo hiện tại là
+`640×480 @ 15 FPS`, MJPG trên Windows và buffer 1; cấu hình này ưu tiên thời gian
+khởi tạo webcam và băng thông LAN ổn định.
 
 ## Độ tin cậy phát hiện
 

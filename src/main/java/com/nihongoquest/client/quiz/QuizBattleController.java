@@ -100,7 +100,7 @@ public class QuizBattleController {
                 cameraPreviewHolder.setManaged(true);
                 app.getProctoringCoordinator().setPreviewListener(frame -> preview.setFrame(frame.image()));
                 app.getProctoringCoordinator().setVisionListener(preview::setVision);
-                preview.setHud("Camera của bạn • HD 45 FPS");
+                preview.setHud("Camera của bạn • 640×480 / 15 FPS");
             }
         }
         titleLabel.setText(room.title());
