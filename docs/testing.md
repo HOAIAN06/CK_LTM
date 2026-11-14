@@ -38,8 +38,12 @@ FPS từng stage, `avgMs`, `maxMs`, `dropped`, độ mượt UI và false positi
 
 ## Baseline gần nhất
 
-- 2026-11-03 P2: 120 test pass trên JDK 21.
+- 2026-11-15: **124 test pass** trên JDK 21 (`mvnw -o clean test` với wrapper LF tạm),
+  0 failure/error/skip, `BUILD SUCCESS`. Đây là baseline hiện tại.
+- 2026-11-03 P2: 120 test pass trên JDK 21 (mốc lịch sử).
 - Có test policy lobby cho mọi camera state, server start không phụ thuộc camera và lifecycle timeout/stale callback bằng fake camera.
+- Có test Ranked trong `GameRoomTest` (tiến độ độc lập, timeout, disconnect, hòa, ghép trận)
+  và `MatchRepositoryTest`/`MatchRepositoryHistoryTest` (transaction, thống kê, lịch sử).
 - Có test metrics, giới hạn retry, evidence `UNKNOWN` và chất lượng frame tối/phẳng.
 - 16 màn hình client được load, apply CSS và layout ở viewport 980×680.
 - `UiThemeTest` kiểm tra các state bắt buộc: hover, pressed, focus, disabled,

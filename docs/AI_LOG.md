@@ -26,15 +26,29 @@ Mỗi lỗi thêm entry mới nhất lên đầu file:
 
 ## Entry hiện tại
 
-## [2026-11-04 12:38 Asia/Saigon] [INVESTIGATING]
+## [2026-11-15 06:45 Asia/Saigon] [FIXED]
+- Task/commit: đối chiếu số liệu/ngày, viết lại `docs/protocol.md`, thêm `docs/ranked.md` và
+  cập nhật `docs/architecture.md`; chỉ thay đổi tài liệu, không đổi code hay protocol.
+- Kết quả mong đợi: số liệu test thống nhất 124; tài liệu khớp `MessageType`, `Payloads`,
+  `GameRoom`, `QuizRoom`, `ProctorMediaRelay` và schema hiện tại.
+- Nguồn đã kiểm tra: `MessageType.java`, `Payloads.java`, `Message.java`, `Protocol.java`,
+  `ServerRequestRouter.java`, `ClientHandler.java`, `GameRoom.java`, `MatchmakingManager.java`,
+  `QuizRoom.java`, `QuizRoomManager.java`, `ProctorMediaRelay.java`, `MediaProtocol.java`,
+  `GameServer.java`, `MatchRepository.java`, `sql/supabase_schema.sql`.
+- Bằng chứng kiểm thử: `mvnw -o clean test` trên JDK 21 (wrapper LF tạm) -> **BUILD SUCCESS**,
+  **124 test**, 0 failure/error/skip; `target/surefire-reports` tổng 124 test.
+- Kết luận/bước tiếp theo: tài liệu đã đồng bộ; vẫn chờ demo webcam/LAN thật để đóng P0.1
+  và benchmark 2/6 client để chốt cấu hình camera.
+
+## [2026-11-14 22:08 Asia/Saigon] [INVESTIGATING]
 - Task/commit: sửa camera đen khi demo 1 server + host + 2 player trên hai máy; nhánh
-  `codex/fix-quiz-camera-black`, chưa commit/merge/push theo yêu cầu người dùng.
+  `codex/fix-quiz-camera-black` đã merge vào `main` tại `389c285`.
 - Bước tái hiện: player vào Quiz Room có proctoring, cho phép camera; preview đen,
   host không thấy hình player.
 - Kết quả mong đợi: mỗi player thấy preview local trong lobby/battle; host nhận hai
   luồng qua media relay. Host không bị hiểu là có camera local.
 - Bằng chứng runtime: một client cũ có `camera_first_frame` sau 8,6 giây và gửi 11–13 FPS,
-  12–14 Mbps; các lần 2026-11-04 không có `camera_first_frame` và liên tục
+  12–14 Mbps; các lần chạy ngày 2026-11-04 không có `camera_first_frame` và liên tục
   `camera_initialization_timeout` sau 10 giây. Host chỉ nhận frame khi player capture thành công.
 - Nguyên nhân code: lobby khai báo `cameraPreview` nhưng không gắn `previewListener`;
   capture ép `1280×720 @ 45 FPS`, không phù hợp nhiều webcam Windows và demo LAN.

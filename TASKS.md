@@ -61,6 +61,7 @@
 
 ## P3 — Đồ án và tài liệu
 
-- [ ] Cập nhật protocol/architecture sau mỗi thay đổi mạng.
+- [x] Viết lại `docs/protocol.md`, thêm `docs/ranked.md` và cập nhật `docs/architecture.md`
+  theo code ngày 2026-11-14; đối chiếu baseline **124 test**.
 - [ ] Viết test và kịch bản demo bảo vệ đồ án.
-- [ ] Cập nhật README, PROGRESS và AI_LOG sau mỗi phiên.
+- [x] Cập nhật README, PROGRESS, TASKS và AI_LOG sau phiên tài liệu.

@@ -59,7 +59,7 @@ Khi chạy từ source, client và server ghi log xoay vòng trong `logs/client.
   decode ngoài JavaFX thread và evidence `UNKNOWN`; còn benchmark 2 rồi 6 client để chốt FPS.
 - P2 UI: đã áp dụng theme Duolingo-inspired, semantic state và animation ngắn cho toàn client;
   còn kiểm tra trực quan Windows 10/11 và DPI cao.
-- Baseline: `mvnw.cmd clean test` trên JDK 21 đạt 120 test, không có failure/error/skip.
+- Baseline 2026-11-15: `mvnw.cmd clean test` trên JDK 21 đạt 124 test, không có failure/error/skip.
 
 ## Tài liệu điều khiển dự án
 
@@ -70,7 +70,8 @@ Khi chạy từ source, client và server ghi log xoay vòng trong `logs/client.
 - [DECISIONS.md](DECISIONS.md): các quyết định có lý do.
 - [docs/AI_LOG.md](docs/AI_LOG.md): nhật ký lỗi và bằng chứng chẩn đoán.
 - [docs/architecture.md](docs/architecture.md): bản đồ module.
-- [docs/protocol.md](docs/protocol.md): hợp đồng TCP.
+- [docs/protocol.md](docs/protocol.md): hợp đồng TCP, payload, mã lỗi và media protocol.
+- [docs/ranked.md](docs/ranked.md): chế độ đấu hạng 1v1, luật trận và persistence.
 - [docs/proctoring.md](docs/proctoring.md): camera và phát hiện gian lận.
 - [docs/ui-design.md](docs/ui-design.md): hệ thống giao diện Duolingo-inspired.
 - [docs/testing.md](docs/testing.md): chiến lược test.

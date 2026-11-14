@@ -2,11 +2,27 @@
 
 ## Cập nhật gần nhất
 
-- Ngày: 2026-11-14
-- Phiên: Chốt bản sửa preview camera đen và ổn định capture cho demo LAN hai máy.
+- Ngày: 2026-11-15
+- Phiên: Chốt bản sửa camera preview, đối chiếu số liệu kiểm thử và viết lại tài liệu
+  protocol/ranked/architecture.
 - Người thực hiện: AI + người dùng
 
-## P0.1 — Camera preview đen khi demo LAN (phiên này)
+## P3.1 — Viết lại tài liệu protocol, Ranked và kiến trúc (phiên này)
+
+- Đối chiếu số liệu: baseline hiện tại là **124 test** trên JDK 21, 0 failure/error/skip
+  (đọc từ `target/surefire-reports`); sửa các số 120/122 còn sót trong README, PROGRESS và
+  `docs/testing.md`.
+- Viết lại `docs/protocol.md`: framing JSON-line, phiên/auth, catalog message theo domain,
+  payload chính, mã lỗi, timeout và binary media protocol.
+- Thêm `docs/ranked.md`: hàng chờ 3/5 phút, luật trận, scoring, disconnect, persistence và
+  giới hạn hiện tại (chưa có MMR, chưa reconnect).
+- Cập nhật `docs/architecture.md`: module map, thread/network boundary, luồng Ranked/Quiz Room,
+  media relay và persistence; thêm liên kết trong README.
+- Không thay đổi code, protocol hay hành vi runtime.
+- Kiểm thử: `mvnw -o clean test` bằng JDK 21 (wrapper LF tạm) đạt **124 test**,
+  0 failure/error/skip, `BUILD SUCCESS`.
+
+## P0.1 — Camera preview đen khi demo LAN
 
 - Bản sửa được hoàn thiện trên nhánh `codex/fix-quiz-camera-black`; kiểm tra webcam thật
   trên hai máy Windows vẫn là bước xác nhận runtime còn lại sau khi tích hợp.
@@ -121,8 +137,9 @@
 
 ## Kiểm thử
 
-- `mvnw.cmd clean test` bằng JDK 21: **122 test pass**, 0 failure, 0 error, 0 skipped
-  (trước khi gỡ âm thanh là 135; đã bỏ đúng 13 test âm thanh: `AudioManagerTest` 8 + `SoundEventTest` 5).
+- `mvnw -o clean test` bằng JDK 21 (wrapper LF tạm): **124 test pass**, 0 failure, 0 error, 0 skipped.
+  Đây là baseline 2026-11-15; trước khi gỡ âm thanh là 135 và đã bỏ đúng 13 test âm thanh
+  (`AudioManagerTest` 8 + `SoundEventTest` 5). Số 122 trong các ghi chú cũ không còn là baseline.
 - `UiThemeTest` (3) vẫn xác nhận palette Indigo/Cyan, nền sáng và component theme (animation);
   đã đổi tên method `themeDefinesAnimationAndSoundSystemComponents` -> `themeDefinesAnimationSystemComponents`
   cho chính xác (selector kiểm tra không liên quan âm thanh).
