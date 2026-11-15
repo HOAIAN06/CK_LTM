@@ -72,7 +72,7 @@
   audit 16 màn hình; tạo `docs/ui-redesign-proposal.md` và `docs/ui-tooling.md`.
 - [x] Xác nhận giữ chính sách không âm thanh (D-015); pháo hoa/confetti chỉ là hiệu ứng hình ảnh.
 - [x] Chốt hướng thị giác **B. Sakura Arcade**; bundle Nunito + Be Vietnam Pro; scope client + server dashboard (D-017).
-- [ ] Phase 1: design tokens Sakura Arcade, font, icon, shell và component cơ bản.
+- [x] Phase 1: design tokens Sakura Arcade, font, icon, shell và component cơ bản.
 - [ ] Phase 2: Login, Home, Quiz Room, Lobby, Battle.
 - [ ] Phase 3: Ranked, Matchmaking, Result và celebration overlay.
 - [ ] Phase 4: Leaderboard, Profile, Friends, History, Quiz sets, Proctor, Server dashboard.

@@ -151,3 +151,20 @@
 - Hệ quả: D-013 vẫn giữ quy tắc token hóa; palette Indigo/Cyan cũ được mở rộng/thay bởi palette
   trên. Mọi selector tiếp tục dùng token `-ndq-*`, không hardcode màu. Không thêm âm thanh
   (D-015). `UiThemeTest` phải cập nhật theo palette mới ở Phase 1.
+
+## D-018 — Font đóng gói dạng static instance + icon SVG nội tuyến
+
+- Trạng thái: đã quyết định và triển khai 2026-11-15.
+- Bối cảnh: `Font.loadFont` của JavaFX 21 nạp file Nunito variable thành family
+  `Nunito ExtraLight`, không dùng được cho heading đậm. Ứng dụng cũng chưa có bộ icon/asset.
+- Quyết định:
+  - Tạo static instance Nunito `wght=700` (Bold) và `wght=800` (ExtraBold) từ variable font
+    bằng `fontTools.varLib.instancer`, đổi name table và đóng gói TTF. Không cần fontTools lúc
+    runtime/build; chỉ cần khi tái tạo font.
+  - Body dùng Be Vietnam Pro (4 weight static). Tiếng Nhật fallback Noto Sans JP / Yu Gothic UI /
+    Meiryo.
+  - Icon dùng `SVGPath` nội tuyến trong `com.nihongoquest.ui.Icons` (Lucide, giấy phép ISC),
+    tô bằng `-fx-stroke` qua style class `.nav-icon`; không thêm file ảnh/icon rời.
+- Hệ quả: font/icon hoạt động nhất quán trên Windows/Linux, jar chỉ tăng khoảng 800 KB font.
+  Khi thêm icon mới phải giữ license Lucide trong `src/main/resources/licenses/Lucide-ISC.txt`
+  và ưu tiên icon stroke 24×24 để đồng bộ theme.

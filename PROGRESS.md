@@ -3,11 +3,39 @@
 ## Cập nhật gần nhất
 
 - Ngày: 2026-11-15
-- Phiên: Phase 0 UI/UX overhaul — Git workflow, cài UI UX Pro Max project-local và chốt
-  hướng giao diện Sakura Arcade.
+- Phiên: Phase 1 UI/UX overhaul — design foundation Sakura Arcade, font, icon và shell.
 - Người thực hiện: AI + người dùng
 
-## P4.0 — Phase 0: Git workflow + UI/UX tooling + đề xuất hướng giao diện (phiên này)
+## P4.1 — Phase 1: Design foundation Sakura Arcade (phiên này)
+
+- Tạo nhánh `feature/ui-foundation` từ nhánh Phase 0 `chore/ui-phase0-tooling`.
+- Bundle font vào `src/main/resources/client/fonts/`: **Be Vietnam Pro** Regular/Medium/
+  SemiBold/Bold cho body và **Nunito** Bold/ExtraBold cho heading; kèm license OFL trong
+  `src/main/resources/licenses/`.
+- Thêm `FontLoader` nạp font một lần trước khi load FXML cho cả `ClientApp` và
+  `ServerDashboardApp`. Nunito variable mặc định bị JavaFX 21 nạp thành ExtraLight, nên đã
+  tạo static instance `wght=700/800` và đóng gói TTF (D-018).
+- Viết lại `client/shared/style.css` theo palette Sakura Arcade: nền `#FFF7FA`, text `#1E1B4B`,
+  border `#FBCFE8`, Sakura `#F472B6`/`#DB2777`, Coral `#FB7185`, giữ Indigo `#4F46E5` và
+  Cyan `#06B6D4` cho focus/tiến trình. Claymorphism: card 18–24px, border 2px, button viền đáy
+  3px, shadow tông sakura.
+- Đồng bộ `server/dashboard/server-dashboard.css` cùng token/font; header dashboard thêm dải
+  Sakura, bảng/log/JSON dùng token mới.
+- Thêm hệ icon nội tuyến `com.nihongoquest.ui.Icons` (SVGPath 24×24, Lucide ISC), áp dụng cho
+  8 mục sidebar; icon đổi màu theo hover/active/logout bằng `.nav-icon`.
+- Nâng shell: logo Sakura, nhãn nhóm **CHƠI**/**CỘNG ĐỒNG**, sidebar 248px, header có thanh
+  nhấn gradient Sakura–Coral. Giữ nguyên `fx:id`, `onAction` và luồng controller.
+- Cập nhật `UiThemeTest` cho palette Sakura + font + component mới; thêm `FontLoaderTest`,
+  `IconsTest` và test token dashboard.
+- Kiểm thử: `mvnw -o clean test` bằng JDK 21 (wrapper LF tạm) -> **BUILD SUCCESS**,
+  **132 test**, 0 failure/error/skip. `ClientFxmlTest` load 16 màn hình + dashboard,
+  `applyCss()` không phát sinh cảnh báo CSS.
+- Chưa làm: kiểm tra trực quan trên Windows 10/11 và DPI cao; lý do môi trường Linux hiện tại
+  không có Xvfb/display. Chuyển sang Phase 5 QA.
+- Bước tiếp theo: Phase 2 — Login, Home, Quiz Room, Lobby và Battle; bắt đầu bằng Login + Home,
+  sau đó lobby/battle và giữ nguyên server authority.
+
+## P4.0 — Phase 0: Git workflow + UI/UX tooling + đề xuất hướng giao diện
 
 - Tạo nhánh `chore/ui-phase0-tooling` từ `main`; Phase 0 đã được người dùng duyệt commit/push.
 - Cài UI UX Pro Max project-local bằng `npx ui-ux-pro-max-cli init --ai opencode`;

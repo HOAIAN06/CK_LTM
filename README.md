@@ -57,11 +57,12 @@ Khi chạy từ source, client và server ghi log xoay vòng trong `logs/client.
 - P0 lobby/camera gate: đã hoàn thành bằng code và test; còn kiểm tra webcam thật Windows 10/11.
 - P1 pipeline camera: đã có metrics 5 giây, latest-frame/drop policy, retry tối đa 3 lần,
   decode ngoài JavaFX thread và evidence `UNKNOWN`; còn benchmark 2 rồi 6 client để chốt FPS.
-- P2 UI: đã áp dụng theme Duolingo-inspired, semantic state và animation ngắn cho toàn client;
+- P2 UI: đã áp dụng theme dùng chung, semantic state và animation ngắn cho toàn client;
   còn kiểm tra trực quan Windows 10/11 và DPI cao.
-- P4 UI overhaul: Phase 0 xong (Git workflow + UI UX Pro Max); đã chốt hướng **Sakura Arcade**
-  (D-017), Phase 1 sẽ cập nhật token/component.
-- Baseline 2026-11-15: `mvnw.cmd clean test` trên JDK 21 đạt 124 test, không có failure/error/skip.
+- P4 UI overhaul: Phase 0 xong (Git workflow + UI UX Pro Max); Phase 1 xong design foundation
+  **Sakura Arcade** (token, font Nunito/Be Vietnam Pro, icon Lucide, shell/sidebar/header)
+  theo D-017/D-018. Phase 2–4 sẽ redesign từng màn hình.
+- Baseline 2026-11-15: `mvnw.cmd clean test` trên JDK 21 đạt 132 test, không có failure/error/skip.
 
 ## Tài liệu điều khiển dự án
 

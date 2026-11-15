@@ -1,41 +1,53 @@
 /* ==========================================================================
-   NihongoQuest — Unified Design System
-   Style: Modern EdTech Gaming — Clean, Professional, Minimal.
+   NihongoQuest — Sakura Arcade Design System
+   Indigo + Sakura + Coral + Cyan · Claymorphism · Vibrant & Block-based.
 
-   Toàn bộ màu sắc tập trung tại khối DESIGN TOKENS bên dưới (looked-up colors
-   trên .root). Mọi selector CHỈ tham chiếu -ndq-* token; không hardcode màu
-   trong controller/FXML/rule khác.
+   Toàn bộ màu nhận diện tập trung tại khối DESIGN TOKENS bên dưới
+   (looked-up colors trên .root). Selector chỉ tham chiếu -ndq-* token.
+   Ngoại lệ duy nhất là màu alpha của shadow (cùng tông sakura/indigo) vì
+   JavaFX không hỗ trợ token kiểu effect.
 
    Quy tắc:
-   - Indigo là màu nhận diện chính (primary + primary-dark).
-   - Cyan chỉ dùng làm màu nhấn (eyebrow, PIN, orb, focus).
-   - Không dùng xanh lá cho button/sidebar/header/trang trí.
-   - Success chỉ dùng cho trạng thái đúng/thành công.
+   - Indigo là màu nhận diện chính; Sakura là điểm nhấn thương hiệu.
+   - Cyan chỉ dùng cho focus/tiến trình; Coral cho trang trí nhẹ.
+   - Success/Warning/Error chỉ dùng cho trạng thái nghiệp vụ.
+   - Heading dùng Nunito, body dùng Be Vietnam Pro; tiếng Nhật fallback
+     Noto Sans JP / Yu Gothic UI / Meiryo.
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
    1. DESIGN TOKENS — nguồn sự thật duy nhất về màu
    -------------------------------------------------------------------------- */
 .root {
-    /* Palette gốc theo yêu cầu */
-    -ndq-primary: #4F46E5;        /* Primary Indigo — nhận diện chính */
-    -ndq-primary-dark: #3730A3;   /* Primary Dark */
-    -ndq-accent: #06B6D4;         /* Accent Cyan — chỉ làm nhấn */
-    -ndq-bg: #F5F7FB;             /* Background */
-    -ndq-surface: #FFFFFF;        /* Surface */
-    -ndq-text: #172033;           /* Primary Text */
-    -ndq-text-secondary: #64748B; /* Secondary Text */
-    -ndq-border: #E2E8F0;         /* Border */
-    -ndq-success: #16A34A;        /* Success */
-    -ndq-warning: #D97706;        /* Warning */
-    -ndq-error: #DC2626;          /* Error */
+    /* Palette nhận diện Sakura Arcade */
+    -ndq-primary: #4F46E5;        /* Indigo — nhận diện chính */
+    -ndq-primary-dark: #3730A3;
+    -ndq-primary-hover: #4338CA;
+    -ndq-accent: #06B6D4;         /* Cyan — focus/tiến trình */
+    -ndq-accent-text: #0E7490;    /* Cyan đủ tương phản trên nền sáng */
+    -ndq-sakura: #F472B6;         /* Sakura — điểm nhấn thương hiệu */
+    -ndq-sakura-deep: #DB2777;
+    -ndq-sakura-hover: #EC4899;
+    -ndq-coral: #FB7185;          /* Coral — trang trí nhẹ */
+    -ndq-bg: #FFF7FA;             /* Nền sáng pha sakura */
+    -ndq-bg-alt: #FFF1F7;
+    -ndq-surface: #FFFFFF;
+    -ndq-text: #1E1B4B;
+    -ndq-text-secondary: #64748B;
+    -ndq-text-muted: #94A3B8;
+    -ndq-border: #FBCFE8;         /* Border sakura */
+    -ndq-success: #16A34A;
+    -ndq-warning: #D97706;
+    -ndq-error: #DC2626;
 
     /* Dẫn xuất nhẹ từ palette (hover/pressed/soft surface) */
-    -ndq-primary-hover: #4338CA;
     -ndq-primary-soft: #EEF2FF;
     -ndq-primary-border: #C7D2FE;
     -ndq-accent-soft: #ECFEFF;
     -ndq-accent-border: #A5F3FC;
+    -ndq-sakura-soft: #FCE7F3;
+    -ndq-sakura-border: #FBCFE8;
+    -ndq-coral-soft: #FFF1F2;
     -ndq-success-soft: #DCFCE7;
     -ndq-success-border: #86EFAC;
     -ndq-success-text: #15803D;
@@ -45,13 +57,13 @@
     -ndq-error-soft: #FEE2E2;
     -ndq-error-border: #FCA5A5;
     -ndq-error-text: #B91C1C;
-    -ndq-neutral-soft: #F1F5F9;
-    -ndq-neutral-border: #CBD5E1;
-    -ndq-text-muted: #94A3B8;
-    -ndq-surface-alt: #FAFBFF;
+    -ndq-neutral-soft: #F8FAFC;
+    -ndq-neutral-border: #E2E8F0;
+    -ndq-surface-alt: #FFFBFD;
 
     /* Typography & shape */
-    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-family: "Be Vietnam Pro", "Segoe UI", "Yu Gothic UI", "Meiryo",
+            "Noto Sans JP", sans-serif;
     -fx-font-size: 14px;
     -fx-background-color: -ndq-bg;
 }
@@ -60,6 +72,32 @@
    2. BASE
    -------------------------------------------------------------------------- */
 .label { -fx-text-fill: -ndq-text; }
+
+/* Nunito cho toàn bộ heading; body giữ Be Vietnam Pro. */
+.title,
+.section-title,
+.brand-title,
+.auth-title,
+.connection-title,
+.shared-page-title,
+.header-page-title,
+.sidebar-brand-primary,
+.sidebar-brand-accent,
+.home-hero-title,
+.search-title,
+.battle-question,
+.lobby-pin,
+.pin-input,
+.result-title,
+.welcome-title,
+.profile-page-username,
+.profile-stat-value,
+.stat-value,
+.score-value,
+.action-title {
+    -fx-font-family: "Nunito", "Be Vietnam Pro", "Segoe UI", "Yu Gothic UI",
+            "Meiryo", "Noto Sans JP", sans-serif;
+}
 
 .status-label {
     -fx-text-fill: -ndq-text-secondary;
@@ -80,56 +118,78 @@
 
 .section-title {
     -fx-font-size: 17px;
-    -fx-font-weight: bold;
+    -fx-font-weight: 800;
     -fx-text-fill: -ndq-text;
 }
 
 .title {
-    -fx-font-size: 28px;
-    -fx-font-weight: bold;
+    -fx-font-size: 30px;
+    -fx-font-weight: 800;
     -fx-text-fill: -ndq-text;
 }
 
 /* --------------------------------------------------------------------------
-   3. BUTTONS
+   3. BUTTONS — block-based, viền đáy dày kiểu clay
    -------------------------------------------------------------------------- */
 .button {
     -fx-background-color: -ndq-primary;
     -fx-text-fill: white;
     -fx-font-size: 14px;
+    -fx-font-weight: bold;
     -fx-padding: 10 20 10 20;
-    -fx-background-radius: 10px;
+    -fx-background-radius: 14px;
+    -fx-border-radius: 14px;
+    -fx-border-color: transparent transparent -ndq-primary-dark transparent;
+    -fx-border-width: 0 0 3px 0;
     -fx-cursor: hand;
 }
-.button:hover { -fx-background-color: -ndq-primary-hover; }
-.button:pressed { -fx-background-color: -ndq-primary-dark; }
+.button:hover {
+    -fx-background-color: -ndq-primary-hover;
+    -fx-border-color: transparent transparent -ndq-primary-dark transparent;
+}
+.button:pressed {
+    -fx-background-color: -ndq-primary-dark;
+    -fx-border-color: -ndq-primary-dark;
+    -fx-border-width: 2px;
+}
 .button:focused {
     -fx-border-color: -ndq-accent;
     -fx-border-width: 2px;
-    -fx-border-radius: 10px;
 }
 .button:disabled { -fx-opacity: 0.48; }
 
 .primary-button {
     -fx-background-color: -ndq-primary;
     -fx-text-fill: white;
-    -fx-font-weight: bold;
-    -fx-background-radius: 10px;
+    -fx-font-weight: 800;
+    -fx-background-radius: 14px;
+    -fx-border-radius: 14px;
+    -fx-border-color: transparent transparent -ndq-primary-dark transparent;
+    -fx-border-width: 0 0 3px 0;
 }
 .primary-button:hover { -fx-background-color: -ndq-primary-hover; }
+.primary-button:pressed {
+    -fx-background-color: -ndq-primary-dark;
+    -fx-border-color: -ndq-primary-dark;
+    -fx-border-width: 2px;
+}
 
 .secondary-button {
     -fx-background-color: -ndq-surface;
     -fx-text-fill: -ndq-primary;
     -fx-border-color: -ndq-primary-border;
-    -fx-border-width: 2px;
-    -fx-border-radius: 10px;
-    -fx-background-radius: 10px;
-    -fx-font-weight: bold;
+    -fx-border-width: 2px 2px 3px 2px;
+    -fx-border-radius: 14px;
+    -fx-background-radius: 14px;
+    -fx-font-weight: 800;
 }
 .secondary-button:hover {
     -fx-background-color: -ndq-primary-soft;
     -fx-border-color: -ndq-accent-border;
+}
+.secondary-button:pressed {
+    -fx-background-color: -ndq-primary-border;
+    -fx-border-color: -ndq-accent;
 }
 
 .danger-outline-button {
@@ -137,9 +197,9 @@
     -fx-text-fill: -ndq-error;
     -fx-border-color: -ndq-error-border;
     -fx-border-width: 2px;
-    -fx-border-radius: 10px;
-    -fx-background-radius: 10px;
-    -fx-font-weight: bold;
+    -fx-border-radius: 14px;
+    -fx-background-radius: 14px;
+    -fx-font-weight: 800;
 }
 .danger-outline-button:hover {
     -fx-background-color: -ndq-error-soft;
@@ -149,7 +209,8 @@
 .large-button {
     -fx-font-size: 15px;
     -fx-padding: 12px 24px;
-    -fx-background-radius: 11px;
+    -fx-background-radius: 16px;
+    -fx-border-radius: 16px;
 }
 
 /* --------------------------------------------------------------------------
@@ -159,20 +220,20 @@
 .password-field,
 .combo-box,
 .choice-box {
-    -fx-pref-height: 42px;
-    -fx-background-radius: 10px;
-    -fx-border-radius: 10px;
+    -fx-pref-height: 44px;
+    -fx-background-radius: 14px;
+    -fx-border-radius: 14px;
     -fx-border-color: -ndq-border;
-    -fx-border-width: 1.5px;
+    -fx-border-width: 2px;
     -fx-background-color: -ndq-surface;
     -fx-text-fill: -ndq-text;
-    -fx-padding: 0 12px;
+    -fx-padding: 0 14px;
 }
 .text-area {
-    -fx-background-radius: 10px;
-    -fx-border-radius: 10px;
+    -fx-background-radius: 14px;
+    -fx-border-radius: 14px;
     -fx-border-color: -ndq-border;
-    -fx-border-width: 1.5px;
+    -fx-border-width: 2px;
     -fx-background-color: -ndq-surface;
     -fx-text-fill: -ndq-text;
 }
@@ -182,7 +243,7 @@
 .choice-box:focused,
 .text-area:focused {
     -fx-border-color: -ndq-accent;
-    -fx-effect: dropshadow(gaussian, rgba(6, 182, 212, 0.18), 8, 0, 0, 1);
+    -fx-effect: dropshadow(gaussian, rgba(6, 182, 212, 0.20), 10, 0, 0, 1);
 }
 
 .check-box:selected .box,
@@ -196,7 +257,9 @@
 /* --------------------------------------------------------------------------
    5. SURFACES, CARDS & SHELL
    -------------------------------------------------------------------------- */
-.app-shell { -fx-background-color: -ndq-bg; }
+.app-shell {
+    -fx-background-color: linear-gradient(to bottom right, -ndq-bg, -ndq-bg-alt);
+}
 
 .page-content { -fx-padding: 22px 28px 28px 28px; }
 .page-surface { -fx-background-color: -ndq-bg; }
@@ -205,33 +268,35 @@
 .content-card,
 .data-card {
     -fx-background-color: -ndq-surface;
-    -fx-background-radius: 16px;
+    -fx-background-radius: 18px;
     -fx-border-color: -ndq-border;
-    -fx-border-width: 1.5px;
-    -fx-border-radius: 16px;
-    -fx-padding: 16px;
-    -fx-effect: dropshadow(gaussian, rgba(23, 32, 51, 0.06), 14, 0, 0, 4);
+    -fx-border-width: 2px;
+    -fx-border-radius: 18px;
+    -fx-padding: 18px;
+    -fx-effect: dropshadow(gaussian, rgba(190, 24, 93, 0.08), 16, 0, 0, 5);
 }
 
 .auth-card {
     -fx-background-color: -ndq-surface;
-    -fx-background-radius: 16px;
+    -fx-background-radius: 22px;
     -fx-padding: 32px 40px 28px 40px;
     -fx-border-color: -ndq-border;
-    -fx-border-radius: 16px;
-    -fx-effect: dropshadow(gaussian, rgba(23, 32, 51, 0.12), 20, 0, 0, 6);
+    -fx-border-width: 2px;
+    -fx-border-radius: 22px;
+    -fx-effect: dropshadow(gaussian, rgba(190, 24, 93, 0.14), 24, 0, 0, 8);
 }
 
 .connection-card {
-    -fx-background-color: -ndq-primary-soft;
-    -fx-background-radius: 16px;
-    -fx-border-color: -ndq-primary-border;
-    -fx-border-radius: 16px;
+    -fx-background-color: -ndq-sakura-soft;
+    -fx-background-radius: 18px;
+    -fx-border-color: -ndq-sakura-border;
+    -fx-border-width: 2px;
+    -fx-border-radius: 18px;
     -fx-padding: 30px;
 }
 .connection-title {
     -fx-font-size: 20px;
-    -fx-font-weight: bold;
+    -fx-font-weight: 800;
     -fx-text-fill: -ndq-text;
 }
 .connection-subtitle { -fx-text-fill: -ndq-text-secondary; -fx-padding: 0 0 6px 0; }
@@ -239,29 +304,39 @@
 
 .brand-title {
     -fx-font-size: 18px;
-    -fx-font-weight: bold;
+    -fx-font-weight: 800;
     -fx-text-fill: -ndq-primary;
 }
 .auth-title {
-    -fx-font-size: 26px;
-    -fx-font-weight: bold;
+    -fx-font-size: 28px;
+    -fx-font-weight: 800;
     -fx-text-fill: -ndq-text;
 }
 .auth-subtitle { -fx-text-fill: -ndq-text-secondary; -fx-padding: 0 0 8px 0; }
-.mode-link { -fx-text-fill: -ndq-primary; -fx-font-weight: bold; -fx-padding: 4px 0; }
+.mode-link { -fx-text-fill: -ndq-sakura-deep; -fx-font-weight: bold; -fx-padding: 4px 0; }
+.mode-link:hover { -fx-text-fill: -ndq-primary; }
 
 /* --------------------------------------------------------------------------
    6. HEADER (shared page header)
    -------------------------------------------------------------------------- */
 .shared-page-header,
 .gameplay-header {
-    -fx-background-color: -ndq-surface;
+    -fx-background-color: linear-gradient(to right, -ndq-surface, -ndq-surface-alt);
     -fx-border-color: transparent transparent -ndq-border transparent;
-    -fx-border-width: 0 0 1px 0;
+    -fx-border-width: 0 0 2px 0;
     -fx-padding: 18px 28px 14px 28px;
 }
+.header-accent {
+    -fx-background-color: linear-gradient(to bottom, -ndq-sakura, -ndq-coral);
+    -fx-background-radius: 999px;
+    -fx-min-width: 5px;
+    -fx-pref-width: 5px;
+    -fx-max-width: 5px;
+    -fx-min-height: 38px;
+    -fx-max-height: 38px;
+}
 .shared-page-title {
-    -fx-font-size: 25px;
+    -fx-font-size: 26px;
     -fx-font-weight: 800;
     -fx-text-fill: -ndq-text;
 }
@@ -271,18 +346,41 @@
 }
 
 /* --------------------------------------------------------------------------
-   7. SIDEBAR — nền sáng, active Indigo
+   7. SIDEBAR — nền sáng, active Sakura
    -------------------------------------------------------------------------- */
 .app-sidebar {
-    -fx-background-color: -ndq-surface;
-    -fx-padding: 24px 14px 18px 14px;
+    -fx-background-color: linear-gradient(to bottom, -ndq-surface, -ndq-surface-alt);
+    -fx-padding: 22px 12px 16px 12px;
     -fx-border-color: transparent -ndq-border transparent transparent;
     -fx-border-width: 0 2px 0 0;
 }
-.sidebar-brand-block { -fx-padding: 0 6px 6px 6px; }
-.sidebar-brand-primary { -fx-text-fill: -ndq-primary; -fx-font-size: 22px; -fx-font-weight: 800; }
-.sidebar-brand-accent { -fx-text-fill: -ndq-accent; -fx-font-size: 22px; -fx-font-weight: 800; }
-.sidebar-tagline { -fx-text-fill: -ndq-text-muted; -fx-font-size: 11px; }
+.sidebar-brand-block { -fx-padding: 0 4px 10px 4px; }
+.sidebar-logo {
+    -fx-background-color: linear-gradient(to bottom right, -ndq-primary, -ndq-sakura-deep);
+    -fx-background-radius: 14px;
+    -fx-min-width: 42px;
+    -fx-pref-width: 42px;
+    -fx-max-width: 42px;
+    -fx-min-height: 42px;
+    -fx-pref-height: 42px;
+    -fx-max-height: 42px;
+    -fx-effect: dropshadow(gaussian, rgba(190, 24, 93, 0.24), 12, 0, 0, 4);
+}
+.sidebar-logo-text {
+    -fx-text-fill: white;
+    -fx-font-family: "Nunito", "Be Vietnam Pro", sans-serif;
+    -fx-font-size: 21px;
+    -fx-font-weight: 800;
+}
+.sidebar-brand-primary { -fx-text-fill: -ndq-primary; -fx-font-size: 19px; -fx-font-weight: 800; }
+.sidebar-brand-accent { -fx-text-fill: -ndq-sakura-deep; -fx-font-size: 19px; -fx-font-weight: 800; }
+.sidebar-tagline { -fx-text-fill: -ndq-text-muted; -fx-font-size: 10px; }
+.sidebar-section-label {
+    -fx-text-fill: -ndq-text-muted;
+    -fx-font-size: 10px;
+    -fx-font-weight: 800;
+    -fx-padding: 9px 14px 2px 14px;
+}
 .sidebar-separator .line { -fx-border-color: -ndq-border; }
 .sidebar-menu { -fx-padding: 4px 0; }
 
@@ -291,42 +389,69 @@
     -fx-text-fill: -ndq-text-secondary;
     -fx-border-color: transparent;
     -fx-border-width: 2px;
-    -fx-padding: 12px 14px;
-    -fx-background-radius: 14px;
-    -fx-border-radius: 14px;
+    -fx-padding: 11px 14px;
+    -fx-background-radius: 16px;
+    -fx-border-radius: 16px;
     -fx-alignment: center-left;
+    -fx-graphic-text-gap: 12px;
 }
 .sidebar-button:hover {
-    -fx-background-color: -ndq-neutral-soft;
-    -fx-text-fill: -ndq-text;
+    -fx-background-color: -ndq-sakura-soft;
+    -fx-text-fill: -ndq-sakura-deep;
+    -fx-border-color: transparent;
     -fx-effect: none;
 }
+.sidebar-button:pressed {
+    -fx-background-color: -ndq-sakura-border;
+    -fx-text-fill: -ndq-sakura-deep;
+    -fx-border-color: -ndq-sakura-border;
+}
 .sidebar-button.active {
-    -fx-background-color: -ndq-primary-soft;
-    -fx-text-fill: -ndq-primary;
-    -fx-border-color: -ndq-primary-border;
+    -fx-background-color: -ndq-sakura-soft;
+    -fx-text-fill: -ndq-sakura-deep;
+    -fx-border-color: -ndq-sakura-border;
     -fx-font-weight: bold;
 }
 .sidebar-button:disabled { -fx-opacity: 0.5; }
 
+/* Icon SVG đồng bộ trạng thái với sidebar. */
+.nav-icon {
+    -fx-fill: transparent;
+    -fx-stroke: -ndq-text-secondary;
+    -fx-stroke-width: 2px;
+    -fx-stroke-line-cap: round;
+    -fx-stroke-line-join: round;
+    -fx-scale-x: 0.86;
+    -fx-scale-y: 0.86;
+}
+.sidebar-button:hover .nav-icon,
+.sidebar-button.active .nav-icon { -fx-stroke: -ndq-sakura-deep; }
+.sidebar-logout-button .nav-icon,
+.sidebar-logout-button:hover .nav-icon { -fx-stroke: -ndq-error; }
+
 .sidebar-logout-button,
 .sidebar-logout-button:hover { -fx-text-fill: -ndq-error; }
-.sidebar-logout-button:hover { -fx-background-color: -ndq-error-soft; }
+.sidebar-logout-button:hover {
+    -fx-background-color: -ndq-error-soft;
+    -fx-border-color: transparent;
+}
 .sidebar-footer { -fx-padding: 4px 0 0 0; }
 
 
 /* --------------------------------------------------------------------------
    8. HOME
    -------------------------------------------------------------------------- */
-.home-page { -fx-background-color: -ndq-bg; }
+.home-page {
+    -fx-background-color: linear-gradient(to bottom right, -ndq-bg, -ndq-bg-alt);
+}
 .home-hero { -fx-padding: 60px 0 0 80px; }
 .home-eyebrow {
-    -fx-text-fill: -ndq-accent;
+    -fx-text-fill: -ndq-sakura-deep;
     -fx-font-size: 13px;
     -fx-font-weight: 800;
 }
 .home-hero-title {
-    -fx-font-size: 40px;
+    -fx-font-size: 42px;
     -fx-font-weight: 800;
     -fx-text-fill: -ndq-text;
 }
@@ -336,8 +461,8 @@
 }
 .home-cta-button { -fx-background-color: -ndq-primary; -fx-font-size: 15px; }
 .home-cta-button:hover { -fx-background-color: -ndq-primary-hover; }
-.home-orb { -fx-opacity: 0.14; }
-.home-orb-primary { -fx-fill: -ndq-primary; }
+.home-orb { -fx-opacity: 0.16; }
+.home-orb-primary { -fx-fill: -ndq-sakura; }
 .home-orb-secondary { -fx-fill: -ndq-accent; }
 
 /* --------------------------------------------------------------------------
@@ -345,22 +470,23 @@
    -------------------------------------------------------------------------- */
 .search-card {
     -fx-background-color: -ndq-surface;
-    -fx-background-radius: 18px;
+    -fx-background-radius: 20px;
     -fx-border-color: -ndq-border;
-    -fx-border-radius: 18px;
+    -fx-border-width: 2px;
+    -fx-border-radius: 20px;
     -fx-padding: 34px 54px;
     -fx-min-width: 520px;
-    -fx-effect: dropshadow(gaussian, rgba(23, 32, 51, 0.10), 18, 0, 0, 5);
+    -fx-effect: dropshadow(gaussian, rgba(190, 24, 93, 0.12), 20, 0, 0, 6);
 }
 .search-title {
-    -fx-font-size: 25px;
-    -fx-font-weight: bold;
+    -fx-font-size: 26px;
+    -fx-font-weight: 800;
     -fx-text-fill: -ndq-text;
 }
 .search-user { -fx-font-size: 14px; -fx-text-fill: -ndq-text-secondary; }
 .spinner-ring { -fx-padding: 10px; }
 .search-status { -fx-font-size: 15px; -fx-font-weight: bold; }
-.search-spinner { -fx-progress-color: -ndq-primary; }
+.search-spinner { -fx-progress-color: -ndq-sakura-deep; }
 
 /* --------------------------------------------------------------------------
    10. BATTLE & SCOREBOARD
@@ -368,16 +494,16 @@
 .battle-content { -fx-padding: 20px 38px 28px 38px; }
 
 .scoreboard-card {
-    -fx-background-color: linear-gradient(to right, -ndq-primary, -ndq-primary-dark);
-    -fx-background-radius: 18px;
+    -fx-background-color: linear-gradient(to right, -ndq-primary, -ndq-sakura-deep);
+    -fx-background-radius: 20px;
     -fx-padding: 14px 34px;
     -fx-min-width: 760px;
     -fx-max-width: 800px;
-    -fx-effect: dropshadow(gaussian, rgba(55, 48, 163, 0.28), 20, 0, 0, 8);
+    -fx-effect: dropshadow(gaussian, rgba(55, 48, 163, 0.32), 22, 0, 0, 9);
 }
 .scoreboard-card .timer-caption,
 .player-role,
-.score-caption { -fx-text-fill: -ndq-primary-border; }
+.score-caption { -fx-text-fill: -ndq-sakura-soft; }
 .score-value { -fx-text-fill: white; -fx-font-size: 30px; -fx-font-weight: 800; }
 .match-time-label { -fx-text-fill: -ndq-accent-soft; -fx-font-weight: bold; }
 .timer-caption { -fx-text-fill: -ndq-text-secondary; }
@@ -387,15 +513,15 @@
 .player-name { -fx-font-size: 17px; -fx-font-weight: 800; -fx-text-fill: white; }
 .score-panel { -fx-alignment: center; }
 
-.time-progress { -fx-accent: -ndq-primary; }
-.progress-bar .track { -fx-background-color: -ndq-border; -fx-background-radius: 999px; }
-.progress-bar .bar { -fx-background-color: -ndq-primary; -fx-background-radius: 999px; }
+.time-progress { -fx-accent: -ndq-accent; }
+.progress-bar .track { -fx-background-color: -ndq-sakura-soft; -fx-background-radius: 999px; }
+.progress-bar .bar { -fx-background-color: -ndq-sakura-deep; -fx-background-radius: 999px; }
 .progress-indicator { -fx-progress-color: -ndq-primary; }
 .countdown-critical { -fx-text-fill: -ndq-error; -fx-font-weight: 800; }
 
 .battle-question {
-    -fx-font-size: 21px;
-    -fx-font-weight: bold;
+    -fx-font-size: 22px;
+    -fx-font-weight: 800;
     -fx-text-fill: -ndq-text;
 }
 .question-card { -fx-spacing: 10px; }
@@ -406,15 +532,15 @@
     -fx-text-fill: -ndq-text;
     -fx-font-size: 15px;
     -fx-font-weight: bold;
-    -fx-border-color: -ndq-border -ndq-border -ndq-neutral-border -ndq-border;
+    -fx-border-color: -ndq-border -ndq-border -ndq-sakura -ndq-border;
     -fx-border-width: 2px 2px 4px 2px;
-    -fx-border-radius: 14px;
-    -fx-background-radius: 14px;
+    -fx-border-radius: 16px;
+    -fx-background-radius: 16px;
     -fx-padding: 14px 18px;
 }
 .answer-button:hover {
-    -fx-background-color: -ndq-accent-soft;
-    -fx-border-color: -ndq-accent-border -ndq-accent-border -ndq-accent -ndq-accent-border;
+    -fx-background-color: -ndq-sakura-soft;
+    -fx-border-color: -ndq-sakura -ndq-sakura -ndq-sakura-deep -ndq-sakura;
 }
 .answer-button:disabled { -fx-opacity: 0.92; }
 
@@ -443,18 +569,18 @@
    -------------------------------------------------------------------------- */
 .quiz-room-card {
     -fx-background-color: -ndq-surface;
-    -fx-background-radius: 18px;
+    -fx-background-radius: 20px;
     -fx-border-color: -ndq-border;
-    -fx-border-width: 1.5px;
-    -fx-border-radius: 18px;
+    -fx-border-width: 2px;
+    -fx-border-radius: 20px;
     -fx-padding: 22px;
     -fx-min-width: 320px;
-    -fx-effect: dropshadow(gaussian, rgba(23, 32, 51, 0.06), 14, 0, 0, 4);
+    -fx-effect: dropshadow(gaussian, rgba(190, 24, 93, 0.08), 16, 0, 0, 5);
 }
-.quiz-room-time { -fx-text-fill: -ndq-accent; -fx-font-weight: bold; }
+.quiz-room-time { -fx-text-fill: -ndq-accent-text; -fx-font-weight: bold; }
 .lobby-pin {
-    -fx-text-fill: -ndq-accent;
-    -fx-font-size: 30px;
+    -fx-text-fill: -ndq-sakura-deep;
+    -fx-font-size: 32px;
     -fx-font-weight: 800;
 }
 .pin-input {
@@ -466,9 +592,10 @@
 
 .quiz-side-panel {
     -fx-background-color: -ndq-surface;
-    -fx-background-radius: 16px;
+    -fx-background-radius: 18px;
     -fx-border-color: -ndq-border;
-    -fx-border-radius: 16px;
+    -fx-border-width: 2px;
+    -fx-border-radius: 18px;
     -fx-padding: 16px;
 }
 
@@ -483,9 +610,10 @@
 
 .quiz-form {
     -fx-background-color: -ndq-surface;
-    -fx-background-radius: 16px;
+    -fx-background-radius: 18px;
     -fx-border-color: -ndq-border;
-    -fx-border-radius: 16px;
+    -fx-border-width: 2px;
+    -fx-border-radius: 18px;
     -fx-padding: 18px;
 }
 .editor-footer {
@@ -501,16 +629,16 @@
    -------------------------------------------------------------------------- */
 .camera-preview-shell {
     -fx-border-color: -ndq-primary;
-    -fx-border-width: 2px;
-    -fx-background-radius: 16px;
-    -fx-border-radius: 16px;
+    -fx-border-width: 3px;
+    -fx-background-radius: 18px;
+    -fx-border-radius: 18px;
     -fx-padding: 6px;
 }
 .camera-grid { -fx-padding: 18px; -fx-background-color: transparent; }
 .camera-tile {
     -fx-background-color: -ndq-surface;
-    -fx-background-radius: 16px;
-    -fx-border-radius: 16px;
+    -fx-background-radius: 18px;
+    -fx-border-radius: 18px;
     -fx-border-width: 2px;
     -fx-border-color: -ndq-border;
     -fx-padding: 9px;
@@ -527,14 +655,15 @@
    -------------------------------------------------------------------------- */
 .result-card {
     -fx-background-color: -ndq-surface;
-    -fx-background-radius: 20px;
+    -fx-background-radius: 24px;
     -fx-border-color: -ndq-border;
-    -fx-border-radius: 20px;
+    -fx-border-width: 2px;
+    -fx-border-radius: 24px;
     -fx-padding: 40px 56px;
-    -fx-effect: dropshadow(gaussian, rgba(23, 32, 51, 0.10), 22, 0, 0, 8);
+    -fx-effect: dropshadow(gaussian, rgba(190, 24, 93, 0.14), 26, 0, 0, 9);
 }
-.result-eyebrow { -fx-text-fill: -ndq-accent; -fx-font-weight: 800; }
-.result-title { -fx-font-size: 34px; -fx-font-weight: 800; -fx-text-fill: -ndq-text; }
+.result-eyebrow { -fx-text-fill: -ndq-sakura-deep; -fx-font-weight: 800; }
+.result-title { -fx-font-size: 36px; -fx-font-weight: 800; -fx-text-fill: -ndq-text; }
 .result-title.result-win { -fx-text-fill: -ndq-success; }
 .result-title.result-lose { -fx-text-fill: -ndq-error; }
 .result-title.result-draw { -fx-text-fill: -ndq-warning; }
@@ -551,12 +680,13 @@
 .table-view {
     -fx-background-color: -ndq-surface;
     -fx-border-color: -ndq-border;
-    -fx-border-radius: 14px;
-    -fx-background-radius: 14px;
+    -fx-border-width: 2px;
+    -fx-border-radius: 16px;
+    -fx-background-radius: 16px;
 }
 .table-view .column-header-background {
-    -fx-background-color: -ndq-neutral-soft;
-    -fx-background-radius: 14px 14px 0 0;
+    -fx-background-color: -ndq-sakura-soft;
+    -fx-background-radius: 16px 16px 0 0;
 }
 .table-view .column-header { -fx-background-color: transparent; -fx-padding: 12px 8px; }
 .table-view .column-header .label {
@@ -569,36 +699,37 @@
     -fx-text-fill: -ndq-text;
 }
 .table-row-cell:odd { -fx-background-color: -ndq-surface-alt; }
-.table-row-cell:hover { -fx-background-color: -ndq-primary-soft; }
+.table-row-cell:hover { -fx-background-color: -ndq-sakura-soft; }
 .table-row-cell:selected {
-    -fx-background-color: -ndq-primary-soft;
-    -fx-text-background-color: -ndq-primary-dark;
+    -fx-background-color: -ndq-sakura-soft;
+    -fx-text-background-color: -ndq-sakura-deep;
 }
 
 .list-view {
     -fx-background-color: -ndq-surface;
     -fx-border-color: -ndq-border;
-    -fx-border-radius: 12px;
-    -fx-background-radius: 12px;
+    -fx-border-width: 2px;
+    -fx-border-radius: 14px;
+    -fx-background-radius: 14px;
 }
 .list-cell { -fx-background-color: transparent; -fx-text-fill: -ndq-text; -fx-padding: 8px 10px; }
-.list-cell:filled:hover { -fx-background-color: -ndq-primary-soft; }
-.list-cell:filled:selected { -fx-background-color: -ndq-primary-soft; -fx-text-fill: -ndq-primary-dark; }
+.list-cell:filled:hover { -fx-background-color: -ndq-sakura-soft; }
+.list-cell:filled:selected { -fx-background-color: -ndq-sakura-soft; -fx-text-fill: -ndq-sakura-deep; }
 .list-view .placeholder .label { -fx-text-fill: -ndq-text-muted; -fx-font-style: italic; }
 
 .tab-pane .tab-header-area .tab-header-background { -fx-background-color: transparent; }
 .tab-pane .tab { -fx-background-color: transparent; -fx-padding: 8px 14px; }
 .tab-pane .tab:selected {
-    -fx-background-color: -ndq-primary-soft;
+    -fx-background-color: -ndq-sakura-soft;
     -fx-background-radius: 12px 12px 0 0;
 }
-.tab-pane .tab:selected .tab-label { -fx-text-fill: -ndq-primary; -fx-font-weight: 800; }
+.tab-pane .tab:selected .tab-label { -fx-text-fill: -ndq-sakura-deep; -fx-font-weight: 800; }
 .tab-pane .tab .tab-label { -fx-text-fill: -ndq-text-secondary; }
 
 .scroll-pane { -fx-background-color: transparent; -fx-border-color: transparent; }
 .scroll-pane > .viewport { -fx-background-color: transparent; }
-.scroll-bar .thumb { -fx-background-color: -ndq-neutral-border; -fx-background-radius: 999px; }
-.scroll-bar .thumb:hover { -fx-background-color: -ndq-text-muted; }
+.scroll-bar .thumb { -fx-background-color: -ndq-sakura-border; -fx-background-radius: 999px; }
+.scroll-bar .thumb:hover { -fx-background-color: -ndq-sakura; }
 
 /* --------------------------------------------------------------------------
    15. PROFILE & STAT CARDS
@@ -606,16 +737,17 @@
 .profile-page { -fx-padding: 28px; }
 .profile-hero {
     -fx-background-color: -ndq-surface;
-    -fx-background-radius: 18px;
+    -fx-background-radius: 20px;
     -fx-border-color: -ndq-border;
-    -fx-border-radius: 18px;
+    -fx-border-width: 2px;
+    -fx-border-radius: 20px;
     -fx-padding: 22px 26px;
-    -fx-effect: dropshadow(gaussian, rgba(23, 32, 51, 0.06), 14, 0, 0, 4);
+    -fx-effect: dropshadow(gaussian, rgba(190, 24, 93, 0.08), 16, 0, 0, 5);
 }
-.profile-eyebrow { -fx-text-fill: -ndq-accent; -fx-font-size: 12px; -fx-font-weight: 800; }
-.profile-page-username { -fx-font-size: 26px; -fx-font-weight: 800; -fx-text-fill: -ndq-text; }
+.profile-eyebrow { -fx-text-fill: -ndq-sakura-deep; -fx-font-size: 12px; -fx-font-weight: 800; }
+.profile-page-username { -fx-font-size: 27px; -fx-font-weight: 800; -fx-text-fill: -ndq-text; }
 .profile-page-avatar {
-    -fx-background-color: linear-gradient(to bottom right, -ndq-primary, -ndq-accent);
+    -fx-background-color: linear-gradient(to bottom right, -ndq-primary, -ndq-sakura-deep);
     -fx-background-radius: 999px;
     -fx-min-width: 72px; -fx-min-height: 72px;
     -fx-max-width: 72px; -fx-max-height: 72px;
@@ -625,23 +757,25 @@
 .profile-stat-card,
 .stat-card {
     -fx-background-color: -ndq-surface;
-    -fx-background-radius: 16px;
+    -fx-background-radius: 18px;
     -fx-border-color: -ndq-border;
-    -fx-border-radius: 16px;
+    -fx-border-width: 2px;
+    -fx-border-radius: 18px;
     -fx-padding: 18px 16px;
     -fx-min-width: 165px;
-    -fx-effect: dropshadow(gaussian, rgba(23, 32, 51, 0.05), 12, 0, 0, 3);
+    -fx-effect: dropshadow(gaussian, rgba(190, 24, 93, 0.06), 14, 0, 0, 4);
 }
 .profile-stat-value,
-.stat-value { -fx-font-size: 28px; -fx-font-weight: 800; -fx-text-fill: -ndq-primary; }
+.stat-value { -fx-font-size: 29px; -fx-font-weight: 800; -fx-text-fill: -ndq-primary; }
 .accuracy-card {
     -fx-background-color: -ndq-surface;
-    -fx-background-radius: 16px;
+    -fx-background-radius: 18px;
     -fx-border-color: -ndq-border;
-    -fx-border-radius: 16px;
+    -fx-border-width: 2px;
+    -fx-border-radius: 18px;
     -fx-padding: 18px 22px;
 }
-.accuracy-value { -fx-font-size: 34px; -fx-font-weight: 800; -fx-text-fill: -ndq-accent; }
+.accuracy-value { -fx-font-size: 34px; -fx-font-weight: 800; -fx-text-fill: -ndq-accent-text; }
 .stat-caption { -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: -ndq-text-secondary; }
 .stat-win { -fx-text-fill: -ndq-success; }
 .stat-loss { -fx-text-fill: -ndq-error; }
@@ -657,19 +791,20 @@
 .error-banner {
     -fx-background-color: -ndq-error-soft;
     -fx-border-color: -ndq-error-border;
-    -fx-border-radius: 12px;
-    -fx-background-radius: 12px;
+    -fx-border-radius: 14px;
+    -fx-background-radius: 14px;
     -fx-padding: 10px 14px;
     -fx-text-fill: -ndq-error-text;
     -fx-font-weight: bold;
 }
 .toast-banner {
-    -fx-background-color: -ndq-primary-soft;
-    -fx-border-color: -ndq-primary-border;
-    -fx-border-radius: 12px;
-    -fx-background-radius: 12px;
+    -fx-background-color: -ndq-sakura-soft;
+    -fx-border-color: -ndq-sakura-border;
+    -fx-border-radius: 14px;
+    -fx-background-radius: 14px;
     -fx-padding: 10px 14px;
-    -fx-text-fill: -ndq-primary-dark;
+    -fx-text-fill: -ndq-sakura-deep;
+    -fx-font-weight: bold;
 }
 .loading-state { -fx-text-fill: -ndq-text-secondary; -fx-font-style: italic; }
 .empty-state { -fx-text-fill: -ndq-text-muted; -fx-font-style: italic; }
@@ -678,28 +813,28 @@
    17. ANIMATION COMPONENTS (skeleton, toast, rank)
    -------------------------------------------------------------------------- */
 .skeleton-line {
-    -fx-background-color: -ndq-border;
+    -fx-background-color: -ndq-sakura-soft;
     -fx-background-radius: 8px;
     -fx-min-height: 14px;
 }
 .skeleton-card {
     -fx-background-color: -ndq-surface;
-    -fx-background-radius: 20px;
+    -fx-background-radius: 22px;
     -fx-border-color: -ndq-border;
     -fx-border-width: 2px;
-    -fx-border-radius: 20px;
+    -fx-border-radius: 22px;
 }
 .toast-card {
     -fx-background-color: -ndq-surface;
-    -fx-background-radius: 14px;
+    -fx-background-radius: 16px;
     -fx-border-color: -ndq-border;
     -fx-border-width: 2px;
-    -fx-border-radius: 14px;
+    -fx-border-radius: 16px;
     -fx-padding: 12px 16px;
-    -fx-effect: dropshadow(gaussian, rgba(23, 32, 51, 0.16), 18, 0, 0, 6);
+    -fx-effect: dropshadow(gaussian, rgba(30, 27, 75, 0.18), 20, 0, 0, 7);
 }
 .rank-badge {
-    -fx-background-color: linear-gradient(to bottom right, -ndq-primary, -ndq-accent);
+    -fx-background-color: linear-gradient(to bottom right, -ndq-primary, -ndq-sakura-deep);
     -fx-text-fill: white;
     -fx-font-weight: 800;
     -fx-background-radius: 999px;
@@ -709,17 +844,18 @@
 /* --------------------------------------------------------------------------
    18. ACTION & WELCOME (legacy home sections kept in one style)
    -------------------------------------------------------------------------- */
-.welcome-title { -fx-font-size: 30px; -fx-font-weight: bold; -fx-text-fill: -ndq-text; }
+.welcome-title { -fx-font-size: 31px; -fx-font-weight: 800; -fx-text-fill: -ndq-text; }
 .welcome-subtitle { -fx-font-size: 15px; -fx-text-fill: -ndq-text-secondary; }
 .action-card {
-    -fx-background-color: linear-gradient(to right, -ndq-primary-soft, -ndq-accent-soft);
-    -fx-background-radius: 14px;
-    -fx-border-color: -ndq-primary-border;
-    -fx-border-radius: 14px;
+    -fx-background-color: linear-gradient(to right, -ndq-primary-soft, -ndq-sakura-soft);
+    -fx-background-radius: 18px;
+    -fx-border-color: -ndq-sakura-border;
+    -fx-border-width: 2px;
+    -fx-border-radius: 18px;
     -fx-padding: 22px 42px;
     -fx-min-width: 700px;
 }
-.action-title { -fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: -ndq-primary-dark; }
+.action-title { -fx-font-size: 21px; -fx-font-weight: 800; -fx-text-fill: -ndq-primary-dark; }
 .action-subtitle { -fx-text-fill: -ndq-text-secondary; }
 
 /* --------------------------------------------------------------------------
@@ -733,9 +869,9 @@
 .app-header {
     -fx-background-color: -ndq-surface;
     -fx-border-color: transparent transparent -ndq-border transparent;
-    -fx-border-width: 0 0 1px 0;
+    -fx-border-width: 0 0 2px 0;
 }
-.header-page-title { -fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: -ndq-text; }
+.header-page-title { -fx-font-size: 21px; -fx-font-weight: 800; -fx-text-fill: -ndq-text; }
 
 /* --------------------------------------------------------------------------
    20. DIALOGS & TOOLTIPS
@@ -744,10 +880,10 @@
     -fx-background-color: -ndq-surface;
     -fx-border-color: -ndq-border;
     -fx-border-width: 2px;
-    -fx-border-radius: 12px;
-    -fx-background-radius: 12px;
+    -fx-border-radius: 16px;
+    -fx-background-radius: 16px;
 }
-.dialog-pane .header-panel { -fx-background-color: -ndq-primary-soft; }
+.dialog-pane .header-panel { -fx-background-color: -ndq-sakura-soft; }
 .dialog-pane .header-panel .label {
     -fx-text-fill: -ndq-text;
     -fx-font-size: 18px;
@@ -756,7 +892,6 @@
 .tooltip {
     -fx-background-color: -ndq-text;
     -fx-text-fill: white;
-    -fx-background-radius: 8px;
+    -fx-background-radius: 10px;
     -fx-padding: 6px 10px;
 }
-

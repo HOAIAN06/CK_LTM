@@ -4,13 +4,16 @@ import com.nihongoquest.client.layout.AuthenticatedRoute;
 import com.nihongoquest.client.layout.AuthenticatedShellController;
 import com.nihongoquest.server.dashboard.DashboardController;
 import com.nihongoquest.common.protocol.Payloads;
+import com.nihongoquest.ui.FontLoader;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import org.junit.jupiter.api.AfterAll;
@@ -134,6 +137,25 @@ class ClientFxmlTest {
         Platform.runLater(check);
         boolean[] result = check.get(10, TimeUnit.SECONDS);
         assertTrue(result[0]); assertTrue(result[1]); assertTrue(result[2]);
+    }
+
+    @Test
+    void headingResolvesToBundledNunito() throws Exception {
+        FutureTask<String> check = new FutureTask<>(() -> {
+            FontLoader.loadAll();
+            Label label = new Label("Sakura");
+            label.getStyleClass().add("title");
+            StackPane root = new StackPane(label);
+            Scene scene = new Scene(root, 320, 120);
+            scene.getStylesheets().add(ClientFxmlTest.class.getResource(
+                    "/client/shared/style.css").toExternalForm());
+            root.applyCss();
+            root.layout();
+            return label.getFont().getFamily() + "|" + label.getFont().getStyle();
+        });
+        Platform.runLater(check);
+        String font = check.get(10, TimeUnit.SECONDS);
+        assertTrue(font.startsWith("Nunito"), "Heading phải dùng Nunito: " + font);
     }
 
     private void loadScreen(String resource, String stylesheet) throws Exception {

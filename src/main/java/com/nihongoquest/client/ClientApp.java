@@ -25,6 +25,7 @@ import com.nihongoquest.common.protocol.Message;
 import com.nihongoquest.common.protocol.MessageType;
 import com.nihongoquest.common.protocol.Payloads;
 import com.nihongoquest.common.logging.RuntimeLog;
+import com.nihongoquest.ui.FontLoader;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -63,6 +64,7 @@ public class ClientApp extends Application {
     @Override
     public void start(Stage primaryStage) throws IOException {
         RuntimeLog.configure("client");
+        FontLoader.loadAll();
         this.primaryStage = primaryStage;
         primaryStage.setTitle("NihongoQuest");
         gameClient.setGlobalMessageHandler(this::handleGlobalMessage);

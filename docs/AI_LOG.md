@@ -26,6 +26,31 @@ Mỗi lỗi thêm entry mới nhất lên đầu file:
 
 ## Entry hiện tại
 
+## [2026-11-15 11:10 Asia/Saigon] [FIXED]
+- Task/commit: Phase 1 UI/UX overhaul — design foundation Sakura Arcade (nhánh `feature/ui-foundation`, đã được người dùng duyệt commit/push).
+- Vai trò và số client: test tự động; chưa chạy GUI do môi trường Linux không có display/Xvfb.
+- Windows/JDK/camera: JDK 21, JavaFX 21; không liên quan camera.
+- Bước tái hiện: load FXML client/server và `applyCss()` ở viewport 980×680.
+- Kết quả mong đợi: token Sakura Arcade, font heading/body đúng weight, icon sidebar hiển thị,
+  shell không vỡ layout và không phát sinh lỗi CSS.
+- Kết quả thực tế: 16 màn hình client + dashboard load thành công; không có cảnh báo parse CSS.
+- UI state cuối: sidebar 248px có logo/gradient, nhãn CHƠI/CỘNG ĐỒNG, 8 icon stroke; header có dải
+  Sakura–Coral; client và dashboard dùng chung palette/font.
+- Camera state cuối: không đổi.
+- Message/event cuối: không đổi protocol.
+- Exception/stack trace: không có.
+- Giả thuyết/nguyên nhân: `Font.loadFont` trên JavaFX 21 nạp Nunito variable theo instance mặc định
+  `ExtraLight`, nên heading đậm sẽ sai weight nếu dùng file variable trực tiếp.
+- Bằng chứng đã kiểm tra: probe JavaFX cho thấy `Nunito-Variable.ttf -> Nunito ExtraLight`; sau khi
+  tạo static instance `wght=700/800` và đổi name table, probe trả `family=Nunito, style=Bold/ExtraBold`.
+- Thay đổi đã thử: bundle Be Vietnam Pro 4 weight + Nunito Bold/ExtraBold; `FontLoader` gọi trong
+  `ClientApp.start()`/`ServerDashboardApp.start()`; token/typography/claymorphism trong hai CSS;
+  `Icons` SVGPath + `.nav-icon`; shell logo/nhãn nhóm/header accent; test theme/font/icon.
+- Kiểm thử: `mvnw -o clean test` JDK 21 (wrapper LF tạm) đạt **132 test**, 0 failure/error/skip,
+  `BUILD SUCCESS`.
+- Kết luận/bước tiếp theo: Phase 1 code hoàn tất; cần kiểm tra trực quan Windows/DPI cao ở Phase 5.
+  Tiếp theo là Phase 2 (Login, Home, Quiz Room, Lobby, Battle); người dùng đã duyệt commit/push Phase 1.
+
 ## [2026-11-15 10:52 Asia/Saigon] [FIXED]
 - Task/commit: Phase 0 UI/UX overhaul — thêm Git workflow, cài UI UX Pro Max project-local,
   audit 16 màn hình và đề xuất hướng giao diện A/B/C; nhánh `chore/ui-phase0-tooling`.

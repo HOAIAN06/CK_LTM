@@ -1,7 +1,7 @@
 # Đề xuất UI/UX overhaul — NihongoQuest
 
 - Ngày: 2026-11-15
-- Trạng thái: **đã chốt hướng B. Sakura Arcade**; Phase 1 sẽ triển khai
+- Trạng thái: **đã chốt hướng B. Sakura Arcade**; Phase 1 đã triển khai design foundation (D-017/D-018).
 - Phạm vi: client JavaFX (16 màn hình) + server dashboard
 - Font: bundle **Nunito + Be Vietnam Pro**; tiếng Nhật fallback Noto Sans JP/Yu Gothic UI
 - Không đổi protocol, TCP framing, server authority, camera/proctoring
@@ -177,7 +177,7 @@ Quyết định:
 | Phase | Nội dung | Nhánh đề xuất |
 |---|---|---|
 | 0 | Git workflow, skill, audit, chọn hướng | `chore/ui-phase0-tooling` |
-| 1 | Design tokens, font, icon, shell, component cơ bản | `feature/ui-foundation` |
+| 1 | Design tokens, font, icon, shell, component cơ bản — **đã xong** | `feature/ui-foundation` |
 | 2 | Login, Home, Quiz Room, Lobby, Battle | `feature/ui-quiz-flow` |
 | 3 | Ranked, Matchmaking, Result, celebration | `feature/ui-ranked-result` |
 | 4 | Data/social/proctor/server dashboard | `feature/ui-data-social` |

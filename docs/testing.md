@@ -38,8 +38,9 @@ FPS từng stage, `avgMs`, `maxMs`, `dropped`, độ mượt UI và false positi
 
 ## Baseline gần nhất
 
-- 2026-11-15: **124 test pass** trên JDK 21 (`mvnw -o clean test` với wrapper LF tạm),
-  0 failure/error/skip, `BUILD SUCCESS`. Đây là baseline hiện tại.
+- 2026-11-15 Phase 1 UI: **132 test pass** trên JDK 21 (`mvnw -o clean test` với wrapper LF tạm),
+  0 failure/error/skip, `BUILD SUCCESS`. Thêm 8 test cho theme Sakura, font, icon và dashboard.
+- 2026-11-15 Phase 0/tài liệu: 124 test pass (mốc trước Phase 1).
 - 2026-11-03 P2: 120 test pass trên JDK 21 (mốc lịch sử).
 - Có test policy lobby cho mọi camera state, server start không phụ thuộc camera và lifecycle timeout/stale callback bằng fake camera.
 - Có test Ranked trong `GameRoomTest` (tiến độ độc lập, timeout, disconnect, hòa, ghép trận)
