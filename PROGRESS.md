@@ -3,11 +3,33 @@
 ## Cập nhật gần nhất
 
 - Ngày: 2026-11-15
-- Phiên: Chốt bản sửa camera preview, đối chiếu số liệu kiểm thử và viết lại tài liệu
-  protocol/ranked/architecture.
+- Phiên: Phase 0 UI/UX overhaul — Git workflow, cài UI UX Pro Max project-local và chốt
+  hướng giao diện Sakura Arcade.
 - Người thực hiện: AI + người dùng
 
-## P3.1 — Viết lại tài liệu protocol, Ranked và kiến trúc (phiên này)
+## P4.0 — Phase 0: Git workflow + UI/UX tooling + đề xuất hướng giao diện (phiên này)
+
+- Tạo nhánh `chore/ui-phase0-tooling` từ `main`; Phase 0 đã được người dùng duyệt commit/push.
+- Cài UI UX Pro Max project-local bằng `npx ui-ux-pro-max-cli init --ai opencode`;
+  skill nằm trong `.opencode/skills/` và đã được gitignore (D-016).
+- Thêm mục **Git workflow** vào `AGENTS.md`: mỗi task/phase tạo nhánh riêng, chỉ commit/push
+  sau khi người dùng OK.
+- Tạo `docs/ui-tooling.md`: hướng dẫn cài/cập nhật và cách chạy search của skill.
+- Tạo `docs/ui-redesign-proposal.md`: audit 16 màn hình, kết quả tra cứu skill và 3 phương án
+  thị giác A (Indigo Quest), B (Sakura Arcade), C (Clean Study).
+- Chốt hướng **B. Sakura Arcade** (D-017); bundle Nunito + Be Vietnam Pro; scope client +
+  server dashboard. Phase 1 sẽ cập nhật token/component, chưa đổi CSS trong phiên này.
+- Xác nhận lại **không có âm thanh** (D-015): không thêm `javafx-media`, `AudioManager`,
+  `SoundEvent` hay asset âm thanh; pháo hoa/confetti chỉ là hiệu ứng hình ảnh.
+- Không thay đổi code Java, FXML, CSS, protocol hay hành vi runtime.
+- Kiểm thử: `mvnw -o clean test` bằng JDK 21 (wrapper LF tạm) -> **BUILD SUCCESS**,
+  **124 test**, 0 failure/error/skip; chỉ thay đổi tài liệu/cấu hình nên baseline không đổi.
+- Chưa làm: chưa bắt đầu Phase 1 (palette/component Sakura Arcade); lý do là Phase 0 cần được
+  commit/push và tạo nhánh riêng trước.
+- Bước tiếp theo: tạo nhánh `feature/ui-foundation` cho Phase 1
+  (palette/component Sakura Arcade).
+
+## P3.1 — Viết lại tài liệu protocol, Ranked và kiến trúc
 
 - Đối chiếu số liệu: baseline hiện tại là **124 test** trên JDK 21, 0 failure/error/skip
   (đọc từ `target/surefire-reports`); sửa các số 120/122 còn sót trong README, PROGRESS và
@@ -137,9 +159,10 @@
 
 ## Kiểm thử
 
-- `mvnw -o clean test` bằng JDK 21 (wrapper LF tạm): **124 test pass**, 0 failure, 0 error, 0 skipped.
-  Đây là baseline 2026-11-15; trước khi gỡ âm thanh là 135 và đã bỏ đúng 13 test âm thanh
-  (`AudioManagerTest` 8 + `SoundEventTest` 5). Số 122 trong các ghi chú cũ không còn là baseline.
+- 2026-11-15 10:50 — `mvnw -o clean test` bằng JDK 21 (wrapper LF tạm): **BUILD SUCCESS**,
+  **124 test pass**, 0 failure, 0 error, 0 skipped. Đây là baseline 2026-11-15; trước khi gỡ
+  âm thanh là 135 và đã bỏ đúng 13 test âm thanh (`AudioManagerTest` 8 + `SoundEventTest` 5).
+  Số 122 trong các ghi chú cũ không còn là baseline.
 - `UiThemeTest` (3) vẫn xác nhận palette Indigo/Cyan, nền sáng và component theme (animation);
   đã đổi tên method `themeDefinesAnimationAndSoundSystemComponents` -> `themeDefinesAnimationSystemComponents`
   cho chính xác (selector kiểm tra không liên quan âm thanh).

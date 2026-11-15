@@ -65,3 +65,15 @@
   theo code ngày 2026-11-14; đối chiếu baseline **124 test**.
 - [ ] Viết test và kịch bản demo bảo vệ đồ án.
 - [x] Cập nhật README, PROGRESS, TASKS và AI_LOG sau phiên tài liệu.
+
+## P4 — UI/UX overhaul (2026-11-15)
+
+- [x] Phase 0: thêm Git workflow vào `AGENTS.md`; cài UI UX Pro Max project-local và gitignore;
+  audit 16 màn hình; tạo `docs/ui-redesign-proposal.md` và `docs/ui-tooling.md`.
+- [x] Xác nhận giữ chính sách không âm thanh (D-015); pháo hoa/confetti chỉ là hiệu ứng hình ảnh.
+- [x] Chốt hướng thị giác **B. Sakura Arcade**; bundle Nunito + Be Vietnam Pro; scope client + server dashboard (D-017).
+- [ ] Phase 1: design tokens Sakura Arcade, font, icon, shell và component cơ bản.
+- [ ] Phase 2: Login, Home, Quiz Room, Lobby, Battle.
+- [ ] Phase 3: Ranked, Matchmaking, Result và celebration overlay.
+- [ ] Phase 4: Leaderboard, Profile, Friends, History, Quiz sets, Proctor, Server dashboard.
+- [ ] Phase 5: responsive/DPI, accessibility, Windows QA và cập nhật tài liệu.

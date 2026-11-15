@@ -46,6 +46,23 @@ Nếu tài liệu khác code, ghi mâu thuẫn vào `docs/AI_LOG.md`, kiểm tra
 6. Ghi vào `PROGRESS.md`: đã làm, chưa làm và lý do, không thể làm và lý do, test.
 7. Nếu có lỗi runtime, ghi ngay vào `docs/AI_LOG.md` với timestamp, bước tái hiện, log và giả thuyết.
 
+## Git workflow
+
+Quy trình này là bắt buộc cho mọi task từ 2026-11-15:
+
+1. `main` là nhánh ổn định. Không commit trực tiếp lên `main`.
+2. Mỗi task/phase tạo nhánh mới:
+   - `feature/<scope>` cho tính năng;
+   - `fix/<scope>` cho sửa lỗi;
+   - `chore/<scope>` hoặc `docs/<scope>` cho tooling/tài liệu.
+3. Làm xong: chạy test, cập nhật `PROGRESS.md`/`TASKS.md`/`docs/AI_LOG.md` nếu cần,
+   rồi tóm tắt diff cho người dùng.
+4. **Không commit và không push khi chưa có xác nhận rõ ràng của người dùng.**
+5. Khi được duyệt: commit theo Conventional Commits (`feat(ui): ...`, `fix(quiz): ...`),
+   push nhánh, mở PR/merge theo yêu cầu.
+6. Không commit `target/`, `logs/`, `db.properties`, file cấu hình thật hoặc file skill sinh ra
+   trong `.opencode/skills/`.
+
 ## Giao diện
 
 Mục tiêu UI là cảm giác gần Duolingo: sáng, thân thiện, rõ trạng thái, chuyển động nhẹ và phản hồi tức thì.

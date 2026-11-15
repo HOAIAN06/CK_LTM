@@ -59,6 +59,8 @@ Khi chạy từ source, client và server ghi log xoay vòng trong `logs/client.
   decode ngoài JavaFX thread và evidence `UNKNOWN`; còn benchmark 2 rồi 6 client để chốt FPS.
 - P2 UI: đã áp dụng theme Duolingo-inspired, semantic state và animation ngắn cho toàn client;
   còn kiểm tra trực quan Windows 10/11 và DPI cao.
+- P4 UI overhaul: Phase 0 xong (Git workflow + UI UX Pro Max); đã chốt hướng **Sakura Arcade**
+  (D-017), Phase 1 sẽ cập nhật token/component.
 - Baseline 2026-11-15: `mvnw.cmd clean test` trên JDK 21 đạt 124 test, không có failure/error/skip.
 
 ## Tài liệu điều khiển dự án
@@ -74,5 +76,7 @@ Khi chạy từ source, client và server ghi log xoay vòng trong `logs/client.
 - [docs/ranked.md](docs/ranked.md): chế độ đấu hạng 1v1, luật trận và persistence.
 - [docs/proctoring.md](docs/proctoring.md): camera và phát hiện gian lận.
 - [docs/ui-design.md](docs/ui-design.md): hệ thống giao diện Duolingo-inspired.
+- [docs/ui-redesign-proposal.md](docs/ui-redesign-proposal.md): đề xuất overhaul UI/UX 2026-11-15 (chờ chọn hướng).
+- [docs/ui-tooling.md](docs/ui-tooling.md): cài/cập nhật UI UX Pro Max project-local.
 - [docs/testing.md](docs/testing.md): chiến lược test.
 - [docs/execution-plan.md](docs/execution-plan.md): kế hoạch triển khai theo task.

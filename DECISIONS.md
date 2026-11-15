@@ -73,7 +73,7 @@
 
 ## D-013 — Design Tokens tập trung cho toàn hệ thống màu
 
-- Trạng thái: đã quyết định và triển khai.
+- Trạng thái: **tokenization vẫn giữ; palette được mở rộng bởi D-017 (Sakura Arcade)**.
 - Lý do: theme cũ là 3 lớp style chồng chéo (base xanh dương `#2b6cb0`, Duolingo xanh lá
   `#58cc02`/`#46a302`, Indigo `#4338ca`) trộn lẫn màu tùy tiện, nhiều rule bị khai báo trùng/ghi
   đè và một số block bị xen kẽ. Cần một nguồn sự thật duy nhất về màu.
@@ -81,11 +81,12 @@
   `client/shared/style.css`; mọi selector chỉ tham chiếu `-ndq-*`. Không hardcode màu trong
   controller/FXML/rule khác. Server dashboard (`server/dashboard/server-dashboard.css`) dùng
   **cùng bộ token** để toàn hệ thống một hệ màu.
-- Palette chuẩn (nguồn sự thật):
+- Palette tại thời điểm D-013 (sẽ được thay bởi D-017 ở Phase 1):
   `-ndq-primary: #4F46E5`, `-ndq-primary-dark: #3730A3`, `-ndq-accent: #06B6D4`,
   `-ndq-bg: #F5F7FB`, `-ndq-surface: #FFFFFF`, `-ndq-text: #172033`,
   `-ndq-text-secondary: #64748B`, `-ndq-border: #E2E8F0`, `-ndq-success: #16A34A`,
   `-ndq-warning: #D97706`, `-ndq-error: #DC2626`; kèm token dẫn xuất (hover/soft/border).
+  Palette hiện hành cho overhaul: xem **D-017**.
 - Quy tắc áp dụng: Indigo là màu nhận diện (button/sidebar active/scoreboard); Cyan chỉ làm nhấn
   (eyebrow, PIN, orb, focus ring); **không dùng xanh lá cho button/sidebar/header/trang trí**;
   Success chỉ dùng cho trạng thái đúng/thành công; text tối trên nền sáng, chữ trắng chỉ trên nền Indigo/tối.
@@ -111,3 +112,42 @@
   Đây là profile an toàn cho demo, không phải kết luận hiệu năng cuối cùng.
 - Hệ quả: phải benchmark hai rồi sáu client trước khi tăng resolution/FPS; mọi thay đổi
   sau này phải giữ timeout, drop policy và JavaFX thread boundary hiện tại.
+
+## D-015 — Tiếp tục không có âm thanh sau khi rà soát lại
+
+- Trạng thái: đã xác nhận 2026-11-15.
+- Bối cảnh: kế hoạch cải thiện UI có đề xuất thêm âm thanh và hiệu ứng; D-012 trước đó đã gỡ
+  toàn bộ âm thanh theo yêu cầu bắt buộc của người dùng.
+- Quyết định: tiếp tục **không có âm thanh**. Không thêm `javafx-media`, `AudioManager`,
+  `SoundEvent` hoặc asset âm thanh. Pháo hoa/confetti chỉ là hiệu ứng hình ảnh.
+- Hệ quả: mọi đề xuất UI/UX sau này không được tự ý thêm âm thanh; nếu muốn đổi phải có
+  yêu cầu mới và cập nhật D-012/D-015.
+
+## D-016 — UI UX Pro Max là công cụ local, không commit
+
+- Trạng thái: đã quyết định và triển khai 2026-11-15.
+- Lý do: skill sinh ra nhiều file dữ liệu/script, không phải source của ứng dụng; commit sẽ
+  làm repo nặng và khó cập nhật.
+- Quyết định: cài project-local vào `.opencode/skills/`, thêm toàn bộ thư mục vào `.gitignore`;
+  hướng dẫn cài lại nằm trong `docs/ui-tooling.md`.
+- Hệ quả: máy mới cần chạy `npx ui-ux-pro-max-cli init --ai opencode` trước khi dùng skill.
+
+## D-017 — Hướng UI "Sakura Arcade" cho overhaul
+
+- Trạng thái: đã chọn 2026-11-15; Phase 1 triển khai.
+- Bối cảnh: audit 16 màn hình cho thấy UI hiện tại mỏng, thiếu icon/asset, bố cục chưa rõ
+  phân cấp; UI UX Pro Max gợi ý Language Learning App dùng Claymorphism + Vibrant & Block-based.
+- Quyết định: chọn **Sakura Arcade** — Indigo làm nền, Sakura/Coral làm điểm nhấn Nhật,
+  Cyan giữ vai trò accent phụ; kết hợp Claymorphism + block-based, pháo hoa/confetti ở Result.
+- Palette chuẩn (Phase 1 sẽ đưa vào `client/shared/style.css`):
+  `-ndq-primary #4F46E5`, `-ndq-primary-dark #3730A3`, `-ndq-sakura #F472B6`,
+  `-ndq-sakura-deep #DB2777`, `-ndq-sakura-soft #FCE7F3`, `-ndq-coral #FB7185`,
+  `-ndq-accent #06B6D4`, `-ndq-bg #FFF7FA`, `-ndq-surface #FFFFFF`, `-ndq-text #1E1B4B`,
+  `-ndq-text-secondary #64748B`, `-ndq-border #FBCFE8`, `-ndq-success #16A34A`,
+  `-ndq-warning #D97706`, `-ndq-error #DC2626`.
+- Typography: bundle **Nunito** (heading) + **Be Vietnam Pro** (body);
+  tiếng Nhật fallback `Noto Sans JP`, `Yu Gothic UI`, `Meiryo`.
+- Scope: client + server dashboard.
+- Hệ quả: D-013 vẫn giữ quy tắc token hóa; palette Indigo/Cyan cũ được mở rộng/thay bởi palette
+  trên. Mọi selector tiếp tục dùng token `-ndq-*`, không hardcode màu. Không thêm âm thanh
+  (D-015). `UiThemeTest` phải cập nhật theo palette mới ở Phase 1.

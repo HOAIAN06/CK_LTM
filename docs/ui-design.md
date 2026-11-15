@@ -1,5 +1,9 @@
 # UI Design — Modern EdTech Gaming
 
+> Overhaul 2026-11-15: xem [ui-redesign-proposal.md](ui-redesign-proposal.md).
+> Trạng thái: đã chốt hướng **B. Sakura Arcade** (D-017); Phase 1 sẽ cập nhật palette/token.
+> Tài liệu này vẫn là design system hiện hành cho đến khi Phase 1 hoàn tất.
+
 ## Nguyên tắc
 
 - Sáng, thân thiện, tương phản tốt, nội dung chính nổi bật.
@@ -55,6 +59,7 @@
   `SoundEvent`, sinh WAV PCM `PcmTone`, `AudioClip`/`MediaPlayer`, dependency
   `org.openjfx:javafx-media`, mọi lời gọi `playSafe`/`stopBackground`) đã bị xóa hoàn toàn theo
   yêu cầu người dùng. Chi tiết: `docs/AI_LOG.md` [2026-11-03 15:45] và `DECISIONS.md` D-012.
+  Người dùng đã xác nhận lại chính sách này ngày 2026-11-15 (D-015).
 - Phản hồi UI/UX vẫn đầy đủ bằng **animation** (`UiMotion`: enter/fade/pulse/shake/countdown/
   rankUp/toast) và **màu semantic**; không có hiệu ứng âm thanh nào được kích hoạt.
 - Không thay thế bằng hệ thống âm thanh khác và không tạo âm thanh mới.

@@ -26,6 +26,30 @@ Mỗi lỗi thêm entry mới nhất lên đầu file:
 
 ## Entry hiện tại
 
+## [2026-11-15 10:52 Asia/Saigon] [FIXED]
+- Task/commit: Phase 0 UI/UX overhaul — thêm Git workflow, cài UI UX Pro Max project-local,
+  audit 16 màn hình và đề xuất hướng giao diện A/B/C; nhánh `chore/ui-phase0-tooling`.
+- Kết quả mong đợi: có quy trình nhánh/commit rõ ràng; skill chạy được nhưng không làm nặng
+  repo; có đề xuất giao diện dựa trên dữ liệu; không đổi code/runtime.
+- Thay đổi đã thực hiện:
+  (1) `.gitignore`: thêm `.opencode/skills/`.
+  (2) `AGENTS.md`: thêm mục **Git workflow** (nhánh riêng, chờ OK mới commit/push).
+  (3) Thêm `docs/ui-tooling.md` và `docs/ui-redesign-proposal.md`.
+  (4) `DECISIONS.md`: D-015 (tiếp tục không âm thanh), D-016 (skill local, không commit).
+  (5) `TASKS.md`, `PROGRESS.md`, `docs/ui-design.md`, `README.md` cập nhật liên kết/trạng thái.
+- Bằng chứng:
+  - `npx ui-ux-pro-max-cli init --ai opencode` tạo `.opencode/skills/` (172 file, 4,6 MB).
+  - `git check-ignore -v .opencode/skills/ui-ux-pro-max/SKILL.md` xác nhận file skill bị ignore.
+  - Chạy thành công `search.py ... --design-system` và `search.py ... --stack javafx`.
+  - Kết quả skill: Language Learning App -> Claymorphism + Vibrant & Block-based; palette
+    Indigo `#4F46E5` + accent tiến độ `#16A34A`; JavaFX shell + feature workspace.
+- Kiểm thử: `mvnw -o clean test` trên JDK 21 (wrapper LF tạm) -> **BUILD SUCCESS**,
+  **124 test**, 0 failure/error/skip.
+- Quyết định sau rà soát: người dùng chọn **B. Sakura Arcade** (D-017), bundle
+  Nunito + Be Vietnam Pro, scope client + server dashboard; vẫn không âm thanh (D-015).
+- Kết luận/bước tiếp theo: commit/push Phase 0 sau khi được duyệt; sau đó tạo nhánh
+  `feature/ui-foundation` cho Phase 1.
+
 ## [2026-11-15 06:45 Asia/Saigon] [FIXED]
 - Task/commit: đối chiếu số liệu/ngày, viết lại `docs/protocol.md`, thêm `docs/ranked.md` và
   cập nhật `docs/architecture.md`; chỉ thay đổi tài liệu, không đổi code hay protocol.
