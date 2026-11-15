@@ -1,5 +1,17 @@
 # AI_LOG — Nhật ký lỗi và bằng chứng
 
+## [2026-11-15 13:10 Asia/Saigon] [FIXED]
+- Task/commit: Calm Study visual correction trên nhánh `feature/ui-quiz-flow`, chưa commit.
+- Bước tái hiện: rà soát UI theo UI UX Pro Max; kiểm tra `style.css` và FXML của đấu hạng,
+  phòng quiz, quản lý bộ đề, xếp hạng, lobby/battle.
+- Kết quả thực tế: palette Sakura Arcade có quá nhiều màu nhấn và gradient; các màn hình cũ
+  chưa có scope style riêng nên cảm giác chắp vá/neon.
+- Thay đổi: token Calm Study (teal sâu, sage, nền giấy, terracotta); bỏ gradient; giảm shadow,
+  radius và border; thêm scope `.matchmaking-page`, `.quiz-room-page`, `.quiz-sets-page`,
+  `.quiz-editor-page`, `.leaderboard-page`; không đổi logic nghiệp vụ.
+- Kiểm thử: `/tmp/opencode/mvnw -o clean test` bằng JDK 21 đạt 135 test pass.
+- Còn lại: chưa có GUI display để kiểm tra trực quan Windows/DPI.
+
 Đây là nơi AI đọc trước khi chẩn đoán. Không ghi mật khẩu, token, ảnh khuôn mặt hoặc dữ liệu cá nhân nhạy cảm. Có thể che PIN và username.
 
 ## Cách ghi
@@ -25,6 +37,165 @@ Mỗi lỗi thêm entry mới nhất lên đầu file:
 ```
 
 ## Entry hiện tại
+
+## [2026-11-15 15:40 Asia/Saigon] [FIXED]
+- Task/commit: `QUIZ_SET_*` không bao giờ tới màn Bộ đề (`feature/electron-desktop`, chưa commit).
+- Bước tái hiện: mở `/sets` hoặc `/sets/editor` với demo fixture; skeleton quay mãi dù server trả lời.
+- Nguyên nhân: `lib/sets/sets-store.ts` đăng ký kênh bằng `useQuizStoreSets()` (hook) thay vì
+  `.getState()`; connection store bọc mỗi listener trong `try/catch` nên lỗi bị nuốt im lặng,
+  message `QUIZ_SET_LIST_RESULT`/`QUIZ_SET_DETAIL` không bao giờ được áp dụng. Unit test không
+  phát hiện vì gọi thẳng `applyServerMessage`.
+- Cách sửa: dùng `useSetsStore.getState()` trong listener.
+- Bằng chứng: `/sets` hiện 3 bộ đề OWN + badge "chưa đủ để xuất bản"; editor 3/3 câu hợp lệ.
+- Kết luận: lỗi thật trong lớp store, đã sửa; nhắc lại nguyên tắc "listener không được gọi hook".
+
+## [2026-11-15 15:35 Asia/Saigon] [FIXED]
+- Task/commit: proctoring Electron không thể phát hiện gian lận bằng vision.
+- Bối cảnh: JavaFX dùng OpenCV/Javacv (`ProctorAiEngine`) cho NO_FACE/MULTIPLE_FACES/LOOKING_AWAY/
+  PHONE_DETECTED; Electron không có model tương đương và không được thêm dependency nặng.
+- Quyết định: chỉ phát các event đo được — `APP_FOCUS_LOST`, `APP_MINIMIZED` (debounce 5 s,
+  một event mỗi lần rời cửa sổ) và `CAMERA_BLOCKED` (track mute/ended). `confidence = 0`.
+  Host dashboard vẫn hiển thị cảnh báo do server tổng hợp.
+- Hệ quả: báo cáo proctoring của bản desktop **không** tương đương bản JavaFX về phát hiện
+  khuôn mặt; phải ghi rõ khi demo/bảo vệ. Không sửa server, không thêm event giả.
+
+## [2026-11-15 14:35 Asia/Saigon] [FIXED]
+- Task/commit: desktop shell — footer sidebar bị đẩy khỏi màn hình (`feature/electron-desktop`, chưa commit).
+- Bước tái hiện: mở Home (hoặc bất kỳ route dài hơn viewport) ở 1440×900 / 1024×700.
+- Kết quả mong đợi: shell cao đúng viewport, chỉ cột nội dung cuộn, footer (user + đăng xuất) luôn thấy.
+- Kết quả thực tế: `<aside>` cao 992–3183px trong cửa sổ 860–900px; nút đăng xuất nằm dưới
+  viewport; `body.scrollHeight` 3223 > 900.
+- Nguyên nhân: grid trong `AppShell` chỉ khai báo `grid-cols-*`; row ngầm định là `auto` nên
+  giãn theo nội dung thay vì bị chặn bởi chiều cao còn lại.
+- Cách sửa: thêm `grid-rows-[minmax(0,1fr)]` + `h-full` cho grid, `min-h-0` cho cột nội dung.
+- Bằng chứng sau sửa (Chromium headless, nội dung 3000px): `aside.height` = 860/820/660 ở
+  1440×900 / 1280×860 / 1024×700; logout `bottom` 884 < 900; `body.scrollHeight` = đúng viewport;
+  nav 30 mục vẫn cuộn trong sidebar và footer còn hiển thị.
+- Kèm theo: title bar chừa `--nq-titlebar-controls-width: 138px` cho `titleBarOverlay`, tránh
+  chồng lên nút theme/badge ở góc phải.
+- Kết luận: lỗi layout thật; đã sửa và đo lại, không phải vấn đề môi trường.
+
+## [2026-11-15 14:05 Asia/Saigon] [FIXED]
+- Task/commit: desktop design system — typography/button utilities bị vô hiệu (`feature/electron-desktop`, chưa commit).
+- Vai trò và số client: kiểm tra bằng Chromium headless (Electron 45 dùng Chromium 157) qua puppeteer,
+  render `DesignPreview` + `AppShell` ở 1440×900 và 1024×700, light + dark.
+- Bước tái hiện: mở preview, đọc `getComputedStyle(h1)` của `h1.nq-display.text-nq-3xl`.
+- Kết quả mong đợi: font-size 30px (`--nq-fs-3xl`), button primary nền teal, padding theo utility.
+- Kết quả thực tế: h1 = **13px**; button primary trong suốt; `px-*`/`p-*` trên `<button>` mất tác dụng.
+  `--nq-fs-3xl` vẫn đúng 30px nên lỗi không nằm ở token.
+- Nguyên nhân: `desktop/src/renderer/styles/base.css` cố ý **không nằm trong `@layer`**
+  ("để thắng Tailwind preflight"). CSS không layer thắng mọi layer, nên cũng thắng
+  toàn bộ utility: `h1{font-size:inherit}` đè `.text-nq-3xl`, `button{background:none;padding:0}`
+  đè `.bg-nq-primary`/`.px-4`. Tương tự `p-4`/`p-6` không áp dụng cho `CardBody`.
+- Cách sửa: chia `base.css` thành `@layer base` (reset, sizing, scrollbar, selection, CJK,
+  reduced-motion), `@layer components` (`.nq-scroll*`, `.nq-skip-link`) và `@layer utilities`
+  (`:focus-visible`, `.nq-focusable:focus-visible` — cần thắng `shadow-*` trên cùng element).
+- Bằng chứng sau sửa: h1 = 30px, primary button nền `#1f5560`, nav active có thanh + nền,
+  dark theme đổi đúng; ảnh lưu tại `/tmp/opencode/screens/v2-*`.
+- Ghi chú thêm: `DesignPreview` tự ghi `data-theme="light"` khi mount nên nuốt theme của harness;
+  đã giao ui-designer chuyển thành controlled. `Card` mặc định `padding='md'` cộng dồn với
+  `CardBody` gây ~52px khoảng trắng — giao ui-designer chốt lại quy ước.
+- Kết luận: lỗi design-system thật, đã sửa và xác minh bằng ảnh, không phải lỗi môi trường.
+
+## [2026-11-15 13:45 Asia/Saigon] [FIXED]
+- Task/commit: Desktop Phase 0 audit + Phase 2 foundation (`feature/electron-desktop`, chưa commit).
+- Bước tái hiện: `cd desktop && npm install` trên `/run/media/...` (volume exFAT).
+- Kết quả mong đợi: cài dependency và chạy `tsc`/`vitest`/`vite build` trong repo.
+- Kết quả thực tế: `npm error code EPERM / syscall symlink
+  ../@babel/parser/bin/babel-parser.js -> desktop/node_modules/.bin/parser`.
+- Nguyên nhân: `mount` xác nhận `/dev/sda2 on /run/media/xiaoying/DATA type exfat`; exFAT
+  không hỗ trợ symlink/hardlink nên npm không tạo được `node_modules/.bin`.
+- Bằng chứng đã kiểm tra: `ln -s` và `ln` đều trả "Thao tác không được phép"; `mount` hiển thị exfat.
+- Cách xử lý: cài dependency tại `/tmp/opencode/nq-verify` (ext4); thêm
+  `desktop/scripts/verify-linux.sh` để rsync `desktop/` sang sandbox rồi chạy lệnh kiểm chứng.
+  Ghi thành D-023 và mục 7.1 trong `docs/desktop/contracts.md`.
+- Kết luận: lỗi môi trường, không phải lỗi cấu hình dự án; không sửa `package.json`.
+
+## [2026-11-15 13:39 Asia/Saigon] [FIXED]
+- Task/commit: xác nhận baseline JavaFX trước khi thêm desktop client.
+- Bước tái hiện: `/tmp/opencode/mvnw -o clean test` (mvnw gốc có CRLF, tạo bản LF ở /tmp).
+- Kết quả: **Tests run: 135, Failures: 0, Errors: 0, Skipped: 0 — BUILD SUCCESS** (JDK 21.0.13).
+- Kết luận: baseline dùng để so sánh regression; mọi thay đổi desktop không được chạm Java.
+
+## [2026-11-15 11:55 Asia/Saigon] [FIXED]
+- Task/commit: Phase 2 UI/UX overhaul — Login, Home, Quiz Room, Lobby, Battle
+  (nhánh `feature/ui-quiz-flow`, chưa commit/push).
+- Vai trò và số client: test tự động; chưa chạy GUI do môi trường Linux không có display/Xvfb.
+- Windows/JDK/camera: JDK 21, JavaFX 21; thay đổi không chạm camera ngoài việc bọc panel preview
+  bằng container ẩn/hiện, không đổi pipeline capture/relay.
+- Bước tái hiện: load 16 FXML client + dashboard qua `FXMLLoader`, gắn `style.css` và gọi
+  `applyCss()/layout()` ở 980×680 cho toàn bộ suite; màn hình Phase 2 kiểm thêm ở 1180×720.
+- Kết quả mong đợi: 5 màn hình Phase 2 render đúng khối Sakura Arcade, giữ nguyên `fx:id`/
+  `onAction`, không phát sinh cảnh báo CSS, Home trở thành đích sau đăng nhập.
+- Kết quả thực tế: **135 test pass**, 0 failure/error/skip; `ClientFxmlTest` 22 test,
+  `UiThemeTest` 7 test; không có cảnh báo parse CSS.
+- UI state cuối: Login 2 cột + cấu hình server thu gọn; Home hero + 3 mode card + panel tiến độ;
+  Quiz Room 2 action card + step bar; Lobby PIN panel + player card + camera/info panel +
+  action bar; Battle HUD + question card 2×2 đáp án + leaderboard tuỳ biến.
+- Camera state cuối: không đổi logic; lobby preview vẫn chỉ hiện cho player khi proctoring bật,
+  lỗi camera vẫn không chặn tham gia/bắt đầu.
+- Message/event cuối: không đổi protocol; chỉ đổi đích điều hướng sau `LOGIN_OK`,
+  `QUIZ_ROOM_CANCEL` và khi rời phòng.
+- Exception/stack trace: không có.
+- Giả thuyết/nguyên nhân: trước Phase 2, `LOGIN_OK` mở thẳng Matchmaking nên thiếu màn hình
+  tổng hợp tiến độ; CSS cũ còn class dùng chung (`.player-name`) giữa Ranked và Lobby nên dễ
+  ghi đè màu chữ trên scoreboard tối.
+- Bằng chứng đã kiểm tra: đổi class Lobby sang `.lobby-player-name` để không đè `.player-name`
+  của Ranked; scope padding Battle Quiz bằng `.quiz-battle-page` thay vì sửa `.battle-content`
+  dùng chung; test cấu trúc xác nhận 3 `.home-mode-card`, 2 `.quiz-action-card`, 4 `.answer-button`.
+- Thay đổi đã thử: `TitledPane` + `ScrollPane` cho Login, `FlowPane` chip và bind `prefWidth`
+  theo `ListView` cho Lobby, `ContentDisplay.LEFT` + badge chữ cho đáp án Battle.
+- Kết luận/bước tiếp theo: Phase 2 xong phần code/tài liệu; còn QA trực quan trên Windows 10/11
+  và DPI cao ở Phase 5, đặc biệt khi mở rộng cấu hình server ở cửa sổ thấp và cửa sổ 1024px.
+
+## [2026-11-15 11:10 Asia/Saigon] [FIXED]
+- Task/commit: Phase 1 UI/UX overhaul — design foundation Sakura Arcade (nhánh `feature/ui-foundation`, đã được người dùng duyệt commit/push).
+- Vai trò và số client: test tự động; chưa chạy GUI do môi trường Linux không có display/Xvfb.
+- Windows/JDK/camera: JDK 21, JavaFX 21; không liên quan camera.
+- Bước tái hiện: load FXML client/server và `applyCss()` ở viewport 980×680.
+- Kết quả mong đợi: token Sakura Arcade, font heading/body đúng weight, icon sidebar hiển thị,
+  shell không vỡ layout và không phát sinh lỗi CSS.
+- Kết quả thực tế: 16 màn hình client + dashboard load thành công; không có cảnh báo parse CSS.
+- UI state cuối: sidebar 248px có logo/gradient, nhãn CHƠI/CỘNG ĐỒNG, 8 icon stroke; header có dải
+  Sakura–Coral; client và dashboard dùng chung palette/font.
+- Camera state cuối: không đổi.
+- Message/event cuối: không đổi protocol.
+- Exception/stack trace: không có.
+- Giả thuyết/nguyên nhân: `Font.loadFont` trên JavaFX 21 nạp Nunito variable theo instance mặc định
+  `ExtraLight`, nên heading đậm sẽ sai weight nếu dùng file variable trực tiếp.
+- Bằng chứng đã kiểm tra: probe JavaFX cho thấy `Nunito-Variable.ttf -> Nunito ExtraLight`; sau khi
+  tạo static instance `wght=700/800` và đổi name table, probe trả `family=Nunito, style=Bold/ExtraBold`.
+- Thay đổi đã thử: bundle Be Vietnam Pro 4 weight + Nunito Bold/ExtraBold; `FontLoader` gọi trong
+  `ClientApp.start()`/`ServerDashboardApp.start()`; token/typography/claymorphism trong hai CSS;
+  `Icons` SVGPath + `.nav-icon`; shell logo/nhãn nhóm/header accent; test theme/font/icon.
+- Kiểm thử: `mvnw -o clean test` JDK 21 (wrapper LF tạm) đạt **132 test**, 0 failure/error/skip,
+  `BUILD SUCCESS`.
+- Kết luận/bước tiếp theo: Phase 1 code hoàn tất; cần kiểm tra trực quan Windows/DPI cao ở Phase 5.
+  Tiếp theo là Phase 2 (Login, Home, Quiz Room, Lobby, Battle); người dùng đã duyệt commit/push Phase 1.
+
+## [2026-11-15 10:52 Asia/Saigon] [FIXED]
+- Task/commit: Phase 0 UI/UX overhaul — thêm Git workflow, cài UI UX Pro Max project-local,
+  audit 16 màn hình và đề xuất hướng giao diện A/B/C; nhánh `chore/ui-phase0-tooling`.
+- Kết quả mong đợi: có quy trình nhánh/commit rõ ràng; skill chạy được nhưng không làm nặng
+  repo; có đề xuất giao diện dựa trên dữ liệu; không đổi code/runtime.
+- Thay đổi đã thực hiện:
+  (1) `.gitignore`: thêm `.opencode/skills/`.
+  (2) `AGENTS.md`: thêm mục **Git workflow** (nhánh riêng, chờ OK mới commit/push).
+  (3) Thêm `docs/ui-tooling.md` và `docs/ui-redesign-proposal.md`.
+  (4) `DECISIONS.md`: D-015 (tiếp tục không âm thanh), D-016 (skill local, không commit).
+  (5) `TASKS.md`, `PROGRESS.md`, `docs/ui-design.md`, `README.md` cập nhật liên kết/trạng thái.
+- Bằng chứng:
+  - `npx ui-ux-pro-max-cli init --ai opencode` tạo `.opencode/skills/` (172 file, 4,6 MB).
+  - `git check-ignore -v .opencode/skills/ui-ux-pro-max/SKILL.md` xác nhận file skill bị ignore.
+  - Chạy thành công `search.py ... --design-system` và `search.py ... --stack javafx`.
+  - Kết quả skill: Language Learning App -> Claymorphism + Vibrant & Block-based; palette
+    Indigo `#4F46E5` + accent tiến độ `#16A34A`; JavaFX shell + feature workspace.
+- Kiểm thử: `mvnw -o clean test` trên JDK 21 (wrapper LF tạm) -> **BUILD SUCCESS**,
+  **124 test**, 0 failure/error/skip.
+- Quyết định sau rà soát: người dùng chọn **B. Sakura Arcade** (D-017), bundle
+  Nunito + Be Vietnam Pro, scope client + server dashboard; vẫn không âm thanh (D-015).
+- Kết luận/bước tiếp theo: commit/push Phase 0 sau khi được duyệt; sau đó tạo nhánh
+  `feature/ui-foundation` cho Phase 1.
 
 ## [2026-11-15 06:45 Asia/Saigon] [FIXED]
 - Task/commit: đối chiếu số liệu/ngày, viết lại `docs/protocol.md`, thêm `docs/ranked.md` và

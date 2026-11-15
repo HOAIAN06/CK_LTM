@@ -49,6 +49,31 @@ cho phép Java/Maven ở mạng Private. Log runtime nằm trong `logs/server.lo
 
 Database dùng các script trong `sql/`. Cấu hình thật không commit vào Git. Chi tiết kiến trúc, protocol, camera, UI và kiểm thử nằm trong thư mục `docs/`.
 
+## Client desktop (Electron + React + TypeScript)
+
+Từ 2026-11-15 có thêm client desktop hiện đại trong `desktop/`. Đây là client **bổ sung**:
+Java server, PostgreSQL và client JavaFX ở trên vẫn giữ nguyên và chạy độc lập.
+
+```powershell
+cd desktop
+npm install
+npm run dev          # mở cửa sổ Electron, kết nối localhost:5000
+npm run typecheck
+npm test
+npm run build
+npm run package:win  # NSIS installer → desktop/dist
+```
+
+- Kiến trúc: main process giữ kết nối TCP JSON-line; renderer chỉ gọi `window.nq` qua IPC
+  (`contextIsolation`, `sandbox`, không `nodeIntegration`). Server vẫn quyết định đáp án,
+  điểm, timer và trạng thái phòng.
+- Tài liệu: `docs/desktop/contracts.md`, `architecture.md`, `protocol.md`,
+  `design-system.md`, `proctoring.md`, `qa-report.md`, `visual-qa.md`.
+- Trạng thái từng màn hình: `TASKS.md` mục **P5**.
+- Lưu ý môi trường: nếu repo nằm trên volume exFAT (Linux), `npm install` trong `desktop/`
+  sẽ lỗi `EPERM` vì không tạo được symlink; dùng `desktop/scripts/verify-linux.sh`
+  (xem `docs/desktop/contracts.md` §7.1). Trên Windows không gặp vấn đề này.
+
 Khi chạy từ source, client và server ghi log xoay vòng trong `logs/client.log*` và
 `logs/server.log*`. Bản đóng gói ghi tại `%USERPROFILE%\.nihongoquest\logs`.
 
@@ -57,9 +82,12 @@ Khi chạy từ source, client và server ghi log xoay vòng trong `logs/client.
 - P0 lobby/camera gate: đã hoàn thành bằng code và test; còn kiểm tra webcam thật Windows 10/11.
 - P1 pipeline camera: đã có metrics 5 giây, latest-frame/drop policy, retry tối đa 3 lần,
   decode ngoài JavaFX thread và evidence `UNKNOWN`; còn benchmark 2 rồi 6 client để chốt FPS.
-- P2 UI: đã áp dụng theme Duolingo-inspired, semantic state và animation ngắn cho toàn client;
+- P2 UI: đã áp dụng theme dùng chung, semantic state và animation ngắn cho toàn client;
   còn kiểm tra trực quan Windows 10/11 và DPI cao.
-- Baseline 2026-11-15: `mvnw.cmd clean test` trên JDK 21 đạt 124 test, không có failure/error/skip.
+- P4 UI overhaul: Phase 0 xong (Git workflow + UI UX Pro Max); Phase 1 xong design foundation
+  **Sakura Arcade** (token, font Nunito/Be Vietnam Pro, icon Lucide, shell/sidebar/header)
+  theo D-017/D-018. Phase 2–4 sẽ redesign từng màn hình.
+- Baseline 2026-11-15: `mvnw.cmd clean test` trên JDK 21 đạt 135 test, không có failure/error/skip.
 
 ## Tài liệu điều khiển dự án
 
@@ -74,5 +102,7 @@ Khi chạy từ source, client và server ghi log xoay vòng trong `logs/client.
 - [docs/ranked.md](docs/ranked.md): chế độ đấu hạng 1v1, luật trận và persistence.
 - [docs/proctoring.md](docs/proctoring.md): camera và phát hiện gian lận.
 - [docs/ui-design.md](docs/ui-design.md): hệ thống giao diện Duolingo-inspired.
+- [docs/ui-redesign-proposal.md](docs/ui-redesign-proposal.md): đề xuất overhaul UI/UX 2026-11-15 (chờ chọn hướng).
+- [docs/ui-tooling.md](docs/ui-tooling.md): cài/cập nhật UI UX Pro Max project-local.
 - [docs/testing.md](docs/testing.md): chiến lược test.
 - [docs/execution-plan.md](docs/execution-plan.md): kế hoạch triển khai theo task.

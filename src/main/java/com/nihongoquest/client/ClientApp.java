@@ -25,6 +25,7 @@ import com.nihongoquest.common.protocol.Message;
 import com.nihongoquest.common.protocol.MessageType;
 import com.nihongoquest.common.protocol.Payloads;
 import com.nihongoquest.common.logging.RuntimeLog;
+import com.nihongoquest.ui.FontLoader;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -63,6 +64,7 @@ public class ClientApp extends Application {
     @Override
     public void start(Stage primaryStage) throws IOException {
         RuntimeLog.configure("client");
+        FontLoader.loadAll();
         this.primaryStage = primaryStage;
         primaryStage.setTitle("NihongoQuest");
         gameClient.setGlobalMessageHandler(this::handleGlobalMessage);
@@ -88,9 +90,24 @@ public class ClientApp extends Application {
         setStandaloneScene(root, 980, 650);
     }
 
-    public void showMatchmaking(Player player) {
+    public void showHome(Player player) {
         currentPlayer = player;
-        showMatchmaking();
+        showHome();
+    }
+
+    public void showHome() {
+        requirePlayer();
+        try {
+            FXMLLoader loader = loader("/client/home/home.fxml");
+            Parent root = loader.load();
+            com.nihongoquest.client.home.HomeController controller = loader.getController();
+            controller.setSession(this, currentPlayer);
+            showInShell(root, controller, "Trang chủ",
+                    "Chào mừng trở lại, " + currentPlayer.getUsername(),
+                    AuthenticatedRoute.HOME, true, true);
+        } catch (IOException e) {
+            throw screenError("Trang chủ", e);
+        }
     }
 
     public void showProfile() {
@@ -302,6 +319,7 @@ public class ClientApp extends Application {
             return;
         }
         switch (target) {
+            case HOME -> showHome();
             case MATCHMAKING -> showMatchmaking();
             case QUIZ_ROOM -> showQuizRoomMenu();
             case QUIZ_SETS -> showQuizSets();

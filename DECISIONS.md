@@ -1,5 +1,49 @@
 # DECISIONS — Nhật ký quyết định
 
+## D-023 — Kiểm chứng toolchain desktop ngoài repo (exFAT không hỗ trợ symlink)
+
+- Trạng thái: đã quyết định và triển khai 2026-11-15.
+- Bối cảnh: repo nằm trên volume exFAT `/run/media/...`; exFAT không hỗ trợ symlink/hardlink
+  nên `npm install` trong `desktop/` lỗi `EPERM: symlink node_modules/.bin/...`.
+- Quyết định: giữ nguyên vị trí source; cài dependency một lần tại `/tmp/opencode/nq-verify`
+  (ext4) và dùng `desktop/scripts/verify-linux.sh` để rsync `desktop/` sang sandbox rồi chạy
+  `tsc`/`vitest`/`vite build`. Không commit `node_modules/`, `out/`, `dist/`.
+- Hệ quả: Windows vẫn dùng `npm install` + `npm run typecheck|test|build` bình thường;
+  script chỉ là công cụ kiểm chứng trên máy Linux hiện tại.
+
+## D-022 — Electron main sở hữu TCP transport, renderer chỉ thấy IPC có kiểu
+
+- Trạng thái: đã quyết định và triển khai nền 2026-11-15.
+- Lý do: renderer có `sandbox: true`, `contextIsolation: true`, không `nodeIntegration`;
+  renderer không thể và không được mở socket, đọc file hay chạm database.
+- Quyết định: `node:net` chỉ tồn tại trong `desktop/src/main/net`; preload expose
+  `window.nq` gồm `connect/disconnect/send/getStatus/onEvent`; main là nguồn sự thật về
+  trạng thái kết nối và phát `nq:event` (`message`/`status`/`transport-error`).
+- Hệ quả: mọi payload đi qua IPC phải được validate; log không bao giờ chứa payload credential.
+  Protocol Java giữ nguyên framing JSON-line UTF-8.
+
+## D-021 — Electron desktop client là client bổ sung, không thay thế JavaFX
+
+- Trạng thái: đã quyết định và triển khai nền 2026-11-15.
+- Lý do: yêu cầu chuyển UI sang desktop hiện đại nhưng vẫn phải giữ JavaFX và Java server
+  chạy độc lập để bảo vệ đồ án và làm fallback demo.
+- Quyết định: thêm `desktop/` (Electron + React + TypeScript) như một client thứ hai nói
+  cùng TCP protocol; không sửa `src/main/java`, FXML, `pom.xml` hay `sql/`.
+- Hệ quả: server và JavaFX vẫn là baseline kiểm thử (135 test). Hai client dùng chung
+  protocol; mọi thay đổi protocol phải cập nhật cả `Payloads.java` và mirror TypeScript.
+
+## D-020 — Chuyển UI từ Sakura Arcade sang Calm Study
+
+- Trạng thái: đã quyết định và triển khai 2026-11-15.
+- Lý do: Sakura/Coral/Cyan cùng xuất hiện trên nhiều card và gradient khiến màn hình bị
+  neon, rối mắt; các màn hình cũ chưa cùng nhịp bố cục.
+- Quyết định: dùng nền giấy `#F7F7F2`, teal sâu `#315A63`, sage `#7A9E7E`,
+  terracotta tiết chế `#C98B72`, text `#24323A`; không gradient và không dùng màu trang trí
+  cạnh tranh trong cùng một màn hình.
+- Phạm vi: client shared theme, server dashboard, đấu hạng, phòng quiz/lobby/battle,
+  quản lý bộ đề/editor và bảng xếp hạng. Giữ nguyên `fx:id`, controller, protocol,
+  server authority, camera/proctoring và không thêm âm thanh.
+
 ## D-001 — Giữ srccode.md
 
 - Trạng thái: đã quyết định
@@ -73,7 +117,7 @@
 
 ## D-013 — Design Tokens tập trung cho toàn hệ thống màu
 
-- Trạng thái: đã quyết định và triển khai.
+- Trạng thái: **tokenization vẫn giữ; palette được mở rộng bởi D-017 (Sakura Arcade)**.
 - Lý do: theme cũ là 3 lớp style chồng chéo (base xanh dương `#2b6cb0`, Duolingo xanh lá
   `#58cc02`/`#46a302`, Indigo `#4338ca`) trộn lẫn màu tùy tiện, nhiều rule bị khai báo trùng/ghi
   đè và một số block bị xen kẽ. Cần một nguồn sự thật duy nhất về màu.
@@ -81,11 +125,12 @@
   `client/shared/style.css`; mọi selector chỉ tham chiếu `-ndq-*`. Không hardcode màu trong
   controller/FXML/rule khác. Server dashboard (`server/dashboard/server-dashboard.css`) dùng
   **cùng bộ token** để toàn hệ thống một hệ màu.
-- Palette chuẩn (nguồn sự thật):
+- Palette tại thời điểm D-013 (sẽ được thay bởi D-017 ở Phase 1):
   `-ndq-primary: #4F46E5`, `-ndq-primary-dark: #3730A3`, `-ndq-accent: #06B6D4`,
   `-ndq-bg: #F5F7FB`, `-ndq-surface: #FFFFFF`, `-ndq-text: #172033`,
   `-ndq-text-secondary: #64748B`, `-ndq-border: #E2E8F0`, `-ndq-success: #16A34A`,
   `-ndq-warning: #D97706`, `-ndq-error: #DC2626`; kèm token dẫn xuất (hover/soft/border).
+  Palette hiện hành cho overhaul: xem **D-017**.
 - Quy tắc áp dụng: Indigo là màu nhận diện (button/sidebar active/scoreboard); Cyan chỉ làm nhấn
   (eyebrow, PIN, orb, focus ring); **không dùng xanh lá cho button/sidebar/header/trang trí**;
   Success chỉ dùng cho trạng thái đúng/thành công; text tối trên nền sáng, chữ trắng chỉ trên nền Indigo/tối.
@@ -111,3 +156,74 @@
   Đây là profile an toàn cho demo, không phải kết luận hiệu năng cuối cùng.
 - Hệ quả: phải benchmark hai rồi sáu client trước khi tăng resolution/FPS; mọi thay đổi
   sau này phải giữ timeout, drop policy và JavaFX thread boundary hiện tại.
+
+## D-015 — Tiếp tục không có âm thanh sau khi rà soát lại
+
+- Trạng thái: đã xác nhận 2026-11-15.
+- Bối cảnh: kế hoạch cải thiện UI có đề xuất thêm âm thanh và hiệu ứng; D-012 trước đó đã gỡ
+  toàn bộ âm thanh theo yêu cầu bắt buộc của người dùng.
+- Quyết định: tiếp tục **không có âm thanh**. Không thêm `javafx-media`, `AudioManager`,
+  `SoundEvent` hoặc asset âm thanh. Pháo hoa/confetti chỉ là hiệu ứng hình ảnh.
+- Hệ quả: mọi đề xuất UI/UX sau này không được tự ý thêm âm thanh; nếu muốn đổi phải có
+  yêu cầu mới và cập nhật D-012/D-015.
+
+## D-016 — UI UX Pro Max là công cụ local, không commit
+
+- Trạng thái: đã quyết định và triển khai 2026-11-15.
+- Lý do: skill sinh ra nhiều file dữ liệu/script, không phải source của ứng dụng; commit sẽ
+  làm repo nặng và khó cập nhật.
+- Quyết định: cài project-local vào `.opencode/skills/`, thêm toàn bộ thư mục vào `.gitignore`;
+  hướng dẫn cài lại nằm trong `docs/ui-tooling.md`.
+- Hệ quả: máy mới cần chạy `npx ui-ux-pro-max-cli init --ai opencode` trước khi dùng skill.
+
+## D-017 — Hướng UI "Sakura Arcade" cho overhaul
+
+- Trạng thái: đã chọn 2026-11-15; Phase 1 triển khai.
+- Bối cảnh: audit 16 màn hình cho thấy UI hiện tại mỏng, thiếu icon/asset, bố cục chưa rõ
+  phân cấp; UI UX Pro Max gợi ý Language Learning App dùng Claymorphism + Vibrant & Block-based.
+- Quyết định: chọn **Sakura Arcade** — Indigo làm nền, Sakura/Coral làm điểm nhấn Nhật,
+  Cyan giữ vai trò accent phụ; kết hợp Claymorphism + block-based, pháo hoa/confetti ở Result.
+- Palette chuẩn (Phase 1 sẽ đưa vào `client/shared/style.css`):
+  `-ndq-primary #4F46E5`, `-ndq-primary-dark #3730A3`, `-ndq-sakura #F472B6`,
+  `-ndq-sakura-deep #DB2777`, `-ndq-sakura-soft #FCE7F3`, `-ndq-coral #FB7185`,
+  `-ndq-accent #06B6D4`, `-ndq-bg #FFF7FA`, `-ndq-surface #FFFFFF`, `-ndq-text #1E1B4B`,
+  `-ndq-text-secondary #64748B`, `-ndq-border #FBCFE8`, `-ndq-success #16A34A`,
+  `-ndq-warning #D97706`, `-ndq-error #DC2626`.
+- Typography: bundle **Nunito** (heading) + **Be Vietnam Pro** (body);
+  tiếng Nhật fallback `Noto Sans JP`, `Yu Gothic UI`, `Meiryo`.
+- Scope: client + server dashboard.
+- Hệ quả: D-013 vẫn giữ quy tắc token hóa; palette Indigo/Cyan cũ được mở rộng/thay bởi palette
+  trên. Mọi selector tiếp tục dùng token `-ndq-*`, không hardcode màu. Không thêm âm thanh
+  (D-015). `UiThemeTest` phải cập nhật theo palette mới ở Phase 1.
+
+## D-018 — Font đóng gói dạng static instance + icon SVG nội tuyến
+
+- Trạng thái: đã quyết định và triển khai 2026-11-15.
+- Bối cảnh: `Font.loadFont` của JavaFX 21 nạp file Nunito variable thành family
+  `Nunito ExtraLight`, không dùng được cho heading đậm. Ứng dụng cũng chưa có bộ icon/asset.
+- Quyết định:
+  - Tạo static instance Nunito `wght=700` (Bold) và `wght=800` (ExtraBold) từ variable font
+    bằng `fontTools.varLib.instancer`, đổi name table và đóng gói TTF. Không cần fontTools lúc
+    runtime/build; chỉ cần khi tái tạo font.
+  - Body dùng Be Vietnam Pro (4 weight static). Tiếng Nhật fallback Noto Sans JP / Yu Gothic UI /
+    Meiryo.
+  - Icon dùng `SVGPath` nội tuyến trong `com.nihongoquest.ui.Icons` (Lucide, giấy phép ISC),
+    tô bằng `-fx-stroke` qua style class `.nav-icon`; không thêm file ảnh/icon rời.
+- Hệ quả: font/icon hoạt động nhất quán trên Windows/Linux, jar chỉ tăng khoảng 800 KB font.
+  Khi thêm icon mới phải giữ license Lucide trong `src/main/resources/licenses/Lucide-ISC.txt`
+  và ưu tiên icon stroke 24×24 để đồng bộ theme.
+
+## D-019 — Home là màn hình đích sau đăng nhập
+
+- Trạng thái: đã quyết định và triển khai 2026-11-15 (Phase 2).
+- Bối cảnh: trước Phase 2, `LOGIN_OK` đưa thẳng người chơi vào màn hình Tìm trận 1v1 và
+  `home.fxml` không có route trong sidebar, nên không có nơi tổng hợp tiến độ học tập.
+- Quyết định:
+  - Thêm `AuthenticatedRoute.HOME`, nút "Trang chủ" đầu sidebar và `ClientApp.showHome()`
+    (kèm overload `showHome(Player)` khi vừa đăng nhập).
+  - `LOGIN_OK` điều hướng về Home; Home hiển thị số liệu thật từ `Player` mà server trả về
+    (thắng, độ chính xác, tổng điểm) và các lối vào Ranked 1v1 / Phòng Quiz / Bộ đề / Lịch sử.
+  - Rời phòng Quiz (lobby hoặc battle) và phòng bị hủy cũng quay về Home thay vì Matchmaking.
+- Hệ quả: `ClientApp.showMatchmaking(Player)` bị xóa để tránh hai đường vào đầu tiên; mọi
+  điều hướng chính đi qua `navigateFromSidebar`. Home chỉ đọc dữ liệu đã có, không gọi mạng,
+  không tính điểm và không truy cập database.

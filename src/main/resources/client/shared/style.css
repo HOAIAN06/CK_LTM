@@ -1,57 +1,69 @@
 /* ==========================================================================
-   NihongoQuest — Unified Design System
-   Style: Modern EdTech Gaming — Clean, Professional, Minimal.
+   NihongoQuest — Calm Study Design System
+   Deep teal + sage + warm paper · Editorial · Content first.
 
-   Toàn bộ màu sắc tập trung tại khối DESIGN TOKENS bên dưới (looked-up colors
-   trên .root). Mọi selector CHỈ tham chiếu -ndq-* token; không hardcode màu
-   trong controller/FXML/rule khác.
+   Toàn bộ màu nhận diện tập trung tại khối DESIGN TOKENS bên dưới
+   (looked-up colors trên .root). Selector chỉ tham chiếu -ndq-* token.
+   Ngoại lệ duy nhất là màu alpha của shadow (cùng tông sakura/indigo) vì
+   JavaFX không hỗ trợ token kiểu effect.
 
    Quy tắc:
-   - Indigo là màu nhận diện chính (primary + primary-dark).
-   - Cyan chỉ dùng làm màu nhấn (eyebrow, PIN, orb, focus).
-   - Không dùng xanh lá cho button/sidebar/header/trang trí.
-   - Success chỉ dùng cho trạng thái đúng/thành công.
+    - Deep teal là màu nhận diện; sage chỉ dùng cho tiến độ/trạng thái tích cực.
+    - Không dùng neon, gradient hoặc nhiều màu nhấn cạnh tranh trong một màn hình.
+   - Success/Warning/Error chỉ dùng cho trạng thái nghiệp vụ.
+   - Heading dùng Nunito, body dùng Be Vietnam Pro; tiếng Nhật fallback
+     Noto Sans JP / Yu Gothic UI / Meiryo.
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
    1. DESIGN TOKENS — nguồn sự thật duy nhất về màu
    -------------------------------------------------------------------------- */
 .root {
-    /* Palette gốc theo yêu cầu */
-    -ndq-primary: #4F46E5;        /* Primary Indigo — nhận diện chính */
-    -ndq-primary-dark: #3730A3;   /* Primary Dark */
-    -ndq-accent: #06B6D4;         /* Accent Cyan — chỉ làm nhấn */
-    -ndq-bg: #F5F7FB;             /* Background */
-    -ndq-surface: #FFFFFF;        /* Surface */
-    -ndq-text: #172033;           /* Primary Text */
-    -ndq-text-secondary: #64748B; /* Secondary Text */
-    -ndq-border: #E2E8F0;         /* Border */
-    -ndq-success: #16A34A;        /* Success */
-    -ndq-warning: #D97706;        /* Warning */
-    -ndq-error: #DC2626;          /* Error */
+    /* Calm Study: giấy ấm, teal sâu, sage tiết chế */
+    -ndq-primary: #315A63;
+    -ndq-primary-dark: #24444B;
+    -ndq-primary-hover: #3D6D75;
+    -ndq-accent: #7A9E7E;
+    -ndq-accent-text: #55765A;
+    -ndq-sakura: #C98B72;
+    -ndq-sakura-deep: #A96852;
+    -ndq-sakura-hover: #B97860;
+    -ndq-coral: #C98B72;
+    -ndq-bg: #F7F7F2;
+    -ndq-bg-alt: #F0F2EC;
+    -ndq-surface: #FFFFFF;
+    -ndq-text: #24323A;
+    -ndq-text-secondary: #607078;
+    -ndq-text-muted: #89969A;
+    -ndq-border: #D9E2E0;
+    -ndq-success: #55765A;
+    -ndq-warning: #A96852;
+    -ndq-error: #B94A48;
 
     /* Dẫn xuất nhẹ từ palette (hover/pressed/soft surface) */
-    -ndq-primary-hover: #4338CA;
-    -ndq-primary-soft: #EEF2FF;
-    -ndq-primary-border: #C7D2FE;
-    -ndq-accent-soft: #ECFEFF;
-    -ndq-accent-border: #A5F3FC;
-    -ndq-success-soft: #DCFCE7;
-    -ndq-success-border: #86EFAC;
-    -ndq-success-text: #15803D;
-    -ndq-warning-soft: #FEF3C7;
-    -ndq-warning-border: #FDE68A;
-    -ndq-warning-text: #B45309;
-    -ndq-error-soft: #FEE2E2;
-    -ndq-error-border: #FCA5A5;
-    -ndq-error-text: #B91C1C;
-    -ndq-neutral-soft: #F1F5F9;
-    -ndq-neutral-border: #CBD5E1;
-    -ndq-text-muted: #94A3B8;
-    -ndq-surface-alt: #FAFBFF;
+    -ndq-primary-soft: #E8F0EF;
+    -ndq-primary-border: #B8CECA;
+    -ndq-accent-soft: #EAF1EA;
+    -ndq-accent-border: #C3D6C5;
+    -ndq-sakura-soft: #F3E9E3;
+    -ndq-sakura-border: #DFC4B8;
+    -ndq-coral-soft: #F3E9E3;
+    -ndq-success-soft: #EAF1EA;
+    -ndq-success-border: #C3D6C5;
+    -ndq-success-text: #55765A;
+    -ndq-warning-soft: #F3E9E3;
+    -ndq-warning-border: #DFC4B8;
+    -ndq-warning-text: #8D5A47;
+    -ndq-error-soft: #F7E8E6;
+    -ndq-error-border: #E2BDB9;
+    -ndq-error-text: #9D4543;
+    -ndq-neutral-soft: #F1F3F0;
+    -ndq-neutral-border: #D9E2E0;
+    -ndq-surface-alt: #FBFBF8;
 
     /* Typography & shape */
-    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-family: "Be Vietnam Pro", "Segoe UI", "Yu Gothic UI", "Meiryo",
+            "Noto Sans JP", sans-serif;
     -fx-font-size: 14px;
     -fx-background-color: -ndq-bg;
 }
@@ -60,6 +72,32 @@
    2. BASE
    -------------------------------------------------------------------------- */
 .label { -fx-text-fill: -ndq-text; }
+
+/* Nunito cho toàn bộ heading; body giữ Be Vietnam Pro. */
+.title,
+.section-title,
+.brand-title,
+.auth-title,
+.connection-title,
+.shared-page-title,
+.header-page-title,
+.sidebar-brand-primary,
+.sidebar-brand-accent,
+.home-hero-title,
+.search-title,
+.battle-question,
+.lobby-pin,
+.pin-input,
+.result-title,
+.welcome-title,
+.profile-page-username,
+.profile-stat-value,
+.stat-value,
+.score-value,
+.action-title {
+    -fx-font-family: "Nunito", "Be Vietnam Pro", "Segoe UI", "Yu Gothic UI",
+            "Meiryo", "Noto Sans JP", sans-serif;
+}
 
 .status-label {
     -fx-text-fill: -ndq-text-secondary;
@@ -80,56 +118,78 @@
 
 .section-title {
     -fx-font-size: 17px;
-    -fx-font-weight: bold;
+    -fx-font-weight: 800;
     -fx-text-fill: -ndq-text;
 }
 
 .title {
-    -fx-font-size: 28px;
-    -fx-font-weight: bold;
+    -fx-font-size: 30px;
+    -fx-font-weight: 800;
     -fx-text-fill: -ndq-text;
 }
 
 /* --------------------------------------------------------------------------
-   3. BUTTONS
+   3. BUTTONS — block-based, viền đáy dày kiểu clay
    -------------------------------------------------------------------------- */
 .button {
     -fx-background-color: -ndq-primary;
     -fx-text-fill: white;
     -fx-font-size: 14px;
+    -fx-font-weight: bold;
     -fx-padding: 10 20 10 20;
-    -fx-background-radius: 10px;
+    -fx-background-radius: 14px;
+    -fx-border-radius: 14px;
+    -fx-border-color: transparent transparent -ndq-primary-dark transparent;
+    -fx-border-width: 0 0 3px 0;
     -fx-cursor: hand;
 }
-.button:hover { -fx-background-color: -ndq-primary-hover; }
-.button:pressed { -fx-background-color: -ndq-primary-dark; }
+.button:hover {
+    -fx-background-color: -ndq-primary-hover;
+    -fx-border-color: transparent transparent -ndq-primary-dark transparent;
+}
+.button:pressed {
+    -fx-background-color: -ndq-primary-dark;
+    -fx-border-color: -ndq-primary-dark;
+    -fx-border-width: 2px;
+}
 .button:focused {
     -fx-border-color: -ndq-accent;
     -fx-border-width: 2px;
-    -fx-border-radius: 10px;
 }
 .button:disabled { -fx-opacity: 0.48; }
 
 .primary-button {
     -fx-background-color: -ndq-primary;
     -fx-text-fill: white;
-    -fx-font-weight: bold;
-    -fx-background-radius: 10px;
+    -fx-font-weight: 800;
+    -fx-background-radius: 14px;
+    -fx-border-radius: 14px;
+    -fx-border-color: transparent transparent -ndq-primary-dark transparent;
+    -fx-border-width: 0 0 3px 0;
 }
 .primary-button:hover { -fx-background-color: -ndq-primary-hover; }
+.primary-button:pressed {
+    -fx-background-color: -ndq-primary-dark;
+    -fx-border-color: -ndq-primary-dark;
+    -fx-border-width: 2px;
+}
 
 .secondary-button {
     -fx-background-color: -ndq-surface;
     -fx-text-fill: -ndq-primary;
     -fx-border-color: -ndq-primary-border;
-    -fx-border-width: 2px;
-    -fx-border-radius: 10px;
-    -fx-background-radius: 10px;
-    -fx-font-weight: bold;
+    -fx-border-width: 2px 2px 3px 2px;
+    -fx-border-radius: 14px;
+    -fx-background-radius: 14px;
+    -fx-font-weight: 800;
 }
 .secondary-button:hover {
     -fx-background-color: -ndq-primary-soft;
     -fx-border-color: -ndq-accent-border;
+}
+.secondary-button:pressed {
+    -fx-background-color: -ndq-primary-border;
+    -fx-border-color: -ndq-accent;
 }
 
 .danger-outline-button {
@@ -137,9 +197,9 @@
     -fx-text-fill: -ndq-error;
     -fx-border-color: -ndq-error-border;
     -fx-border-width: 2px;
-    -fx-border-radius: 10px;
-    -fx-background-radius: 10px;
-    -fx-font-weight: bold;
+    -fx-border-radius: 14px;
+    -fx-background-radius: 14px;
+    -fx-font-weight: 800;
 }
 .danger-outline-button:hover {
     -fx-background-color: -ndq-error-soft;
@@ -149,7 +209,8 @@
 .large-button {
     -fx-font-size: 15px;
     -fx-padding: 12px 24px;
-    -fx-background-radius: 11px;
+    -fx-background-radius: 16px;
+    -fx-border-radius: 16px;
 }
 
 /* --------------------------------------------------------------------------
@@ -159,20 +220,20 @@
 .password-field,
 .combo-box,
 .choice-box {
-    -fx-pref-height: 42px;
-    -fx-background-radius: 10px;
-    -fx-border-radius: 10px;
+    -fx-pref-height: 44px;
+    -fx-background-radius: 14px;
+    -fx-border-radius: 14px;
     -fx-border-color: -ndq-border;
-    -fx-border-width: 1.5px;
+    -fx-border-width: 2px;
     -fx-background-color: -ndq-surface;
     -fx-text-fill: -ndq-text;
-    -fx-padding: 0 12px;
+    -fx-padding: 0 14px;
 }
 .text-area {
-    -fx-background-radius: 10px;
-    -fx-border-radius: 10px;
+    -fx-background-radius: 14px;
+    -fx-border-radius: 14px;
     -fx-border-color: -ndq-border;
-    -fx-border-width: 1.5px;
+    -fx-border-width: 2px;
     -fx-background-color: -ndq-surface;
     -fx-text-fill: -ndq-text;
 }
@@ -182,7 +243,7 @@
 .choice-box:focused,
 .text-area:focused {
     -fx-border-color: -ndq-accent;
-    -fx-effect: dropshadow(gaussian, rgba(6, 182, 212, 0.18), 8, 0, 0, 1);
+    -fx-effect: dropshadow(gaussian, rgba(6, 182, 212, 0.20), 10, 0, 0, 1);
 }
 
 .check-box:selected .box,
@@ -196,7 +257,9 @@
 /* --------------------------------------------------------------------------
    5. SURFACES, CARDS & SHELL
    -------------------------------------------------------------------------- */
-.app-shell { -fx-background-color: -ndq-bg; }
+.app-shell {
+    -fx-background-color: -ndq-bg;
+}
 
 .page-content { -fx-padding: 22px 28px 28px 28px; }
 .page-surface { -fx-background-color: -ndq-bg; }
@@ -205,50 +268,182 @@
 .content-card,
 .data-card {
     -fx-background-color: -ndq-surface;
+    -fx-background-radius: 18px;
+    -fx-border-color: -ndq-border;
+    -fx-border-width: 2px;
+    -fx-border-radius: 18px;
+    -fx-padding: 18px;
+    -fx-effect: dropshadow(gaussian, rgba(36, 50, 58, 0.07), 16, 0, 0, 5);
+}
+
+.auth-page {
+    -fx-background-color: -ndq-bg;
+}
+.auth-scroll,
+.auth-scroll > .viewport { -fx-background-color: transparent; }
+.auth-scroll { -fx-border-color: transparent; }
+.auth-orb { -fx-opacity: 0.20; }
+.auth-orb-sakura { -fx-fill: -ndq-sakura; }
+.auth-orb-accent { -fx-fill: -ndq-accent; }
+.auth-orb-soft { -fx-fill: -ndq-sakura-soft; }
+
+.auth-brand-panel { -fx-padding: 6px 0; }
+.auth-brand-mark {
+    -fx-background-color: -ndq-primary;
+    -fx-background-radius: 18px;
+    -fx-min-width: 56px;
+    -fx-pref-width: 56px;
+    -fx-max-width: 56px;
+    -fx-min-height: 56px;
+    -fx-pref-height: 56px;
+    -fx-max-height: 56px;
+    -fx-effect: dropshadow(gaussian, rgba(36, 50, 58, 0.14), 16, 0, 0, 5);
+}
+.auth-brand-mark-text {
+    -fx-text-fill: white;
+    -fx-font-family: "Nunito", "Be Vietnam Pro", sans-serif;
+    -fx-font-size: 28px;
+    -fx-font-weight: 800;
+}
+.auth-brand-primary {
+    -fx-text-fill: -ndq-primary;
+    -fx-font-family: "Nunito", "Be Vietnam Pro", sans-serif;
+    -fx-font-size: 22px;
+    -fx-font-weight: 800;
+}
+.auth-brand-accent {
+    -fx-text-fill: -ndq-sakura-deep;
+    -fx-font-family: "Nunito", "Be Vietnam Pro", sans-serif;
+    -fx-font-size: 22px;
+    -fx-font-weight: 800;
+}
+.auth-headline {
+    -fx-font-family: "Nunito", "Be Vietnam Pro", sans-serif;
+    -fx-font-size: 38px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -ndq-text;
+}
+.auth-copy {
+    -fx-font-size: 14px;
+    -fx-text-fill: -ndq-text-secondary;
+}
+.auth-feature-row {
+    -fx-background-color: -ndq-surface;
     -fx-background-radius: 16px;
     -fx-border-color: -ndq-border;
-    -fx-border-width: 1.5px;
+    -fx-border-width: 2px;
     -fx-border-radius: 16px;
-    -fx-padding: 16px;
-    -fx-effect: dropshadow(gaussian, rgba(23, 32, 51, 0.06), 14, 0, 0, 4);
+    -fx-padding: 9px 12px;
+    -fx-effect: dropshadow(gaussian, rgba(36, 50, 58, 0.06), 12, 0, 0, 3);
+}
+.auth-feature-icon {
+    -fx-background-color: -ndq-primary-soft;
+    -fx-background-radius: 12px;
+    -fx-min-width: 38px;
+    -fx-pref-width: 38px;
+    -fx-max-width: 38px;
+    -fx-min-height: 38px;
+    -fx-pref-height: 38px;
+    -fx-max-height: 38px;
+    -fx-alignment: center;
+}
+.auth-feature-icon .nav-icon {
+    -fx-stroke: -ndq-primary;
+    -fx-scale-x: 0.80;
+    -fx-scale-y: 0.80;
+}
+.auth-feature-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -ndq-text;
+}
+.auth-feature-copy {
+    -fx-font-size: 11px;
+    -fx-text-fill: -ndq-text-secondary;
+}
+.auth-stamp {
+    -fx-background-color: -ndq-sakura-soft;
+    -fx-border-color: -ndq-sakura;
+    -fx-border-width: 2px;
+    -fx-border-radius: 999px;
+    -fx-background-radius: 999px;
+    -fx-padding: 6px 16px;
+    -fx-text-fill: -ndq-sakura-deep;
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
 }
 
 .auth-card {
     -fx-background-color: -ndq-surface;
-    -fx-background-radius: 16px;
-    -fx-padding: 32px 40px 28px 40px;
+    -fx-background-radius: 24px;
+    -fx-padding: 26px 34px 24px 34px;
     -fx-border-color: -ndq-border;
-    -fx-border-radius: 16px;
-    -fx-effect: dropshadow(gaussian, rgba(23, 32, 51, 0.12), 20, 0, 0, 6);
+    -fx-border-width: 2px;
+    -fx-border-radius: 24px;
+    -fx-effect: dropshadow(gaussian, rgba(36, 50, 58, 0.10), 28, 0, 0, 10);
 }
-
-.connection-card {
-    -fx-background-color: -ndq-primary-soft;
-    -fx-background-radius: 16px;
-    -fx-border-color: -ndq-primary-border;
-    -fx-border-radius: 16px;
-    -fx-padding: 30px;
+.auth-separator .line { -fx-border-color: -ndq-border; }
+.auth-server-pane {
+    -fx-background-color: transparent;
+    -fx-border-color: -ndq-border;
+    -fx-border-width: 2px;
+    -fx-border-radius: 14px;
+    -fx-background-radius: 14px;
 }
-.connection-title {
-    -fx-font-size: 20px;
+.auth-server-pane > .title {
+    -fx-background-color: -ndq-sakura-soft;
+    -fx-background-radius: 12px;
+    -fx-padding: 7px 12px;
+}
+.auth-server-pane > .title > .label {
+    -fx-text-fill: -ndq-sakura-deep;
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+}
+.auth-server-pane > .title > .arrow-button > .arrow {
+    -fx-background-color: -ndq-sakura-deep;
+}
+.auth-server-pane > *.content {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 10px 0 0 0;
+}
+.connection-status-pill {
+    -fx-background-color: -ndq-neutral-soft;
+    -fx-border-color: -ndq-neutral-border;
+    -fx-border-width: 2px;
+    -fx-border-radius: 999px;
+    -fx-background-radius: 999px;
+    -fx-padding: 5px 14px;
+    -fx-text-fill: -ndq-text-secondary;
+    -fx-font-size: 11px;
     -fx-font-weight: bold;
-    -fx-text-fill: -ndq-text;
+    -fx-alignment: center;
 }
-.connection-subtitle { -fx-text-fill: -ndq-text-secondary; -fx-padding: 0 0 6px 0; }
-.connection-status-label { -fx-text-fill: -ndq-text-secondary; -fx-min-height: 42px; }
+.connection-status-pill.status-success {
+    -fx-background-color: -ndq-success-soft;
+    -fx-border-color: -ndq-success-border;
+    -fx-text-fill: -ndq-success-text;
+}
+.connection-status-pill.status-error {
+    -fx-background-color: -ndq-error-soft;
+    -fx-border-color: -ndq-error-border;
+    -fx-text-fill: -ndq-error-text;
+}
 
 .brand-title {
     -fx-font-size: 18px;
-    -fx-font-weight: bold;
+    -fx-font-weight: 800;
     -fx-text-fill: -ndq-primary;
 }
 .auth-title {
-    -fx-font-size: 26px;
-    -fx-font-weight: bold;
+    -fx-font-size: 28px;
+    -fx-font-weight: 800;
     -fx-text-fill: -ndq-text;
 }
-.auth-subtitle { -fx-text-fill: -ndq-text-secondary; -fx-padding: 0 0 8px 0; }
-.mode-link { -fx-text-fill: -ndq-primary; -fx-font-weight: bold; -fx-padding: 4px 0; }
+.auth-subtitle { -fx-text-fill: -ndq-text-secondary; -fx-padding: 0 0 6px 0; }
+.mode-link { -fx-text-fill: -ndq-sakura-deep; -fx-font-weight: bold; -fx-padding: 4px 0; }
+.mode-link:hover { -fx-text-fill: -ndq-primary; }
 
 /* --------------------------------------------------------------------------
    6. HEADER (shared page header)
@@ -257,11 +452,20 @@
 .gameplay-header {
     -fx-background-color: -ndq-surface;
     -fx-border-color: transparent transparent -ndq-border transparent;
-    -fx-border-width: 0 0 1px 0;
+    -fx-border-width: 0 0 2px 0;
     -fx-padding: 18px 28px 14px 28px;
 }
+.header-accent {
+    -fx-background-color: -ndq-sakura;
+    -fx-background-radius: 999px;
+    -fx-min-width: 5px;
+    -fx-pref-width: 5px;
+    -fx-max-width: 5px;
+    -fx-min-height: 38px;
+    -fx-max-height: 38px;
+}
 .shared-page-title {
-    -fx-font-size: 25px;
+    -fx-font-size: 26px;
     -fx-font-weight: 800;
     -fx-text-fill: -ndq-text;
 }
@@ -271,18 +475,41 @@
 }
 
 /* --------------------------------------------------------------------------
-   7. SIDEBAR — nền sáng, active Indigo
+   7. SIDEBAR — nền sáng, active Sakura
    -------------------------------------------------------------------------- */
 .app-sidebar {
     -fx-background-color: -ndq-surface;
-    -fx-padding: 24px 14px 18px 14px;
+    -fx-padding: 22px 12px 16px 12px;
     -fx-border-color: transparent -ndq-border transparent transparent;
     -fx-border-width: 0 2px 0 0;
 }
-.sidebar-brand-block { -fx-padding: 0 6px 6px 6px; }
-.sidebar-brand-primary { -fx-text-fill: -ndq-primary; -fx-font-size: 22px; -fx-font-weight: 800; }
-.sidebar-brand-accent { -fx-text-fill: -ndq-accent; -fx-font-size: 22px; -fx-font-weight: 800; }
-.sidebar-tagline { -fx-text-fill: -ndq-text-muted; -fx-font-size: 11px; }
+.sidebar-brand-block { -fx-padding: 0 4px 10px 4px; }
+.sidebar-logo {
+    -fx-background-color: -ndq-primary;
+    -fx-background-radius: 14px;
+    -fx-min-width: 42px;
+    -fx-pref-width: 42px;
+    -fx-max-width: 42px;
+    -fx-min-height: 42px;
+    -fx-pref-height: 42px;
+    -fx-max-height: 42px;
+    -fx-effect: dropshadow(gaussian, rgba(190, 24, 93, 0.24), 12, 0, 0, 4);
+}
+.sidebar-logo-text {
+    -fx-text-fill: white;
+    -fx-font-family: "Nunito", "Be Vietnam Pro", sans-serif;
+    -fx-font-size: 21px;
+    -fx-font-weight: 800;
+}
+.sidebar-brand-primary { -fx-text-fill: -ndq-primary; -fx-font-size: 19px; -fx-font-weight: 800; }
+.sidebar-brand-accent { -fx-text-fill: -ndq-sakura-deep; -fx-font-size: 19px; -fx-font-weight: 800; }
+.sidebar-tagline { -fx-text-fill: -ndq-text-muted; -fx-font-size: 10px; }
+.sidebar-section-label {
+    -fx-text-fill: -ndq-text-muted;
+    -fx-font-size: 10px;
+    -fx-font-weight: 800;
+    -fx-padding: 9px 14px 2px 14px;
+}
 .sidebar-separator .line { -fx-border-color: -ndq-border; }
 .sidebar-menu { -fx-padding: 4px 0; }
 
@@ -291,93 +518,361 @@
     -fx-text-fill: -ndq-text-secondary;
     -fx-border-color: transparent;
     -fx-border-width: 2px;
-    -fx-padding: 12px 14px;
-    -fx-background-radius: 14px;
-    -fx-border-radius: 14px;
+    -fx-padding: 11px 14px;
+    -fx-background-radius: 16px;
+    -fx-border-radius: 16px;
     -fx-alignment: center-left;
+    -fx-graphic-text-gap: 12px;
 }
 .sidebar-button:hover {
-    -fx-background-color: -ndq-neutral-soft;
-    -fx-text-fill: -ndq-text;
+    -fx-background-color: -ndq-sakura-soft;
+    -fx-text-fill: -ndq-sakura-deep;
+    -fx-border-color: transparent;
     -fx-effect: none;
 }
+.sidebar-button:pressed {
+    -fx-background-color: -ndq-sakura-border;
+    -fx-text-fill: -ndq-sakura-deep;
+    -fx-border-color: -ndq-sakura-border;
+}
 .sidebar-button.active {
-    -fx-background-color: -ndq-primary-soft;
-    -fx-text-fill: -ndq-primary;
-    -fx-border-color: -ndq-primary-border;
+    -fx-background-color: -ndq-sakura-soft;
+    -fx-text-fill: -ndq-sakura-deep;
+    -fx-border-color: -ndq-sakura-border;
     -fx-font-weight: bold;
 }
 .sidebar-button:disabled { -fx-opacity: 0.5; }
 
+/* Icon SVG đồng bộ trạng thái với sidebar. */
+.nav-icon {
+    -fx-fill: transparent;
+    -fx-stroke: -ndq-text-secondary;
+    -fx-stroke-width: 2px;
+    -fx-stroke-line-cap: round;
+    -fx-stroke-line-join: round;
+    -fx-scale-x: 0.86;
+    -fx-scale-y: 0.86;
+}
+.sidebar-button:hover .nav-icon,
+.sidebar-button.active .nav-icon { -fx-stroke: -ndq-sakura-deep; }
+.sidebar-logout-button .nav-icon,
+.sidebar-logout-button:hover .nav-icon { -fx-stroke: -ndq-error; }
+
 .sidebar-logout-button,
 .sidebar-logout-button:hover { -fx-text-fill: -ndq-error; }
-.sidebar-logout-button:hover { -fx-background-color: -ndq-error-soft; }
+.sidebar-logout-button:hover {
+    -fx-background-color: -ndq-error-soft;
+    -fx-border-color: transparent;
+}
 .sidebar-footer { -fx-padding: 4px 0 0 0; }
 
 
 /* --------------------------------------------------------------------------
    8. HOME
    -------------------------------------------------------------------------- */
-.home-page { -fx-background-color: -ndq-bg; }
-.home-hero { -fx-padding: 60px 0 0 80px; }
-.home-eyebrow {
-    -fx-text-fill: -ndq-accent;
-    -fx-font-size: 13px;
+.home-scroll,
+.home-scroll > .viewport { -fx-background-color: transparent; }
+.home-scroll { -fx-border-color: transparent; }
+.home-dashboard { -fx-padding: 22px 28px 28px 28px; }
+
+.home-hero-card {
+    -fx-background-color: -ndq-primary;
+    -fx-background-radius: 24px;
+    -fx-padding: 26px 30px;
+    -fx-effect: dropshadow(gaussian, rgba(36, 50, 58, 0.14), 24, 0, 0, 9);
+}
+.home-greeting {
+    -fx-text-fill: -ndq-sakura-soft;
+    -fx-font-size: 12px;
     -fx-font-weight: 800;
 }
 .home-hero-title {
-    -fx-font-size: 40px;
+    -fx-font-size: 34px;
+    -fx-font-weight: 800;
+    -fx-text-fill: white;
+}
+.home-hero-copy {
+    -fx-font-size: 13px;
+    -fx-text-fill: -ndq-sakura-soft;
+}
+.home-hero-primary {
+    -fx-background-color: -ndq-surface;
+    -fx-text-fill: -ndq-primary-dark;
+    -fx-font-weight: 800;
+    -fx-background-radius: 14px;
+    -fx-border-radius: 14px;
+    -fx-border-color: transparent transparent -ndq-sakura-soft transparent;
+    -fx-border-width: 0 0 3px 0;
+    -fx-padding: 10px 18px;
+}
+.home-hero-primary:hover {
+    -fx-background-color: -ndq-sakura-soft;
+    -fx-border-color: transparent transparent -ndq-sakura-border transparent;
+}
+.home-hero-secondary {
+    -fx-background-color: transparent;
+    -fx-text-fill: -ndq-sakura-soft;
+    -fx-font-weight: 800;
+    -fx-background-radius: 14px;
+    -fx-border-radius: 14px;
+    -fx-border-color: -ndq-sakura-soft;
+    -fx-border-width: 2px;
+    -fx-padding: 10px 18px;
+}
+.home-hero-secondary:hover {
+    -fx-background-color: -ndq-sakura-soft;
+    -fx-text-fill: -ndq-sakura-deep;
+}
+
+.home-progress-card {
+    -fx-background-color: -ndq-surface;
+    -fx-background-radius: 18px;
+    -fx-padding: 12px 14px;
+    -fx-effect: dropshadow(gaussian, rgba(30, 27, 75, 0.20), 16, 0, 0, 5);
+}
+.home-stat-eyebrow {
+    -fx-font-size: 10px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -ndq-text-secondary;
+}
+.home-ready-chip {
+    -fx-background-color: -ndq-success-soft;
+    -fx-text-fill: -ndq-success-text;
+    -fx-font-size: 9px;
+    -fx-font-weight: 800;
+    -fx-padding: 2px 8px;
+    -fx-background-radius: 999px;
+}
+.home-stat {
+    -fx-background-color: -ndq-surface-alt;
+    -fx-background-radius: 12px;
+    -fx-border-color: -ndq-border;
+    -fx-border-width: 1px;
+    -fx-border-radius: 12px;
+    -fx-padding: 7px 4px;
+    -fx-alignment: center;
+}
+.home-stat-value {
+    -fx-font-family: "Nunito", "Be Vietnam Pro", sans-serif;
+    -fx-font-size: 21px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -ndq-primary;
+}
+.home-stat-caption {
+    -fx-font-size: 8px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -ndq-text-secondary;
+}
+.home-stat-hint {
+    -fx-font-size: 10px;
+    -fx-text-fill: -ndq-text-secondary;
+}
+
+.home-section-title {
+    -fx-font-family: "Nunito", "Be Vietnam Pro", sans-serif;
+    -fx-font-size: 14px;
     -fx-font-weight: 800;
     -fx-text-fill: -ndq-text;
 }
-.home-hero-subtitle {
-    -fx-font-size: 16px;
+.home-mode-card {
+    -fx-background-color: -ndq-surface;
+    -fx-background-radius: 20px;
+    -fx-border-color: -ndq-border;
+    -fx-border-width: 2px;
+    -fx-border-radius: 20px;
+    -fx-padding: 16px;
+    -fx-effect: dropshadow(gaussian, rgba(36, 50, 58, 0.07), 16, 0, 0, 5);
+}
+.home-mode-card:hover {
+    -fx-border-color: -ndq-sakura;
+    -fx-effect: dropshadow(gaussian, rgba(36, 50, 58, 0.10), 20, 0, 0, 7);
+}
+.home-mode-match { -fx-border-color: -ndq-primary-border; }
+.home-mode-quiz { -fx-border-color: -ndq-sakura-border; }
+.home-mode-sets { -fx-border-color: -ndq-accent-border; }
+.home-mode-icon {
+    -fx-background-radius: 14px;
+    -fx-min-width: 46px;
+    -fx-pref-width: 46px;
+    -fx-max-width: 46px;
+    -fx-min-height: 46px;
+    -fx-pref-height: 46px;
+    -fx-max-height: 46px;
+    -fx-alignment: center;
+}
+.home-mode-icon-match { -fx-background-color: -ndq-primary-soft; }
+.home-mode-icon-quiz { -fx-background-color: -ndq-sakura-soft; }
+.home-mode-icon-sets { -fx-background-color: -ndq-accent-soft; }
+.home-mode-icon .nav-icon { -fx-scale-x: 1.05; -fx-scale-y: 1.05; }
+.home-mode-icon-match .nav-icon { -fx-stroke: -ndq-primary; }
+.home-mode-icon-quiz .nav-icon { -fx-stroke: -ndq-sakura-deep; }
+.home-mode-icon-sets .nav-icon { -fx-stroke: -ndq-accent-text; }
+.home-mode-title {
+    -fx-font-family: "Nunito", "Be Vietnam Pro", sans-serif;
+    -fx-font-size: 19px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -ndq-text;
+}
+.home-mode-copy {
+    -fx-font-size: 11px;
     -fx-text-fill: -ndq-text-secondary;
 }
-.home-cta-button { -fx-background-color: -ndq-primary; -fx-font-size: 15px; }
-.home-cta-button:hover { -fx-background-color: -ndq-primary-hover; }
-.home-orb { -fx-opacity: 0.14; }
-.home-orb-primary { -fx-fill: -ndq-primary; }
-.home-orb-secondary { -fx-fill: -ndq-accent; }
+.home-panel {
+    -fx-background-color: -ndq-surface;
+    -fx-background-radius: 18px;
+    -fx-border-color: -ndq-border;
+    -fx-border-width: 2px;
+    -fx-border-radius: 18px;
+    -fx-padding: 15px 17px;
+    -fx-effect: dropshadow(gaussian, rgba(36, 50, 58, 0.06), 14, 0, 0, 4);
+}
+.home-panel-history {
+    -fx-background-color: -ndq-primary-soft;
+}
+.home-tip-row { -fx-padding: 2px 0; }
+.home-tip-index {
+    -fx-background-color: -ndq-primary-soft;
+    -fx-text-fill: -ndq-primary;
+    -fx-font-size: 11px;
+    -fx-font-weight: 800;
+    -fx-background-radius: 999px;
+    -fx-min-width: 24px;
+    -fx-pref-width: 24px;
+    -fx-max-width: 24px;
+    -fx-min-height: 24px;
+    -fx-pref-height: 24px;
+    -fx-max-height: 24px;
+    -fx-alignment: center;
+}
+.home-tip-copy {
+    -fx-font-size: 11px;
+    -fx-text-fill: -ndq-text-secondary;
+}
 
 /* --------------------------------------------------------------------------
    9. MATCHMAKING
    -------------------------------------------------------------------------- */
 .search-card {
     -fx-background-color: -ndq-surface;
-    -fx-background-radius: 18px;
+    -fx-background-radius: 20px;
     -fx-border-color: -ndq-border;
-    -fx-border-radius: 18px;
+    -fx-border-width: 2px;
+    -fx-border-radius: 20px;
     -fx-padding: 34px 54px;
     -fx-min-width: 520px;
-    -fx-effect: dropshadow(gaussian, rgba(23, 32, 51, 0.10), 18, 0, 0, 5);
+    -fx-effect: dropshadow(gaussian, rgba(36, 50, 58, 0.08), 20, 0, 0, 6);
 }
 .search-title {
-    -fx-font-size: 25px;
-    -fx-font-weight: bold;
+    -fx-font-size: 26px;
+    -fx-font-weight: 800;
     -fx-text-fill: -ndq-text;
 }
 .search-user { -fx-font-size: 14px; -fx-text-fill: -ndq-text-secondary; }
 .spinner-ring { -fx-padding: 10px; }
 .search-status { -fx-font-size: 15px; -fx-font-weight: bold; }
-.search-spinner { -fx-progress-color: -ndq-primary; }
+.search-spinner { -fx-progress-color: -ndq-sakura-deep; }
 
 /* --------------------------------------------------------------------------
    10. BATTLE & SCOREBOARD
    -------------------------------------------------------------------------- */
 .battle-content { -fx-padding: 20px 38px 28px 38px; }
+.quiz-battle-page { -fx-padding: 14px 18px 16px 18px; }
+.battle-brand-mark {
+    -fx-background-color: -ndq-primary;
+    -fx-background-radius: 12px;
+    -fx-min-width: 40px;
+    -fx-pref-width: 40px;
+    -fx-max-width: 40px;
+    -fx-min-height: 40px;
+    -fx-pref-height: 40px;
+    -fx-max-height: 40px;
+}
+.battle-brand-mark-text {
+    -fx-text-fill: white;
+    -fx-font-family: "Nunito", "Be Vietnam Pro", sans-serif;
+    -fx-font-size: 20px;
+    -fx-font-weight: 800;
+}
+.gameplay-eyebrow {
+    -fx-font-size: 9px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -ndq-sakura-deep;
+}
+.header-pill {
+    -fx-background-color: -ndq-surface-alt;
+    -fx-background-radius: 12px;
+    -fx-border-color: -ndq-border;
+    -fx-border-width: 2px;
+    -fx-border-radius: 12px;
+    -fx-padding: 4px 12px;
+    -fx-min-width: 88px;
+}
+.header-pill-time {
+    -fx-background-color: -ndq-accent-soft;
+    -fx-border-color: -ndq-accent-border;
+    -fx-min-width: 120px;
+}
+.header-pill-caption {
+    -fx-font-size: 8px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -ndq-text-muted;
+}
+.header-pill-value {
+    -fx-font-family: "Nunito", "Be Vietnam Pro", sans-serif;
+    -fx-font-size: 15px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -ndq-text;
+}
+.header-time-value { -fx-font-size: 16px; }
+
+.battle-hud {
+    -fx-background-color: -ndq-surface;
+    -fx-background-radius: 18px;
+    -fx-border-color: -ndq-border;
+    -fx-border-width: 2px;
+    -fx-border-radius: 18px;
+    -fx-padding: 10px 16px;
+    -fx-effect: dropshadow(gaussian, rgba(36, 50, 58, 0.06), 14, 0, 0, 4);
+}
+.battle-hud-caption {
+    -fx-font-size: 9px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -ndq-text-secondary;
+}
+.battle-score {
+    -fx-font-family: "Nunito", "Be Vietnam Pro", sans-serif;
+    -fx-font-size: 27px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -ndq-primary;
+}
+.battle-timer-value {
+    -fx-font-family: "Nunito", "Be Vietnam Pro", sans-serif;
+    -fx-font-size: 18px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -ndq-text;
+    -fx-min-width: 42px;
+    -fx-alignment: center-right;
+}
+.battle-time-progress {
+    -fx-min-height: 12px;
+    -fx-pref-height: 12px;
+}
+.battle-time-progress .bar { -fx-background-color: -ndq-accent; }
+.battle-time-progress > .track { -fx-background-color: -ndq-accent-soft; }
+.battle-status { -fx-alignment: center-left; -fx-min-height: 0; }
+.battle-footer-bar { -fx-padding: 0 2px; }
 
 .scoreboard-card {
-    -fx-background-color: linear-gradient(to right, -ndq-primary, -ndq-primary-dark);
-    -fx-background-radius: 18px;
+    -fx-background-color: -ndq-primary;
+    -fx-background-radius: 20px;
     -fx-padding: 14px 34px;
     -fx-min-width: 760px;
     -fx-max-width: 800px;
-    -fx-effect: dropshadow(gaussian, rgba(55, 48, 163, 0.28), 20, 0, 0, 8);
+    -fx-effect: dropshadow(gaussian, rgba(36, 50, 58, 0.14), 22, 0, 0, 9);
 }
 .scoreboard-card .timer-caption,
 .player-role,
-.score-caption { -fx-text-fill: -ndq-primary-border; }
+.score-caption { -fx-text-fill: -ndq-sakura-soft; }
 .score-value { -fx-text-fill: white; -fx-font-size: 30px; -fx-font-weight: 800; }
 .match-time-label { -fx-text-fill: -ndq-accent-soft; -fx-font-weight: bold; }
 .timer-caption { -fx-text-fill: -ndq-text-secondary; }
@@ -387,36 +882,70 @@
 .player-name { -fx-font-size: 17px; -fx-font-weight: 800; -fx-text-fill: white; }
 .score-panel { -fx-alignment: center; }
 
-.time-progress { -fx-accent: -ndq-primary; }
-.progress-bar .track { -fx-background-color: -ndq-border; -fx-background-radius: 999px; }
-.progress-bar .bar { -fx-background-color: -ndq-primary; -fx-background-radius: 999px; }
+.time-progress { -fx-accent: -ndq-accent; }
+.progress-bar .track { -fx-background-color: -ndq-sakura-soft; -fx-background-radius: 999px; }
+.progress-bar .bar { -fx-background-color: -ndq-sakura-deep; -fx-background-radius: 999px; }
 .progress-indicator { -fx-progress-color: -ndq-primary; }
 .countdown-critical { -fx-text-fill: -ndq-error; -fx-font-weight: 800; }
 
 .battle-question {
-    -fx-font-size: 21px;
-    -fx-font-weight: bold;
+    -fx-font-size: 24px;
+    -fx-font-weight: 800;
     -fx-text-fill: -ndq-text;
 }
-.question-card { -fx-spacing: 10px; }
+.question-card {
+    -fx-spacing: 12px;
+    -fx-background-color: -ndq-surface;
+    -fx-background-radius: 20px;
+    -fx-border-color: -ndq-border;
+    -fx-border-width: 2px;
+    -fx-border-radius: 20px;
+    -fx-padding: 16px 18px;
+    -fx-effect: dropshadow(gaussian, rgba(36, 50, 58, 0.07), 16, 0, 0, 5);
+}
+.question-eyebrow {
+    -fx-background-color: -ndq-sakura-soft;
+    -fx-text-fill: -ndq-sakura-deep;
+    -fx-font-size: 10px;
+    -fx-font-weight: 800;
+    -fx-padding: 3px 10px;
+    -fx-background-radius: 999px;
+}
 .answer-grid { -fx-hgap: 12px; -fx-vgap: 12px; }
 
 .answer-button {
-    -fx-background-color: -ndq-surface;
+    -fx-background-color: -ndq-surface-alt;
     -fx-text-fill: -ndq-text;
-    -fx-font-size: 15px;
+    -fx-font-size: 14px;
     -fx-font-weight: bold;
-    -fx-border-color: -ndq-border -ndq-border -ndq-neutral-border -ndq-border;
+    -fx-border-color: -ndq-border -ndq-border -ndq-sakura -ndq-border;
     -fx-border-width: 2px 2px 4px 2px;
-    -fx-border-radius: 14px;
-    -fx-background-radius: 14px;
-    -fx-padding: 14px 18px;
+    -fx-border-radius: 16px;
+    -fx-background-radius: 16px;
+    -fx-padding: 12px 14px;
+    -fx-min-height: 60px;
 }
 .answer-button:hover {
-    -fx-background-color: -ndq-accent-soft;
-    -fx-border-color: -ndq-accent-border -ndq-accent-border -ndq-accent -ndq-accent-border;
+    -fx-background-color: -ndq-sakura-soft;
+    -fx-border-color: -ndq-sakura -ndq-sakura -ndq-sakura-deep -ndq-sakura;
 }
 .answer-button:disabled { -fx-opacity: 0.92; }
+
+.answer-letter {
+    -fx-background-color: -ndq-primary-soft;
+    -fx-text-fill: -ndq-primary;
+    -fx-font-family: "Nunito", "Be Vietnam Pro", sans-serif;
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-background-radius: 999px;
+    -fx-min-width: 28px;
+    -fx-pref-width: 28px;
+    -fx-max-width: 28px;
+    -fx-min-height: 28px;
+    -fx-pref-height: 28px;
+    -fx-max-height: 28px;
+    -fx-alignment: center;
+}
 
 .answer-correct,
 .answer-correct:disabled,
@@ -436,40 +965,404 @@
     -fx-text-fill: -ndq-error-text;
     -fx-opacity: 1;
 }
+.answer-correct .answer-letter,
+.answer-button.answer-correct .answer-letter {
+    -fx-background-color: -ndq-success;
+    -fx-text-fill: white;
+}
+.answer-wrong .answer-letter,
+.answer-button.answer-wrong .answer-letter {
+    -fx-background-color: -ndq-error;
+    -fx-text-fill: white;
+}
 
+.battle-side-panel { -fx-padding: 14px; }
+.camera-caption {
+    -fx-graphic-text-gap: 6px;
+    -fx-font-size: 10px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -ndq-text-secondary;
+}
+.camera-caption .nav-icon { -fx-scale-x: 0.72; -fx-scale-y: 0.72; }
+.live-chip {
+    -fx-background-color: -ndq-success-soft;
+    -fx-text-fill: -ndq-success-text;
+    -fx-font-size: 8px;
+    -fx-font-weight: 800;
+    -fx-padding: 2px 7px;
+    -fx-background-radius: 999px;
+}
+.leaderboard-list {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+.leaderboard-list .list-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 4px 2px;
+}
+.leaderboard-list .list-cell:filled:hover { -fx-background-color: transparent; }
+.leaderboard-row {
+    -fx-background-color: -ndq-surface-alt;
+    -fx-background-radius: 12px;
+    -fx-border-color: -ndq-border;
+    -fx-border-width: 1px;
+    -fx-border-radius: 12px;
+    -fx-padding: 8px 10px;
+}
+.leaderboard-list .list-cell:filled:hover .leaderboard-row {
+    -fx-background-color: -ndq-sakura-soft;
+}
+.leaderboard-row.leaderboard-me {
+    -fx-background-color: -ndq-primary-soft;
+    -fx-border-color: -ndq-primary-border;
+}
+.leaderboard-rank {
+    -fx-background-color: -ndq-primary-soft;
+    -fx-text-fill: -ndq-primary;
+    -fx-font-family: "Nunito", "Be Vietnam Pro", sans-serif;
+    -fx-font-size: 11px;
+    -fx-font-weight: 800;
+    -fx-background-radius: 8px;
+    -fx-min-width: 30px;
+    -fx-pref-width: 30px;
+    -fx-max-width: 30px;
+    -fx-min-height: 26px;
+    -fx-alignment: center;
+}
+.leaderboard-rank-top {
+    -fx-background-color: -ndq-sakura;
+    -fx-text-fill: white;
+}
+.leaderboard-name {
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -ndq-text;
+}
+.leaderboard-detail {
+    -fx-font-size: 9px;
+    -fx-text-fill: -ndq-text-secondary;
+}
+.leaderboard-score {
+    -fx-font-family: "Nunito", "Be Vietnam Pro", sans-serif;
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -ndq-primary;
+}
 
 /* --------------------------------------------------------------------------
    11. QUIZ — ROOM MENU / LOBBY / SET EDITOR
    -------------------------------------------------------------------------- */
-.quiz-room-card {
+.quiz-menu-scroll { -fx-background-color: transparent; -fx-border-color: transparent; }
+.quiz-menu-scroll > .viewport { -fx-background-color: transparent; }
+.quiz-menu-page { -fx-padding: 18px 28px 22px 28px; }
+.quiz-menu-eyebrow {
+    -fx-font-size: 11px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -ndq-sakura-deep;
+}
+.quiz-meta-chip {
+    -fx-background-color: -ndq-surface;
+    -fx-border-color: -ndq-border;
+    -fx-border-width: 2px;
+    -fx-border-radius: 999px;
+    -fx-background-radius: 999px;
+    -fx-padding: 5px 12px;
+    -fx-font-size: 10px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -ndq-text-secondary;
+}
+.quiz-action-card {
+    -fx-background-color: -ndq-surface;
+    -fx-background-radius: 22px;
+    -fx-border-color: -ndq-border;
+    -fx-border-width: 2px;
+    -fx-border-radius: 22px;
+    -fx-padding: 20px;
+    -fx-effect: dropshadow(gaussian, rgba(36, 50, 58, 0.07), 18, 0, 0, 6);
+}
+.quiz-action-create { -fx-border-color: -ndq-primary-border; }
+.quiz-action-join { -fx-border-color: -ndq-sakura-border; }
+.quiz-action-icon {
+    -fx-background-radius: 14px;
+    -fx-min-width: 46px;
+    -fx-pref-width: 46px;
+    -fx-max-width: 46px;
+    -fx-min-height: 46px;
+    -fx-pref-height: 46px;
+    -fx-max-height: 46px;
+    -fx-alignment: center;
+}
+.quiz-action-icon-create { -fx-background-color: -ndq-primary-soft; }
+.quiz-action-icon-join { -fx-background-color: -ndq-sakura-soft; }
+.quiz-action-icon-create .nav-icon { -fx-stroke: -ndq-primary; }
+.quiz-action-icon-join .nav-icon { -fx-stroke: -ndq-sakura-deep; }
+.quiz-action-title {
+    -fx-font-family: "Nunito", "Be Vietnam Pro", sans-serif;
+    -fx-font-size: 21px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -ndq-text;
+}
+.quiz-action-copy {
+    -fx-font-size: 11px;
+    -fx-text-fill: -ndq-text-secondary;
+}
+.quiz-card-separator .line { -fx-border-color: -ndq-border; }
+.quiz-inline-note {
+    -fx-font-size: 10px;
+    -fx-text-fill: -ndq-text-muted;
+}
+.pin-length-chip {
+    -fx-background-color: -ndq-accent-soft;
+    -fx-text-fill: -ndq-accent-text;
+    -fx-font-size: 9px;
+    -fx-font-weight: 800;
+    -fx-padding: 2px 8px;
+    -fx-background-radius: 999px;
+}
+.pin-field {
+    -fx-pref-height: 58px;
+    -fx-min-height: 58px;
+    -fx-font-size: 26px;
+}
+.quiz-steps-bar {
     -fx-background-color: -ndq-surface;
     -fx-background-radius: 18px;
     -fx-border-color: -ndq-border;
-    -fx-border-width: 1.5px;
+    -fx-border-width: 2px;
     -fx-border-radius: 18px;
-    -fx-padding: 22px;
-    -fx-min-width: 320px;
-    -fx-effect: dropshadow(gaussian, rgba(23, 32, 51, 0.06), 14, 0, 0, 4);
+    -fx-padding: 13px 18px;
+    -fx-effect: dropshadow(gaussian, rgba(36, 50, 58, 0.05), 12, 0, 0, 3);
 }
-.quiz-room-time { -fx-text-fill: -ndq-accent; -fx-font-weight: bold; }
+.quiz-step-index {
+    -fx-background-color: -ndq-sakura-soft;
+    -fx-text-fill: -ndq-sakura-deep;
+    -fx-font-family: "Nunito", "Be Vietnam Pro", sans-serif;
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+    -fx-background-radius: 999px;
+    -fx-min-width: 26px;
+    -fx-pref-width: 26px;
+    -fx-max-width: 26px;
+    -fx-min-height: 26px;
+    -fx-pref-height: 26px;
+    -fx-max-height: 26px;
+    -fx-alignment: center;
+}
+.quiz-step-title {
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -ndq-text;
+}
+.quiz-step-copy {
+    -fx-font-size: 10px;
+    -fx-text-fill: -ndq-text-secondary;
+}
+.quiz-step-divider {
+    -fx-background-color: -ndq-border;
+    -fx-min-width: 2px;
+    -fx-pref-width: 2px;
+    -fx-max-width: 2px;
+    -fx-min-height: 30px;
+    -fx-pref-height: 30px;
+    -fx-max-height: 30px;
+}
+.quiz-status-bar {
+    -fx-background-color: -ndq-surface;
+    -fx-border-color: -ndq-border transparent transparent transparent;
+    -fx-border-width: 2px 0 0 0;
+    -fx-padding: 8px 20px;
+}
+.quiz-room-time { -fx-text-fill: -ndq-accent-text; -fx-font-weight: bold; }
 .lobby-pin {
-    -fx-text-fill: -ndq-accent;
-    -fx-font-size: 30px;
+    -fx-text-fill: white;
+    -fx-font-size: 38px;
     -fx-font-weight: 800;
 }
 .pin-input {
     -fx-text-fill: -ndq-text;
-    -fx-font-size: 22px;
+    -fx-font-size: 26px;
     -fx-font-weight: 800;
     -fx-alignment: center;
 }
 
 .quiz-side-panel {
     -fx-background-color: -ndq-surface;
+    -fx-background-radius: 18px;
+    -fx-border-color: -ndq-border;
+    -fx-border-width: 2px;
+    -fx-border-radius: 18px;
+    -fx-padding: 16px;
+}
+
+.lobby-header-card {
+    -fx-background-color: -ndq-surface;
+    -fx-background-radius: 22px;
+    -fx-border-color: -ndq-border;
+    -fx-border-width: 2px;
+    -fx-border-radius: 22px;
+    -fx-padding: 16px 20px;
+    -fx-effect: dropshadow(gaussian, rgba(36, 50, 58, 0.07), 16, 0, 0, 5);
+}
+.lobby-eyebrow {
+    -fx-font-size: 10px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -ndq-sakura-deep;
+}
+.lobby-title {
+    -fx-font-family: "Nunito", "Be Vietnam Pro", sans-serif;
+    -fx-font-size: 25px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -ndq-text;
+}
+.lobby-count-chip {
+    -fx-background-color: -ndq-primary-soft;
+    -fx-text-fill: -ndq-primary;
+    -fx-font-size: 10px;
+    -fx-font-weight: 800;
+    -fx-padding: 3px 10px;
+    -fx-background-radius: 999px;
+}
+.lobby-meta-text {
+    -fx-font-size: 10px;
+    -fx-text-fill: -ndq-text-muted;
+}
+.lobby-pin-panel {
+    -fx-background-color: -ndq-primary;
+    -fx-background-radius: 20px;
+    -fx-padding: 10px 24px;
+    -fx-min-width: 210px;
+    -fx-effect: dropshadow(gaussian, rgba(36, 50, 58, 0.14), 18, 0, 0, 7);
+}
+.lobby-pin-caption {
+    -fx-text-fill: -ndq-sakura-soft;
+    -fx-font-size: 9px;
+    -fx-font-weight: 800;
+}
+.copy-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: -ndq-sakura-soft;
+    -fx-font-size: 9px;
+    -fx-font-weight: 800;
+    -fx-border-color: -ndq-sakura-soft;
+    -fx-border-width: 2px;
+    -fx-border-radius: 999px;
+    -fx-background-radius: 999px;
+    -fx-padding: 3px 10px;
+}
+.copy-button:hover {
+    -fx-background-color: -ndq-sakura-soft;
+    -fx-text-fill: -ndq-sakura-deep;
+}
+.copy-button .nav-icon { -fx-stroke: -ndq-sakura-soft; -fx-scale-x: 0.62; -fx-scale-y: 0.62; }
+.copy-button:hover .nav-icon { -fx-stroke: -ndq-sakura-deep; }
+.lobby-section-title {
+    -fx-font-family: "Nunito", "Be Vietnam Pro", sans-serif;
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -ndq-text;
+}
+.lobby-player-list {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+.lobby-player-list .list-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 4px 2px;
+}
+.lobby-player-list .list-cell:filled:hover,
+.lobby-player-list .list-cell:filled:selected {
+    -fx-background-color: transparent;
+}
+.lobby-player-card {
+    -fx-background-color: -ndq-surface;
     -fx-background-radius: 16px;
     -fx-border-color: -ndq-border;
+    -fx-border-width: 2px;
     -fx-border-radius: 16px;
-    -fx-padding: 16px;
+    -fx-padding: 9px 13px;
+    -fx-effect: dropshadow(gaussian, rgba(36, 50, 58, 0.05), 10, 0, 0, 3);
+}
+.player-cell-host .lobby-player-card {
+    -fx-border-color: -ndq-primary-border;
+    -fx-background-color: -ndq-surface;
+}
+.player-cell-offline .lobby-player-card {
+    -fx-border-color: -ndq-neutral-border;
+    -fx-opacity: 0.62;
+}
+.player-avatar {
+    -fx-background-color: -ndq-primary-soft;
+    -fx-background-radius: 999px;
+}
+.player-avatar-host {
+    -fx-background-color: -ndq-primary;
+}
+.player-avatar-text {
+    -fx-font-family: "Nunito", "Be Vietnam Pro", sans-serif;
+    -fx-font-size: 18px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -ndq-primary;
+}
+.player-avatar-host .player-avatar-text { -fx-text-fill: white; }
+.lobby-player-name {
+    -fx-font-size: 14px;
+    -fx-font-weight: 800;
+    -fx-text-fill: -ndq-text;
+}
+.player-chip {
+    -fx-background-color: -ndq-neutral-soft;
+    -fx-text-fill: -ndq-text-secondary;
+    -fx-font-size: 9px;
+    -fx-font-weight: 800;
+    -fx-padding: 2px 8px;
+    -fx-background-radius: 999px;
+}
+.chip-role-player { -fx-background-color: -ndq-primary-soft; -fx-text-fill: -ndq-primary; }
+.chip-role-controller { -fx-background-color: -ndq-sakura-soft; -fx-text-fill: -ndq-sakura-deep; }
+.chip-online { -fx-background-color: -ndq-success-soft; -fx-text-fill: -ndq-success-text; }
+.chip-offline { -fx-background-color: -ndq-error-soft; -fx-text-fill: -ndq-error-text; }
+.chip-camera-ok { -fx-background-color: -ndq-accent-soft; -fx-text-fill: -ndq-accent-text; }
+.chip-camera-warn { -fx-background-color: -ndq-warning-soft; -fx-text-fill: -ndq-warning-text; }
+.lobby-camera-card,
+.lobby-info-card {
+    -fx-background-color: -ndq-surface;
+    -fx-background-radius: 18px;
+    -fx-border-color: -ndq-border;
+    -fx-border-width: 2px;
+    -fx-border-radius: 18px;
+    -fx-padding: 13px;
+    -fx-effect: dropshadow(gaussian, rgba(36, 50, 58, 0.06), 12, 0, 0, 4);
+}
+.lobby-info-line {
+    -fx-font-size: 10px;
+    -fx-text-fill: -ndq-text-secondary;
+}
+.proctoring-note {
+    -fx-background-color: -ndq-warning-soft;
+    -fx-border-color: -ndq-warning-border;
+    -fx-border-width: 2px;
+    -fx-border-radius: 14px;
+    -fx-background-radius: 14px;
+    -fx-padding: 9px 11px;
+    -fx-text-fill: -ndq-warning-text;
+    -fx-font-size: 10px;
+    -fx-alignment: center-left;
+}
+.lobby-action-bar {
+    -fx-background-color: -ndq-surface;
+    -fx-background-radius: 18px;
+    -fx-border-color: -ndq-border;
+    -fx-border-width: 2px;
+    -fx-border-radius: 18px;
+    -fx-padding: 9px 13px;
+    -fx-effect: dropshadow(gaussian, rgba(36, 50, 58, 0.06), 12, 0, 0, 4);
+}
+.lobby-status {
+    -fx-alignment: center-left;
+    -fx-font-size: 11px;
+    -fx-min-height: 0;
 }
 
 .quiz-editor-split { -fx-background-color: transparent; -fx-padding: 0; }
@@ -483,9 +1376,10 @@
 
 .quiz-form {
     -fx-background-color: -ndq-surface;
-    -fx-background-radius: 16px;
+    -fx-background-radius: 18px;
     -fx-border-color: -ndq-border;
-    -fx-border-radius: 16px;
+    -fx-border-width: 2px;
+    -fx-border-radius: 18px;
     -fx-padding: 18px;
 }
 .editor-footer {
@@ -501,16 +1395,16 @@
    -------------------------------------------------------------------------- */
 .camera-preview-shell {
     -fx-border-color: -ndq-primary;
-    -fx-border-width: 2px;
-    -fx-background-radius: 16px;
-    -fx-border-radius: 16px;
+    -fx-border-width: 3px;
+    -fx-background-radius: 18px;
+    -fx-border-radius: 18px;
     -fx-padding: 6px;
 }
 .camera-grid { -fx-padding: 18px; -fx-background-color: transparent; }
 .camera-tile {
     -fx-background-color: -ndq-surface;
-    -fx-background-radius: 16px;
-    -fx-border-radius: 16px;
+    -fx-background-radius: 18px;
+    -fx-border-radius: 18px;
     -fx-border-width: 2px;
     -fx-border-color: -ndq-border;
     -fx-padding: 9px;
@@ -527,14 +1421,15 @@
    -------------------------------------------------------------------------- */
 .result-card {
     -fx-background-color: -ndq-surface;
-    -fx-background-radius: 20px;
+    -fx-background-radius: 24px;
     -fx-border-color: -ndq-border;
-    -fx-border-radius: 20px;
+    -fx-border-width: 2px;
+    -fx-border-radius: 24px;
     -fx-padding: 40px 56px;
-    -fx-effect: dropshadow(gaussian, rgba(23, 32, 51, 0.10), 22, 0, 0, 8);
+    -fx-effect: dropshadow(gaussian, rgba(190, 24, 93, 0.14), 26, 0, 0, 9);
 }
-.result-eyebrow { -fx-text-fill: -ndq-accent; -fx-font-weight: 800; }
-.result-title { -fx-font-size: 34px; -fx-font-weight: 800; -fx-text-fill: -ndq-text; }
+.result-eyebrow { -fx-text-fill: -ndq-sakura-deep; -fx-font-weight: 800; }
+.result-title { -fx-font-size: 36px; -fx-font-weight: 800; -fx-text-fill: -ndq-text; }
 .result-title.result-win { -fx-text-fill: -ndq-success; }
 .result-title.result-lose { -fx-text-fill: -ndq-error; }
 .result-title.result-draw { -fx-text-fill: -ndq-warning; }
@@ -551,12 +1446,13 @@
 .table-view {
     -fx-background-color: -ndq-surface;
     -fx-border-color: -ndq-border;
-    -fx-border-radius: 14px;
-    -fx-background-radius: 14px;
+    -fx-border-width: 2px;
+    -fx-border-radius: 16px;
+    -fx-background-radius: 16px;
 }
 .table-view .column-header-background {
-    -fx-background-color: -ndq-neutral-soft;
-    -fx-background-radius: 14px 14px 0 0;
+    -fx-background-color: -ndq-sakura-soft;
+    -fx-background-radius: 16px 16px 0 0;
 }
 .table-view .column-header { -fx-background-color: transparent; -fx-padding: 12px 8px; }
 .table-view .column-header .label {
@@ -569,36 +1465,37 @@
     -fx-text-fill: -ndq-text;
 }
 .table-row-cell:odd { -fx-background-color: -ndq-surface-alt; }
-.table-row-cell:hover { -fx-background-color: -ndq-primary-soft; }
+.table-row-cell:hover { -fx-background-color: -ndq-sakura-soft; }
 .table-row-cell:selected {
-    -fx-background-color: -ndq-primary-soft;
-    -fx-text-background-color: -ndq-primary-dark;
+    -fx-background-color: -ndq-sakura-soft;
+    -fx-text-background-color: -ndq-sakura-deep;
 }
 
 .list-view {
     -fx-background-color: -ndq-surface;
     -fx-border-color: -ndq-border;
-    -fx-border-radius: 12px;
-    -fx-background-radius: 12px;
+    -fx-border-width: 2px;
+    -fx-border-radius: 14px;
+    -fx-background-radius: 14px;
 }
 .list-cell { -fx-background-color: transparent; -fx-text-fill: -ndq-text; -fx-padding: 8px 10px; }
-.list-cell:filled:hover { -fx-background-color: -ndq-primary-soft; }
-.list-cell:filled:selected { -fx-background-color: -ndq-primary-soft; -fx-text-fill: -ndq-primary-dark; }
+.list-cell:filled:hover { -fx-background-color: -ndq-sakura-soft; }
+.list-cell:filled:selected { -fx-background-color: -ndq-sakura-soft; -fx-text-fill: -ndq-sakura-deep; }
 .list-view .placeholder .label { -fx-text-fill: -ndq-text-muted; -fx-font-style: italic; }
 
 .tab-pane .tab-header-area .tab-header-background { -fx-background-color: transparent; }
 .tab-pane .tab { -fx-background-color: transparent; -fx-padding: 8px 14px; }
 .tab-pane .tab:selected {
-    -fx-background-color: -ndq-primary-soft;
+    -fx-background-color: -ndq-sakura-soft;
     -fx-background-radius: 12px 12px 0 0;
 }
-.tab-pane .tab:selected .tab-label { -fx-text-fill: -ndq-primary; -fx-font-weight: 800; }
+.tab-pane .tab:selected .tab-label { -fx-text-fill: -ndq-sakura-deep; -fx-font-weight: 800; }
 .tab-pane .tab .tab-label { -fx-text-fill: -ndq-text-secondary; }
 
 .scroll-pane { -fx-background-color: transparent; -fx-border-color: transparent; }
 .scroll-pane > .viewport { -fx-background-color: transparent; }
-.scroll-bar .thumb { -fx-background-color: -ndq-neutral-border; -fx-background-radius: 999px; }
-.scroll-bar .thumb:hover { -fx-background-color: -ndq-text-muted; }
+.scroll-bar .thumb { -fx-background-color: -ndq-sakura-border; -fx-background-radius: 999px; }
+.scroll-bar .thumb:hover { -fx-background-color: -ndq-sakura; }
 
 /* --------------------------------------------------------------------------
    15. PROFILE & STAT CARDS
@@ -606,16 +1503,17 @@
 .profile-page { -fx-padding: 28px; }
 .profile-hero {
     -fx-background-color: -ndq-surface;
-    -fx-background-radius: 18px;
+    -fx-background-radius: 20px;
     -fx-border-color: -ndq-border;
-    -fx-border-radius: 18px;
+    -fx-border-width: 2px;
+    -fx-border-radius: 20px;
     -fx-padding: 22px 26px;
-    -fx-effect: dropshadow(gaussian, rgba(23, 32, 51, 0.06), 14, 0, 0, 4);
+    -fx-effect: dropshadow(gaussian, rgba(36, 50, 58, 0.07), 16, 0, 0, 5);
 }
-.profile-eyebrow { -fx-text-fill: -ndq-accent; -fx-font-size: 12px; -fx-font-weight: 800; }
-.profile-page-username { -fx-font-size: 26px; -fx-font-weight: 800; -fx-text-fill: -ndq-text; }
+.profile-eyebrow { -fx-text-fill: -ndq-sakura-deep; -fx-font-size: 12px; -fx-font-weight: 800; }
+.profile-page-username { -fx-font-size: 27px; -fx-font-weight: 800; -fx-text-fill: -ndq-text; }
 .profile-page-avatar {
-    -fx-background-color: linear-gradient(to bottom right, -ndq-primary, -ndq-accent);
+    -fx-background-color: -ndq-primary;
     -fx-background-radius: 999px;
     -fx-min-width: 72px; -fx-min-height: 72px;
     -fx-max-width: 72px; -fx-max-height: 72px;
@@ -625,23 +1523,25 @@
 .profile-stat-card,
 .stat-card {
     -fx-background-color: -ndq-surface;
-    -fx-background-radius: 16px;
+    -fx-background-radius: 18px;
     -fx-border-color: -ndq-border;
-    -fx-border-radius: 16px;
+    -fx-border-width: 2px;
+    -fx-border-radius: 18px;
     -fx-padding: 18px 16px;
     -fx-min-width: 165px;
-    -fx-effect: dropshadow(gaussian, rgba(23, 32, 51, 0.05), 12, 0, 0, 3);
+    -fx-effect: dropshadow(gaussian, rgba(36, 50, 58, 0.06), 14, 0, 0, 4);
 }
 .profile-stat-value,
-.stat-value { -fx-font-size: 28px; -fx-font-weight: 800; -fx-text-fill: -ndq-primary; }
+.stat-value { -fx-font-size: 29px; -fx-font-weight: 800; -fx-text-fill: -ndq-primary; }
 .accuracy-card {
     -fx-background-color: -ndq-surface;
-    -fx-background-radius: 16px;
+    -fx-background-radius: 18px;
     -fx-border-color: -ndq-border;
-    -fx-border-radius: 16px;
+    -fx-border-width: 2px;
+    -fx-border-radius: 18px;
     -fx-padding: 18px 22px;
 }
-.accuracy-value { -fx-font-size: 34px; -fx-font-weight: 800; -fx-text-fill: -ndq-accent; }
+.accuracy-value { -fx-font-size: 34px; -fx-font-weight: 800; -fx-text-fill: -ndq-accent-text; }
 .stat-caption { -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: -ndq-text-secondary; }
 .stat-win { -fx-text-fill: -ndq-success; }
 .stat-loss { -fx-text-fill: -ndq-error; }
@@ -657,19 +1557,20 @@
 .error-banner {
     -fx-background-color: -ndq-error-soft;
     -fx-border-color: -ndq-error-border;
-    -fx-border-radius: 12px;
-    -fx-background-radius: 12px;
+    -fx-border-radius: 14px;
+    -fx-background-radius: 14px;
     -fx-padding: 10px 14px;
     -fx-text-fill: -ndq-error-text;
     -fx-font-weight: bold;
 }
 .toast-banner {
-    -fx-background-color: -ndq-primary-soft;
-    -fx-border-color: -ndq-primary-border;
-    -fx-border-radius: 12px;
-    -fx-background-radius: 12px;
+    -fx-background-color: -ndq-sakura-soft;
+    -fx-border-color: -ndq-sakura-border;
+    -fx-border-radius: 14px;
+    -fx-background-radius: 14px;
     -fx-padding: 10px 14px;
-    -fx-text-fill: -ndq-primary-dark;
+    -fx-text-fill: -ndq-sakura-deep;
+    -fx-font-weight: bold;
 }
 .loading-state { -fx-text-fill: -ndq-text-secondary; -fx-font-style: italic; }
 .empty-state { -fx-text-fill: -ndq-text-muted; -fx-font-style: italic; }
@@ -678,28 +1579,28 @@
    17. ANIMATION COMPONENTS (skeleton, toast, rank)
    -------------------------------------------------------------------------- */
 .skeleton-line {
-    -fx-background-color: -ndq-border;
+    -fx-background-color: -ndq-sakura-soft;
     -fx-background-radius: 8px;
     -fx-min-height: 14px;
 }
 .skeleton-card {
     -fx-background-color: -ndq-surface;
-    -fx-background-radius: 20px;
+    -fx-background-radius: 22px;
     -fx-border-color: -ndq-border;
     -fx-border-width: 2px;
-    -fx-border-radius: 20px;
+    -fx-border-radius: 22px;
 }
 .toast-card {
     -fx-background-color: -ndq-surface;
-    -fx-background-radius: 14px;
+    -fx-background-radius: 16px;
     -fx-border-color: -ndq-border;
     -fx-border-width: 2px;
-    -fx-border-radius: 14px;
+    -fx-border-radius: 16px;
     -fx-padding: 12px 16px;
-    -fx-effect: dropshadow(gaussian, rgba(23, 32, 51, 0.16), 18, 0, 0, 6);
+    -fx-effect: dropshadow(gaussian, rgba(30, 27, 75, 0.18), 20, 0, 0, 7);
 }
 .rank-badge {
-    -fx-background-color: linear-gradient(to bottom right, -ndq-primary, -ndq-accent);
+    -fx-background-color: -ndq-primary;
     -fx-text-fill: white;
     -fx-font-weight: 800;
     -fx-background-radius: 999px;
@@ -709,17 +1610,18 @@
 /* --------------------------------------------------------------------------
    18. ACTION & WELCOME (legacy home sections kept in one style)
    -------------------------------------------------------------------------- */
-.welcome-title { -fx-font-size: 30px; -fx-font-weight: bold; -fx-text-fill: -ndq-text; }
+.welcome-title { -fx-font-size: 31px; -fx-font-weight: 800; -fx-text-fill: -ndq-text; }
 .welcome-subtitle { -fx-font-size: 15px; -fx-text-fill: -ndq-text-secondary; }
 .action-card {
-    -fx-background-color: linear-gradient(to right, -ndq-primary-soft, -ndq-accent-soft);
-    -fx-background-radius: 14px;
-    -fx-border-color: -ndq-primary-border;
-    -fx-border-radius: 14px;
+    -fx-background-color: -ndq-primary-soft;
+    -fx-background-radius: 18px;
+    -fx-border-color: -ndq-sakura-border;
+    -fx-border-width: 2px;
+    -fx-border-radius: 18px;
     -fx-padding: 22px 42px;
     -fx-min-width: 700px;
 }
-.action-title { -fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: -ndq-primary-dark; }
+.action-title { -fx-font-size: 21px; -fx-font-weight: 800; -fx-text-fill: -ndq-primary-dark; }
 .action-subtitle { -fx-text-fill: -ndq-text-secondary; }
 
 /* --------------------------------------------------------------------------
@@ -733,9 +1635,9 @@
 .app-header {
     -fx-background-color: -ndq-surface;
     -fx-border-color: transparent transparent -ndq-border transparent;
-    -fx-border-width: 0 0 1px 0;
+    -fx-border-width: 0 0 2px 0;
 }
-.header-page-title { -fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: -ndq-text; }
+.header-page-title { -fx-font-size: 21px; -fx-font-weight: 800; -fx-text-fill: -ndq-text; }
 
 /* --------------------------------------------------------------------------
    20. DIALOGS & TOOLTIPS
@@ -744,10 +1646,10 @@
     -fx-background-color: -ndq-surface;
     -fx-border-color: -ndq-border;
     -fx-border-width: 2px;
-    -fx-border-radius: 12px;
-    -fx-background-radius: 12px;
+    -fx-border-radius: 16px;
+    -fx-background-radius: 16px;
 }
-.dialog-pane .header-panel { -fx-background-color: -ndq-primary-soft; }
+.dialog-pane .header-panel { -fx-background-color: -ndq-sakura-soft; }
 .dialog-pane .header-panel .label {
     -fx-text-fill: -ndq-text;
     -fx-font-size: 18px;
@@ -756,7 +1658,204 @@
 .tooltip {
     -fx-background-color: -ndq-text;
     -fx-text-fill: white;
-    -fx-background-radius: 8px;
+    -fx-background-radius: 10px;
     -fx-padding: 6px 10px;
 }
 
+/* --------------------------------------------------------------------------
+   21. CALM STUDY OVERRIDES
+   Các màn hình dữ liệu và thi đấu dùng cùng một nhịp thị giác:
+   nền giấy, một màu nhận diện, một màu trạng thái. Không gradient/neon.
+   -------------------------------------------------------------------------- */
+.app-shell,
+.auth-page,
+.page-surface,
+.authenticated-shell,
+.authenticated-main,
+.authenticated-content,
+.gameplay-shell {
+    -fx-background-color: -ndq-bg;
+}
+
+.button,
+.primary-button,
+.large-button {
+    -fx-background-radius: 10px;
+    -fx-border-radius: 10px;
+    -fx-border-width: 0 0 2px 0;
+}
+.button:focused,
+.text-field:focused,
+.password-field:focused,
+.combo-box:focused,
+.choice-box:focused,
+.text-area:focused {
+    -fx-border-color: -ndq-primary;
+    -fx-effect: dropshadow(gaussian, rgba(49, 90, 99, 0.16), 8, 0, 0, 1);
+}
+.secondary-button {
+    -fx-text-fill: -ndq-primary;
+    -fx-border-color: -ndq-primary-border;
+    -fx-border-width: 1px;
+}
+.secondary-button:hover { -fx-background-color: -ndq-primary-soft; }
+
+.content-card,
+.data-card,
+.search-card,
+.quiz-action-card,
+.quiz-steps-bar,
+.question-card,
+.battle-hud,
+.lobby-header-card,
+.lobby-info-card,
+.lobby-camera-card,
+.profile-hero,
+.profile-stat-card,
+.stat-card {
+    -fx-background-radius: 12px;
+    -fx-border-radius: 12px;
+    -fx-border-width: 1px;
+    -fx-effect: dropshadow(gaussian, rgba(36, 50, 58, 0.08), 12, 0, 0, 3);
+}
+
+.shared-page-header,
+.gameplay-header,
+.app-sidebar {
+    -fx-background-color: -ndq-surface;
+}
+.header-accent {
+    -fx-background-color: -ndq-primary;
+    -fx-background-radius: 2px;
+}
+.sidebar-logo,
+.auth-brand-mark,
+.battle-brand-mark {
+    -fx-background-color: -ndq-primary;
+    -fx-effect: none;
+}
+.sidebar-brand-accent,
+.auth-brand-accent,
+.gameplay-eyebrow,
+.quiz-menu-eyebrow,
+.profile-eyebrow,
+.result-eyebrow {
+    -fx-text-fill: -ndq-primary;
+}
+.sidebar-button {
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+}
+.sidebar-button:hover,
+.sidebar-button.active {
+    -fx-background-color: -ndq-primary-soft;
+    -fx-text-fill: -ndq-primary;
+    -fx-border-color: transparent;
+}
+.sidebar-button:hover .nav-icon,
+.sidebar-button.active .nav-icon { -fx-stroke: -ndq-primary; }
+
+/* Đấu hạng: tập trung vào trạng thái tìm trận, không biến thành poster neon. */
+.matchmaking-page .search-card {
+    -fx-min-width: 480px;
+    -fx-padding: 30px 46px;
+}
+.matchmaking-page .search-spinner { -fx-progress-color: -ndq-primary; }
+.matchmaking-page .spinner-ring {
+    -fx-background-color: -ndq-primary-soft;
+    -fx-background-radius: 999px;
+    -fx-padding: 14px;
+}
+.matchmaking-page .search-title { -fx-text-fill: -ndq-primary-dark; }
+
+/* Phòng quiz: create/join là hai lựa chọn cùng cấp, không dùng pink/cyan đối chọi. */
+.quiz-room-page .quiz-action-card {
+    -fx-border-color: -ndq-border;
+    -fx-background-color: -ndq-surface;
+}
+.quiz-room-page .quiz-action-create,
+.quiz-room-page .quiz-action-join { -fx-border-color: -ndq-border; }
+.quiz-room-page .quiz-action-icon-create,
+.quiz-room-page .quiz-action-icon-join,
+.quiz-room-page .quiz-step-index {
+    -fx-background-color: -ndq-primary-soft;
+}
+.quiz-room-page .quiz-action-icon-create .nav-icon,
+.quiz-room-page .quiz-action-icon-join .nav-icon,
+.quiz-room-page .quiz-step-index {
+    -fx-text-fill: -ndq-primary;
+}
+.quiz-room-page .quiz-action-icon .nav-icon { -fx-stroke: -ndq-primary; }
+.quiz-room-page .pin-length-chip {
+    -fx-background-color: -ndq-accent-soft;
+    -fx-text-fill: -ndq-accent-text;
+}
+
+/* Quản lý bộ đề: công cụ làm việc, ít bo góc và không dùng màu trang trí. */
+.quiz-sets-page .list-view,
+.quiz-editor-page .list-view,
+.quiz-editor-page .split-pane {
+    -fx-border-color: -ndq-border;
+    -fx-border-width: 1px;
+}
+.quiz-sets-page .list-cell:filled:hover,
+.quiz-sets-page .list-cell:filled:selected,
+.quiz-editor-page .list-cell:filled:hover,
+.quiz-editor-page .list-cell:filled:selected {
+    -fx-background-color: -ndq-primary-soft;
+    -fx-text-fill: -ndq-primary-dark;
+}
+.quiz-sets-page .page-action-row { -fx-padding: 0 0 6px 0; }
+.quiz-editor-page .quiz-side-panel {
+    -fx-background-color: -ndq-surface;
+    -fx-padding: 16px;
+}
+.quiz-editor-page .quiz-form { -fx-padding: 18px 22px 24px 22px; }
+.quiz-editor-page .editor-footer {
+    -fx-background-color: -ndq-surface;
+    -fx-border-color: -ndq-border transparent transparent transparent;
+    -fx-border-width: 1px 0 0 0;
+    -fx-padding: 10px 18px;
+}
+
+/* Xếp hạng: bảng đọc nhanh, selection rõ nhưng không tô cả bảng màu hồng. */
+.leaderboard-page .table-view {
+    -fx-border-width: 1px;
+    -fx-background-radius: 10px;
+    -fx-border-radius: 10px;
+}
+.leaderboard-page .table-view .column-header-background {
+    -fx-background-color: -ndq-primary-soft;
+}
+.leaderboard-page .table-row-cell:hover,
+.leaderboard-page .table-row-cell:selected {
+    -fx-background-color: -ndq-accent-soft;
+}
+.leaderboard-page .table-row-cell:selected {
+    -fx-text-background-color: -ndq-primary-dark;
+}
+
+/* Battle/lobby dùng hierarchy, không dùng gradient cho HUD hoặc PIN. */
+.quiz-battle-page .answer-button {
+    -fx-border-color: -ndq-border;
+    -fx-border-width: 1px 1px 3px 1px;
+}
+.quiz-battle-page .answer-button:hover {
+    -fx-background-color: -ndq-primary-soft;
+    -fx-border-color: -ndq-primary-border;
+}
+.quiz-battle-page .question-eyebrow,
+.quiz-battle-page .live-chip {
+    -fx-background-color: -ndq-accent-soft;
+    -fx-text-fill: -ndq-accent-text;
+}
+.lobby-pin-panel {
+    -fx-background-color: -ndq-primary;
+    -fx-border-color: -ndq-primary-dark;
+}
+.lobby-pin-panel .lobby-pin-caption,
+.lobby-pin-panel .lobby-pin { -fx-text-fill: white; }
+.lobby-pin-panel .copy-button {
+    -fx-background-color: rgba(255,255,255,0.14);
+    -fx-border-color: rgba(255,255,255,0.45);
+}

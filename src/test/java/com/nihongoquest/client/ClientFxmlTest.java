@@ -4,13 +4,16 @@ import com.nihongoquest.client.layout.AuthenticatedRoute;
 import com.nihongoquest.client.layout.AuthenticatedShellController;
 import com.nihongoquest.server.dashboard.DashboardController;
 import com.nihongoquest.common.protocol.Payloads;
+import com.nihongoquest.ui.FontLoader;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import org.junit.jupiter.api.AfterAll;
@@ -134,6 +137,108 @@ class ClientFxmlTest {
         Platform.runLater(check);
         boolean[] result = check.get(10, TimeUnit.SECONDS);
         assertTrue(result[0]); assertTrue(result[1]); assertTrue(result[2]);
+    }
+
+    @Test
+    void headingResolvesToBundledNunito() throws Exception {
+        FutureTask<String> check = new FutureTask<>(() -> {
+            FontLoader.loadAll();
+            Label label = new Label("Sakura");
+            label.getStyleClass().add("title");
+            StackPane root = new StackPane(label);
+            Scene scene = new Scene(root, 320, 120);
+            scene.getStylesheets().add(ClientFxmlTest.class.getResource(
+                    "/client/shared/style.css").toExternalForm());
+            root.applyCss();
+            root.layout();
+            return label.getFont().getFamily() + "|" + label.getFont().getStyle();
+        });
+        Platform.runLater(check);
+        String font = check.get(10, TimeUnit.SECONDS);
+        assertTrue(font.startsWith("Nunito"), "Heading phải dùng Nunito: " + font);
+    }
+
+    @Test
+    void shellMarksHomeActiveAndKeepsSidebarVisible() throws Exception {
+        FutureTask<boolean[]> check = new FutureTask<>(() -> {
+            FXMLLoader loader = new FXMLLoader(ClientFxmlTest.class.getResource(
+                    "/client/layout/authenticated-shell.fxml"));
+            Parent root = loader.load();
+            AuthenticatedShellController controller = loader.getController();
+            Button homeButton = (Button) root.lookup("#homeButton");
+            VBox sidebar = (VBox) root.lookup("#sidebar");
+            assertNotNull(homeButton, "Shell phải có nút Trang chủ");
+
+            controller.showContent(new Pane(), "Trang chủ", "",
+                    AuthenticatedRoute.HOME, true);
+            return new boolean[]{
+                    homeButton.getStyleClass().contains("active"),
+                    sidebar.isVisible() && sidebar.isManaged()};
+        });
+        Platform.runLater(check);
+
+        boolean[] result = check.get(10, TimeUnit.SECONDS);
+        assertTrue(result[0]);
+        assertTrue(result[1]);
+    }
+
+    @Test
+    void phaseTwoScreensRenderSakuraBlocks() throws Exception {
+        FutureTask<boolean[]> check = new FutureTask<>(() -> {
+            Parent login = loadStyled("/client/auth/login.fxml");
+            boolean loginOk = login.lookup(".auth-brand-panel") != null
+                    && login.lookup(".auth-scroll") != null
+                    && login.lookup("#serverConfigPane") != null
+                    && login.lookup(".connection-status-pill") != null;
+
+            Parent home = loadStyled("/client/home/home.fxml");
+            boolean homeOk = home.lookup(".home-hero-card") != null
+                    && home.lookupAll(".home-mode-card").size() == 3
+                    && home.lookupAll(".home-stat").size() == 3;
+
+            Parent menu = loadStyled("/client/quiz/quiz-room-menu.fxml");
+            boolean menuOk = menu.lookupAll(".quiz-action-card").size() == 2
+                    && menu.lookup(".quiz-steps-bar") != null
+                    && menu.lookup(".quiz-step-divider") != null
+                    && menu.lookup(".pin-field") != null;
+
+            Parent lobby = loadStyled("/client/quiz/quiz-lobby.fxml");
+            boolean lobbyOk = lobby.lookup(".lobby-player-list") != null
+                    && lobby.lookup("#cameraPanel") != null
+                    && lobby.lookup(".lobby-pin-panel") != null
+                    && lobby.lookup(".lobby-action-bar") != null;
+
+            Parent battle = loadStyled("/client/quiz/quiz-battle.fxml");
+            boolean battleOk = battle.lookup(".battle-hud") != null
+                    && battle.lookup(".question-card") != null
+                    && battle.lookup(".battle-side-panel") != null
+                    && battle.lookupAll(".answer-button").size() == 4
+                    && battle.lookupAll(".answer-letter").size() == 4;
+            return new boolean[]{loginOk, homeOk, menuOk, lobbyOk, battleOk};
+        });
+        Platform.runLater(check);
+
+        boolean[] result = check.get(10, TimeUnit.SECONDS);
+        assertTrue(result[0], "Login thiếu khối brand/cấu hình server");
+        assertTrue(result[1], "Trang chủ thiếu hero hoặc 3 mode card");
+        assertTrue(result[2], "Quiz Room thiếu action card/bước/PIN field");
+        assertTrue(result[3], "Lobby thiếu player list/camera/action bar");
+        assertTrue(result[4], "Battle thiếu HUD/question/4 đáp án");
+    }
+
+    private static Parent loadStyled(String resource) {
+        try {
+            FXMLLoader loader = new FXMLLoader(ClientFxmlTest.class.getResource(resource));
+            Parent root = loader.load();
+            Scene scene = new Scene(root, 1180, 720);
+            scene.getStylesheets().add(ClientFxmlTest.class.getResource(
+                    "/client/shared/style.css").toExternalForm());
+            root.applyCss();
+            root.layout();
+            return root;
+        } catch (Exception e) {
+            throw new IllegalStateException("Không load được " + resource, e);
+        }
     }
 
     private void loadScreen(String resource, String stylesheet) throws Exception {

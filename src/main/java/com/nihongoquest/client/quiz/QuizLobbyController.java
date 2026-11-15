@@ -6,10 +6,13 @@ import com.nihongoquest.client.network.GameClient;
 import com.nihongoquest.client.proctor.CapturedFrame;
 import com.nihongoquest.common.protocol.Message;
 import com.nihongoquest.common.protocol.Payloads;
+import com.nihongoquest.ui.Icons;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
@@ -18,7 +21,17 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -39,6 +52,8 @@ public class QuizLobbyController implements NavigationGuard {
     @FXML private Button retryCameraButton;
     @FXML private Label proctoringLabel;
     @FXML private ImageView cameraPreview;
+    @FXML private VBox cameraPanel;
+    @FXML private Button copyPinButton;
 
     private ClientApp app;
     private GameClient gameClient;
@@ -53,17 +68,8 @@ public class QuizLobbyController implements NavigationGuard {
         Label empty = new Label("Đang chờ người chơi tham gia bằng mã PIN...");
         empty.getStyleClass().add("empty-state");
         playerList.setPlaceholder(empty);
-        playerList.setCellFactory(ignored -> new ListCell<>() {
-            @Override
-            protected void updateItem(Payloads.QuizLobbyPlayer item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) setText(null);
-                else setText((item.host() ? "★ " : "") + item.username()
-                        + (item.playing() ? " • Người chơi" : " • Điều khiển")
-                        + (item.connected() ? " • Online" : " • Mất kết nối")
-                        + cameraText(item));
-            }
-        });
+        playerList.setCellFactory(ignored -> new PlayerCell());
+        copyPinButton.setGraphic(Icons.icon(Icons.COPY));
     }
 
     public void setSession(ClientApp app, GameClient gameClient, Payloads.QuizLobbyData lobby) {
@@ -102,12 +108,26 @@ public class QuizLobbyController implements NavigationGuard {
         if (host) gameClient.cancelQuizRoom();
         else gameClient.leaveQuizRoom();
         app.getProctoringCoordinator().stopRoom();
-        app.showMatchmaking();
+        app.showHome();
     }
 
     @FXML
     private void onRetryCamera() {
         app.getProctoringCoordinator().requestCameraConsent(true);
+    }
+
+    @FXML
+    private void onCopyPin() {
+        if (currentLobby == null) {
+            return;
+        }
+        ClipboardContent content = new ClipboardContent();
+        content.putString(currentLobby.pin());
+        Clipboard.getSystemClipboard().setContent(content);
+        copyPinButton.setText("Đã sao chép");
+        PauseTransition reset = new PauseTransition(Duration.seconds(1.5));
+        reset.setOnFinished(ignored -> copyPinButton.setText("Sao chép PIN"));
+        reset.play();
     }
 
     private void handleMessage(Message message) {
@@ -117,7 +137,7 @@ public class QuizLobbyController implements NavigationGuard {
             case QUIZ_ROOM_START -> app.showQuizBattle(Payloads.fromJson(
                     message.getPayload(), Payloads.QuizRoomStarted.class));
             case QUIZ_QUESTION, QUIZ_LEADERBOARD -> gameClient.redispatch(message);
-            case QUIZ_ROOM_CANCEL -> { app.getProctoringCoordinator().stopRoom(); app.showMatchmaking(); }
+            case QUIZ_ROOM_CANCEL -> { app.getProctoringCoordinator().stopRoom(); app.showHome(); }
             case QUIZ_ERROR -> {
                 startRequestPending = false;
                 if (currentLobby != null) {
@@ -161,6 +181,8 @@ public class QuizLobbyController implements NavigationGuard {
 
     private void configureCameraPreview(Payloads.QuizLobbyData lobby) {
         boolean showLocalCamera = lobby.proctoringEnabled() && !lobby.currentUserHost();
+        cameraPanel.setVisible(showLocalCamera);
+        cameraPanel.setManaged(showLocalCamera);
         cameraPreview.setVisible(showLocalCamera);
         cameraPreview.setManaged(showLocalCamera);
         if (!showLocalCamera) {
@@ -191,10 +213,10 @@ public class QuizLobbyController implements NavigationGuard {
         if (latestPreview.get() != null) schedulePreviewPaint();
     }
 
-    private String cameraText(Payloads.QuizLobbyPlayer item) {
+    private String cameraStatusText(Payloads.QuizLobbyPlayer item) {
         if (item.cameraStatus() == null || item.cameraStatus() == Payloads.CameraStatus.NOT_REQUIRED
                 || item.cameraStatus() == Payloads.CameraStatus.NOT_APPLICABLE) return "";
-        return " • Camera: " + switch (item.cameraStatus()) {
+        return "Camera: " + switch (item.cameraStatus()) {
             case READY -> "Sẵn sàng";
             case INITIALIZING -> "Đang mở";
             case DENIED -> "Từ chối";
@@ -205,6 +227,88 @@ public class QuizLobbyController implements NavigationGuard {
             case STOPPED -> "Đã dừng";
             default -> item.cameraStatus().name();
         };
+    }
+
+    private static Label chip(String text) {
+        Label label = new Label(text);
+        label.getStyleClass().add("player-chip");
+        return label;
+    }
+
+    private static void setChipStyle(Label label, String styleClass) {
+        label.getStyleClass().removeAll("chip-role-player", "chip-role-controller",
+                "chip-online", "chip-offline", "chip-camera-ok", "chip-camera-warn");
+        label.getStyleClass().add(styleClass);
+    }
+
+    private static String initial(String username) {
+        return username == null || username.isBlank()
+                ? "?" : username.substring(0, 1).toUpperCase(Locale.ROOT);
+    }
+
+    /** Render mỗi thành viên thành player card có avatar, vai trò và chip camera. */
+    private final class PlayerCell extends ListCell<Payloads.QuizLobbyPlayer> {
+        private final Label avatarLabel = new Label();
+        private final StackPane avatar = new StackPane(avatarLabel);
+        private final Label nameLabel = new Label();
+        private final Label hostChip = chip("HOST");
+        private final Label roleChip = chip("");
+        private final Label onlineChip = chip("");
+        private final Label cameraChip = chip("");
+        private final FlowPane chips = new FlowPane(6, 4, hostChip, roleChip,
+                onlineChip, cameraChip);
+        private final VBox identity = new VBox(4, nameLabel, chips);
+        private final HBox layout = new HBox(12, avatar, identity);
+
+        private PlayerCell() {
+            getStyleClass().add("lobby-player-cell");
+            avatar.getStyleClass().add("player-avatar");
+            avatarLabel.getStyleClass().add("player-avatar-text");
+            avatar.setMinSize(42, 42);
+            avatar.setPrefSize(42, 42);
+            avatar.setMaxSize(42, 42);
+            nameLabel.getStyleClass().add("lobby-player-name");
+            layout.getStyleClass().add("lobby-player-card");
+            layout.prefWidthProperty().bind(playerList.widthProperty().subtract(26));
+            chips.setAlignment(Pos.CENTER_LEFT);
+            chips.setMaxWidth(Double.MAX_VALUE);
+            layout.setAlignment(Pos.CENTER_LEFT);
+            HBox.setHgrow(identity, Priority.ALWAYS);
+        }
+
+        @Override
+        protected void updateItem(Payloads.QuizLobbyPlayer item, boolean empty) {
+            super.updateItem(item, empty);
+            getStyleClass().removeAll("player-cell-host", "player-cell-offline");
+            if (empty || item == null) {
+                setText(null);
+                setGraphic(null);
+                return;
+            }
+            setText(null);
+            if (item.host()) getStyleClass().add("player-cell-host");
+            if (!item.connected()) getStyleClass().add("player-cell-offline");
+            avatar.getStyleClass().removeAll("player-avatar-host", "player-avatar-player");
+            avatar.getStyleClass().add(item.host() ? "player-avatar-host" : "player-avatar-player");
+            avatarLabel.setText(initial(item.username()));
+            nameLabel.setText(item.username());
+            hostChip.setVisible(item.host());
+            hostChip.setManaged(item.host());
+            roleChip.setText(item.playing() ? "Người chơi" : "Điều khiển");
+            setChipStyle(roleChip, item.playing() ? "chip-role-player" : "chip-role-controller");
+            onlineChip.setText(item.connected() ? "Trực tuyến" : "Mất kết nối");
+            setChipStyle(onlineChip, item.connected() ? "chip-online" : "chip-offline");
+            String camera = cameraStatusText(item);
+            boolean showCamera = !camera.isEmpty();
+            cameraChip.setVisible(showCamera);
+            cameraChip.setManaged(showCamera);
+            if (showCamera) {
+                cameraChip.setText(camera);
+                setChipStyle(cameraChip, item.cameraStatus() == Payloads.CameraStatus.READY
+                        ? "chip-camera-ok" : "chip-camera-warn");
+            }
+            setGraphic(layout);
+        }
     }
 
     private void showError(String text) {

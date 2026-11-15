@@ -9,6 +9,7 @@ import com.nihongoquest.client.proctor.VideoCanvas;
 import com.nihongoquest.common.media.VisionMetadata;
 import com.nihongoquest.common.protocol.Message;
 import com.nihongoquest.common.protocol.Payloads;
+import com.nihongoquest.ui.Icons;
 import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
@@ -16,12 +17,18 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
 import java.util.List;
@@ -45,6 +52,8 @@ public class QuizBattleController {
     @FXML private Button leaveButton;
     @FXML private ListView<Payloads.QuizLeaderboardEntry> leaderboardList;
     @FXML private StackPane cameraPreviewHolder;
+    @FXML private VBox cameraSection;
+    @FXML private Label cameraCaption;
 
     private ClientApp app;
     private GameClient gameClient;
@@ -62,17 +71,22 @@ public class QuizBattleController {
     @FXML
     private void initialize() {
         answerButtons = List.of(answerAButton, answerBButton, answerCButton, answerDButton);
-        leaderboardList.setCellFactory(ignored -> new ListCell<>() {
-            @Override
-            protected void updateItem(Payloads.QuizLeaderboardEntry item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) setText(null);
-                else setText("#" + item.rank() + "  " + item.username()
-                        + "  •  " + item.score() + " điểm  •  "
-                        + item.correctAnswers() + " đúng"
-                        + (item.connected() ? "" : "  •  Offline"));
-            }
-        });
+        decorateAnswerButtons();
+        cameraCaption.setGraphic(Icons.icon(Icons.CAMERA));
+        leaderboardList.setCellFactory(ignored -> new LeaderboardCell());
+    }
+
+    private void decorateAnswerButtons() {
+        char[] letters = {'A', 'B', 'C', 'D'};
+        for (int index = 0; index < answerButtons.size(); index++) {
+            Label letter = new Label(String.valueOf(letters[index]));
+            letter.getStyleClass().add("answer-letter");
+            Button button = answerButtons.get(index);
+            button.setGraphic(letter);
+            button.setContentDisplay(ContentDisplay.LEFT);
+            button.setAlignment(Pos.CENTER_LEFT);
+            button.setGraphicTextGap(12);
+        }
     }
 
     public void setSession(ClientApp app, GameClient gameClient, Player player,
@@ -94,17 +108,19 @@ public class QuizBattleController {
                 }
             }));
             if (!room.host()) {
-                VideoCanvas preview = new VideoCanvas(320, 180);
+                VideoCanvas preview = new VideoCanvas(298, 168);
                 cameraPreviewHolder.getChildren().setAll(preview);
                 cameraPreviewHolder.setVisible(true);
                 cameraPreviewHolder.setManaged(true);
+                cameraSection.setVisible(true);
+                cameraSection.setManaged(true);
                 app.getProctoringCoordinator().setPreviewListener(frame -> preview.setFrame(frame.image()));
                 app.getProctoringCoordinator().setVisionListener(preview::setVision);
                 preview.setHud("Camera của bạn • 640×480 / 15 FPS");
             }
         }
         titleLabel.setText(room.title());
-        pinLabel.setText("PIN " + room.pin());
+        pinLabel.setText(room.pin());
         roomTimeLabel.setText(formatSeconds(room.durationSeconds()));
         scoreLabel.setText("0 điểm");
         leaveButton.setText(room.host() ? "Hủy phòng" : "Rời phòng");
@@ -143,13 +159,13 @@ public class QuizBattleController {
     @FXML
     private void onLeave() {
         if (finished) {
-            app.showMatchmaking();
+            app.showHome();
             return;
         }
         if (room.host()) gameClient.cancelQuizRoom();
         else gameClient.leaveQuizRoom();
         app.getProctoringCoordinator().stopRoom();
-        app.showMatchmaking();
+        app.showHome();
     }
 
     private void handleMessage(Message message) {
@@ -162,7 +178,7 @@ public class QuizBattleController {
                     message.getPayload(), Payloads.QuizLeaderboardData.class));
             case QUIZ_ROOM_FINISHED -> showFinished(Payloads.fromJson(
                     message.getPayload(), Payloads.QuizLeaderboardData.class));
-            case QUIZ_ROOM_CANCEL -> { app.getProctoringCoordinator().stopRoom(); app.showMatchmaking(); }
+            case QUIZ_ROOM_CANCEL -> { app.getProctoringCoordinator().stopRoom(); app.showHome(); }
             case QUIZ_ERROR -> showError(QuizRoomUi.errorText(message.payloadText()));
             default -> { }
         }
@@ -234,6 +250,7 @@ public class QuizBattleController {
         roomDurationMillis = roomSeconds * 1_000L;
         questionProgress.setProgress(1);
         questionTimeLabel.setText(questionSeconds + "s");
+        questionTimeLabel.getStyleClass().remove("countdown-critical");
         roomTimeLabel.setText(formatSeconds(roomSeconds));
         countdown = new Timeline(new KeyFrame(Duration.millis(100), ignored -> updateCountdown()));
         countdown.setCycleCount(Timeline.INDEFINITE);
@@ -250,6 +267,11 @@ public class QuizBattleController {
         questionTimeLabel.setText(secondsLeft + "s");
         roomTimeLabel.setText(formatSeconds((int) ((roomRemaining + 999) / 1_000)));
         // Countdown gấp: chỉ pulse ở mốc giây thay đổi và khi còn <= 5 giây.
+        if (secondsLeft <= 5 && !questionTimeLabel.getStyleClass().contains("countdown-critical")) {
+            questionTimeLabel.getStyleClass().add("countdown-critical");
+        } else if (secondsLeft > 5) {
+            questionTimeLabel.getStyleClass().remove("countdown-critical");
+        }
         if (secondsLeft <= 5 && secondsLeft != lastCountdownSecond) {
             lastCountdownSecond = secondsLeft;
             UiMotion.countdown(questionTimeLabel);
@@ -282,6 +304,54 @@ public class QuizBattleController {
         if (countdown != null) {
             countdown.stop();
             countdown = null;
+        }
+    }
+
+    /** Row bảng xếp hạng: hạng, tên, số câu đúng và điểm; highlight chính người chơi. */
+    private final class LeaderboardCell extends ListCell<Payloads.QuizLeaderboardEntry> {
+        private final Label rankLabel = new Label();
+        private final Label nameLabel = new Label();
+        private final Label detailLabel = new Label();
+        private final Label scoreLabel = new Label();
+        private final Region spacer = new Region();
+        private final VBox identity = new VBox(2, nameLabel, detailLabel);
+        private final HBox layout = new HBox(10, rankLabel, identity, spacer, scoreLabel);
+
+        private LeaderboardCell() {
+            layout.getStyleClass().add("leaderboard-row");
+            layout.prefWidthProperty().bind(leaderboardList.widthProperty().subtract(22));
+            rankLabel.getStyleClass().add("leaderboard-rank");
+            nameLabel.getStyleClass().add("leaderboard-name");
+            detailLabel.getStyleClass().add("leaderboard-detail");
+            scoreLabel.getStyleClass().add("leaderboard-score");
+            layout.setAlignment(Pos.CENTER_LEFT);
+            HBox.setHgrow(identity, Priority.ALWAYS);
+            HBox.setHgrow(spacer, Priority.ALWAYS);
+        }
+
+        @Override
+        protected void updateItem(Payloads.QuizLeaderboardEntry item, boolean empty) {
+            super.updateItem(item, empty);
+            layout.getStyleClass().remove("leaderboard-me");
+            rankLabel.getStyleClass().remove("leaderboard-rank-top");
+            if (empty || item == null) {
+                setText(null);
+                setGraphic(null);
+                return;
+            }
+            setText(null);
+            rankLabel.setText("#" + item.rank());
+            if (item.rank() <= 3) {
+                rankLabel.getStyleClass().add("leaderboard-rank-top");
+            }
+            nameLabel.setText(item.username());
+            detailLabel.setText(item.correctAnswers() + " câu đúng"
+                    + (item.connected() ? "" : " • Offline"));
+            scoreLabel.setText(item.score() + " đ");
+            if (player != null && item.userId() == player.id()) {
+                layout.getStyleClass().add("leaderboard-me");
+            }
+            setGraphic(layout);
         }
     }
 

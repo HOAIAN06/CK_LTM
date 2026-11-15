@@ -2,6 +2,7 @@ package com.nihongoquest.client.layout;
 
 import com.nihongoquest.client.ClientApp;
 import com.nihongoquest.client.ui.UiMotion;
+import com.nihongoquest.ui.Icons;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -22,6 +23,7 @@ public class AuthenticatedShellController {
     @FXML private StackPane contentHost;
     @FXML private Label pageTitleLabel;
     @FXML private Label pageSubtitleLabel;
+    @FXML private Button homeButton;
     @FXML private Button matchmakingButton;
     @FXML private Button quizRoomButton;
     @FXML private Button quizSetsButton;
@@ -29,6 +31,7 @@ public class AuthenticatedShellController {
     @FXML private Button historyButton;
     @FXML private Button friendsButton;
     @FXML private Button profileButton;
+    @FXML private Button logoutButton;
 
     private final Map<AuthenticatedRoute, Button> routeButtons =
             new EnumMap<>(AuthenticatedRoute.class);
@@ -36,6 +39,8 @@ public class AuthenticatedShellController {
 
     @FXML
     private void initialize() {
+        applyNavigationIcons();
+        routeButtons.put(AuthenticatedRoute.HOME, homeButton);
         routeButtons.put(AuthenticatedRoute.MATCHMAKING, matchmakingButton);
         routeButtons.put(AuthenticatedRoute.QUIZ_ROOM, quizRoomButton);
         routeButtons.put(AuthenticatedRoute.QUIZ_SETS, quizSetsButton);
@@ -43,6 +48,18 @@ public class AuthenticatedShellController {
         routeButtons.put(AuthenticatedRoute.HISTORY, historyButton);
         routeButtons.put(AuthenticatedRoute.FRIENDS, friendsButton);
         routeButtons.put(AuthenticatedRoute.PROFILE, profileButton);
+    }
+
+    private void applyNavigationIcons() {
+        homeButton.setGraphic(Icons.icon(Icons.HOME));
+        matchmakingButton.setGraphic(Icons.icon(Icons.SWORDS));
+        quizRoomButton.setGraphic(Icons.icon(Icons.GAMEPAD));
+        quizSetsButton.setGraphic(Icons.icon(Icons.LAYERS));
+        leaderboardButton.setGraphic(Icons.icon(Icons.TROPHY));
+        historyButton.setGraphic(Icons.icon(Icons.CLOCK));
+        friendsButton.setGraphic(Icons.icon(Icons.USERS));
+        profileButton.setGraphic(Icons.icon(Icons.USER));
+        logoutButton.setGraphic(Icons.icon(Icons.LOGOUT));
     }
 
     public void setApp(ClientApp app) {
@@ -85,6 +102,7 @@ public class AuthenticatedShellController {
         }
     }
 
+    @FXML private void onHome() { app.navigateFromSidebar(AuthenticatedRoute.HOME); }
     @FXML private void onMatchmaking() { app.navigateFromSidebar(AuthenticatedRoute.MATCHMAKING); }
     @FXML private void onQuizRoom() { app.navigateFromSidebar(AuthenticatedRoute.QUIZ_ROOM); }
     @FXML private void onQuizSets() { app.navigateFromSidebar(AuthenticatedRoute.QUIZ_SETS); }

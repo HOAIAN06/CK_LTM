@@ -1,35 +1,82 @@
 package com.nihongoquest.client.home;
 
 import com.nihongoquest.client.ClientApp;
-import com.nihongoquest.client.network.GameClient;
-import javafx.event.ActionEvent;
+import com.nihongoquest.client.profile.Player;
+import com.nihongoquest.ui.Icons;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.layout.StackPane;
+
+import java.util.Locale;
 
 /**
- * HomeController xử lý CTA duy nhất trên màn hình chính.
- * Không tạo Socket trực tiếp trong Controller.
+ * Trang chủ sau đăng nhập: tóm tắt tiến độ thật của người chơi và mở các chế độ chơi.
+ * Không tạo Socket, không tự tính điểm và không gọi database.
  */
 public class HomeController {
     @FXML
-    private Button findMatchButton;
+    private Label greetingLabel;
+    @FXML
+    private Label accuracyValueLabel;
+    @FXML
+    private Label winsValueLabel;
+    @FXML
+    private Label scoreValueLabel;
+    @FXML
+    private Label homeHintLabel;
+    @FXML
+    private StackPane matchModeIcon;
+    @FXML
+    private StackPane quizModeIcon;
+    @FXML
+    private StackPane setsModeIcon;
 
-    private GameClient gameClient;
     private ClientApp app;
 
-    public void setSession(ClientApp app, GameClient gameClient) {
-        this.app = app;
-        this.gameClient = gameClient;
-        gameClient.setMessageHandler(message -> { });
+    @FXML
+    private void initialize() {
+        matchModeIcon.getChildren().setAll(Icons.icon(Icons.SWORDS));
+        quizModeIcon.getChildren().setAll(Icons.icon(Icons.GAMEPAD));
+        setsModeIcon.getChildren().setAll(Icons.icon(Icons.LAYERS));
     }
 
-    /**
-     * Xử lý khi người dùng bấm "TÌM TRẬN".
-     */
+    public void setSession(ClientApp app, Player player) {
+        this.app = app;
+        renderProgress(player);
+    }
+
+    private void renderProgress(Player player) {
+        greetingLabel.setText("XIN CHÀO, " + player.username().toUpperCase(Locale.ROOT));
+        int answered = player.questionsAnswered();
+        int accuracy = answered == 0
+                ? 0
+                : (int) Math.round(player.correctAnswers() * 100.0 / answered);
+        accuracyValueLabel.setText(accuracy + "%");
+        winsValueLabel.setText(Integer.toString(player.wins()));
+        scoreValueLabel.setText(Integer.toString(player.totalScore()));
+        homeHintLabel.setText(answered == 0
+                ? "Chưa có câu trả lời nào. Hãy bắt đầu bằng một trận 1v1!"
+                : "Bạn đã trả lời " + answered + " câu và đúng "
+                        + player.correctAnswers() + " câu. Giữ nhịp nhé!");
+    }
+
     @FXML
-    private void onFindMatch(ActionEvent event) {
-        findMatchButton.setDisable(true);
+    private void onFindMatch() {
         app.showMatchmaking();
     }
 
+    @FXML
+    private void onQuizRoom() {
+        app.showQuizRoomMenu();
+    }
+
+    @FXML
+    private void onQuizSets() {
+        app.showQuizSets();
+    }
+
+    @FXML
+    private void onHistory() {
+        app.showMatchHistory();
+    }
 }

@@ -16,6 +16,9 @@ src/main/resources/db.properties
 .kilo/
 repomix-output.md
 
+### UI/UX Pro Max (cài local, không commit file sinh ra) ###
+.opencode/skills/
+
 ### Eclipse ###
 .apt_generated
 .classpath

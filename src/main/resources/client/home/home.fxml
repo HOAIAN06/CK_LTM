@@ -2,23 +2,131 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.shape.Circle?>
 
-<StackPane styleClass="home-page"
-           xmlns="http://javafx.com/javafx/21"
-           xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="com.nihongoquest.client.home.HomeController">
-    <Pane mouseTransparent="true">
-        <Circle radius="120" layoutX="730" layoutY="120" styleClass="home-orb,home-orb-primary"/>
-        <Circle radius="70" layoutX="650" layoutY="470" styleClass="home-orb,home-orb-secondary"/>
-    </Pane>
-    <VBox alignment="CENTER_LEFT" spacing="18" maxWidth="760" styleClass="home-hero">
-        <Label text="NIHONGOQUEST" styleClass="home-eyebrow"/>
-        <Label text="Sẵn sàng chinh phục tiếng Nhật?"
-               wrapText="true" styleClass="home-hero-title"/>
-        <Label text="Thử sức trong một trận đấu thời gian thực và nâng cao phản xạ tiếng Nhật qua từng câu hỏi."
-               wrapText="true" maxWidth="560" styleClass="home-hero-subtitle"/>
-        <Button fx:id="findMatchButton" text="TÌM TRẬN 1V1"
-                onAction="#onFindMatch" styleClass="primary-button,home-cta-button"/>
+<ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
+            styleClass="root,home-scroll"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.nihongoquest.client.home.HomeController">
+    <VBox spacing="18" styleClass="home-dashboard">
+        <HBox alignment="CENTER_LEFT" spacing="24" styleClass="home-hero-card">
+            <VBox HBox.hgrow="ALWAYS" spacing="10" maxWidth="580">
+                <Label fx:id="greetingLabel" text="XIN CHÀO, BẠN" styleClass="home-greeting"/>
+                <Label text="Hôm nay bạn muốn chinh phục điều gì?"
+                       wrapText="true" styleClass="home-hero-title"/>
+                <Label text="Một trận đấu nhanh, một phòng Quiz cùng bạn bè hoặc một bộ đề mới. Mỗi lựa chọn đều giúp bạn tiến gần hơn tới mục tiêu."
+                       wrapText="true" maxWidth="540" styleClass="home-hero-copy"/>
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Button text="TÌM TRẬN 1V1"
+                            onAction="#onFindMatch" styleClass="home-hero-primary"/>
+                    <Button text="VÀO PHÒNG QUIZ" onAction="#onQuizRoom"
+                            styleClass="home-hero-secondary"/>
+                </HBox>
+            </VBox>
+
+            <VBox spacing="8" prefWidth="286" maxWidth="286" styleClass="home-progress-card">
+                <HBox alignment="CENTER_LEFT" spacing="6">
+                    <Label text="TIẾN ĐỘ CỦA BẠN" styleClass="home-stat-eyebrow"
+                           HBox.hgrow="ALWAYS"/>
+                    <Label text="SẴN SÀNG" styleClass="home-ready-chip"/>
+                </HBox>
+                <HBox spacing="8">
+                    <VBox HBox.hgrow="ALWAYS" styleClass="home-stat">
+                        <Label fx:id="accuracyValueLabel" text="0%"
+                               styleClass="home-stat-value"/>
+                        <Label text="Chính xác" styleClass="home-stat-caption"/>
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" styleClass="home-stat">
+                        <Label fx:id="winsValueLabel" text="0"
+                               styleClass="home-stat-value"/>
+                        <Label text="Trận thắng" styleClass="home-stat-caption"/>
+                    </VBox>
+                    <VBox HBox.hgrow="ALWAYS" styleClass="home-stat">
+                        <Label fx:id="scoreValueLabel" text="0"
+                               styleClass="home-stat-value"/>
+                        <Label text="Tổng điểm" styleClass="home-stat-caption"/>
+                    </VBox>
+                </HBox>
+                <Label fx:id="homeHintLabel" wrapText="true" styleClass="home-stat-hint"
+                       text="Trận đấu đầu tiên đang chờ bạn."/>
+            </VBox>
+        </HBox>
+
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <Label text="CHỌN CHẾ ĐỘ CHƠI" styleClass="home-section-title"
+                   HBox.hgrow="ALWAYS"/>
+            <Label text="3 cách để luyện tập mỗi ngày" styleClass="helper-text"/>
+        </HBox>
+
+        <GridPane hgap="16">
+            <columnConstraints>
+                <ColumnConstraints percentWidth="33.333" hgrow="ALWAYS"/>
+                <ColumnConstraints percentWidth="33.333" hgrow="ALWAYS"/>
+                <ColumnConstraints percentWidth="33.334" hgrow="ALWAYS"/>
+            </columnConstraints>
+
+            <VBox spacing="9" styleClass="home-mode-card,home-mode-match"
+                  GridPane.columnIndex="0">
+                <StackPane fx:id="matchModeIcon" styleClass="home-mode-icon,home-mode-icon-match"/>
+                <Label text="Đấu hạng 1v1" styleClass="home-mode-title"/>
+                <Label text="Tìm đối thủ và trả lời nhanh trong 3 hoặc 5 phút."
+                       wrapText="true" styleClass="home-mode-copy"/>
+                <Region VBox.vgrow="ALWAYS"/>
+                <Button text="TÌM TRẬN" onAction="#onFindMatch"
+                        maxWidth="Infinity" styleClass="secondary-button"/>
+            </VBox>
+
+            <VBox spacing="9" styleClass="home-mode-card,home-mode-quiz"
+                  GridPane.columnIndex="1">
+                <StackPane fx:id="quizModeIcon" styleClass="home-mode-icon,home-mode-icon-quiz"/>
+                <Label text="Phòng Quiz" styleClass="home-mode-title"/>
+                <Label text="Tạo phòng, chia sẻ PIN và thi đấu cùng lớp của bạn."
+                       wrapText="true" styleClass="home-mode-copy"/>
+                <Region VBox.vgrow="ALWAYS"/>
+                <Button text="MỞ PHÒNG QUIZ" onAction="#onQuizRoom"
+                        maxWidth="Infinity" styleClass="secondary-button"/>
+            </VBox>
+
+            <VBox spacing="9" styleClass="home-mode-card,home-mode-sets"
+                  GridPane.columnIndex="2">
+                <StackPane fx:id="setsModeIcon" styleClass="home-mode-icon,home-mode-icon-sets"/>
+                <Label text="Bộ đề của bạn" styleClass="home-mode-title"/>
+                <Label text="Tạo, chỉnh sửa và xuất bản bộ đề cho cộng đồng."
+                       wrapText="true" styleClass="home-mode-copy"/>
+                <Region VBox.vgrow="ALWAYS"/>
+                <Button text="QUẢN LÝ BỘ ĐỀ" onAction="#onQuizSets"
+                        maxWidth="Infinity" styleClass="secondary-button"/>
+            </VBox>
+        </GridPane>
+
+        <HBox spacing="16" alignment="TOP_LEFT">
+            <VBox spacing="9" HBox.hgrow="ALWAYS" styleClass="home-panel">
+                <Label text="MẸO NHANH" styleClass="home-section-title"/>
+                <HBox alignment="CENTER_LEFT" spacing="10" styleClass="home-tip-row">
+                    <Label text="1" styleClass="home-tip-index"/>
+                    <Label text="Đọc kỹ câu hỏi trước khi chọn đáp án; thời gian câu hỏi là yếu tố quyết định điểm."
+                           wrapText="true" styleClass="home-tip-copy"/>
+                </HBox>
+                <HBox alignment="CENTER_LEFT" spacing="10" styleClass="home-tip-row">
+                    <Label text="2" styleClass="home-tip-index"/>
+                    <Label text="Dùng phòng Quiz để luyện theo bộ đề; PIN chỉ cần chia sẻ một lần cho cả lớp."
+                           wrapText="true" styleClass="home-tip-copy"/>
+                </HBox>
+                <HBox alignment="CENTER_LEFT" spacing="10" styleClass="home-tip-row">
+                    <Label text="3" styleClass="home-tip-index"/>
+                    <Label text="Camera giám sát không chặn việc thi đấu; nếu lỗi, bạn vẫn có thể tiếp tục."
+                           wrapText="true" styleClass="home-tip-copy"/>
+                </HBox>
+            </VBox>
+
+            <VBox spacing="9" prefWidth="300" maxWidth="300" styleClass="home-panel,home-panel-history">
+                <Label text="TIẾP TỤC HÀNH TRÌNH" styleClass="home-section-title"/>
+                <Label text="Xem lại các trận đã đấu để biết mình tiến bộ ở đâu và cần luyện thêm gì."
+                       wrapText="true" styleClass="home-mode-copy"/>
+                <Region VBox.vgrow="ALWAYS"/>
+                <Button text="XEM LỊCH SỬ THI ĐẤU" onAction="#onHistory"
+                        maxWidth="Infinity" styleClass="secondary-button"/>
+            </VBox>
+        </HBox>
     </VBox>
-</StackPane>
+</ScrollPane>

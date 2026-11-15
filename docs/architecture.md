@@ -39,6 +39,7 @@ src/main/java/com/nihongoquest/
 │   ├── leaderboard/     top 10
 │   ├── history/         lịch sử Ranked
 │   └── proctor/         camera, AI, media, evidence
+├── ui/                  FontLoader, Icons SVG dùng chung JavaFX
 └── server/
     ├── GameServer       accept loop, đăng ký client, vòng đời server
     ├── ServerLauncher   entry point JavaFX dashboard
@@ -237,6 +238,8 @@ users ──< quiz_sets ──< questions ──< choices
 - `showContent` dùng animation ngắn; feedback đúng/sai và countdown không trì hoãn gửi đáp án.
 - CSS dùng design token `-ndq-*` trong `client/shared/style.css`; server dashboard dùng
   cùng token. Chi tiết ở [`ui-design.md`](ui-design.md).
+- `com.nihongoquest.ui.FontLoader` nạp font đóng gói trước khi load FXML; `Icons` tạo icon
+  `SVGPath` nội tuyến. Không có asset icon/âm thanh rời; JavaFX thread không bị chặn bởi I/O font.
 
 ## 11. Cấu hình, cổng và log
 

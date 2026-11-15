@@ -7,21 +7,30 @@
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.nihongoquest.client.layout.AuthenticatedShellController">
-    <VBox fx:id="sidebar" prefWidth="232" minWidth="232" maxWidth="232"
+    <VBox fx:id="sidebar" prefWidth="248" minWidth="248" maxWidth="248"
           styleClass="app-sidebar">
-        <VBox spacing="4" styleClass="sidebar-brand-block">
-            <Label text="NIHONGO" styleClass="sidebar-brand-primary"/>
-            <Label text="QUEST" styleClass="sidebar-brand-accent"/>
-            <Label text="HỌC • THI ĐẤU • TIẾN BỘ" styleClass="sidebar-tagline"/>
-        </VBox>
+        <HBox alignment="CENTER_LEFT" spacing="10" styleClass="sidebar-brand-block">
+            <StackPane styleClass="sidebar-logo">
+                <Label text="N" styleClass="sidebar-logo-text"/>
+            </StackPane>
+            <VBox spacing="0">
+                <Label text="NIHONGO" styleClass="sidebar-brand-primary"/>
+                <Label text="QUEST" styleClass="sidebar-brand-accent"/>
+                <Label text="HỌC • THI ĐẤU • TIẾN BỘ" styleClass="sidebar-tagline"/>
+            </VBox>
+        </HBox>
         <Separator styleClass="sidebar-separator"/>
         <VBox spacing="6" styleClass="sidebar-menu" VBox.vgrow="ALWAYS">
+            <Button fx:id="homeButton" text="Trang chủ" onAction="#onHome"
+                    maxWidth="Infinity" styleClass="sidebar-button"/>
+            <Label text="CHƠI" styleClass="sidebar-section-label"/>
             <Button fx:id="matchmakingButton" text="Đấu hạng 1v1" onAction="#onMatchmaking"
                     maxWidth="Infinity" styleClass="sidebar-button"/>
             <Button fx:id="quizRoomButton" text="Phòng Quiz" onAction="#onQuizRoom"
                     maxWidth="Infinity" styleClass="sidebar-button"/>
             <Button fx:id="quizSetsButton" text="Quản lý bộ đề" onAction="#onQuizSets"
                     maxWidth="Infinity" styleClass="sidebar-button"/>
+            <Label text="CỘNG ĐỒNG" styleClass="sidebar-section-label"/>
             <Button fx:id="leaderboardButton" text="Bảng xếp hạng" onAction="#onLeaderboard"
                     maxWidth="Infinity" styleClass="sidebar-button"/>
             <Button fx:id="historyButton" text="Lịch sử thi đấu" onAction="#onHistory"
@@ -33,15 +42,20 @@
         <VBox spacing="6" styleClass="sidebar-footer">
             <Button fx:id="profileButton" text="Hồ sơ" onAction="#onProfile"
                     maxWidth="Infinity" styleClass="sidebar-button"/>
-            <Button text="Đăng xuất" onAction="#onLogout"
+            <Button fx:id="logoutButton" text="Đăng xuất" onAction="#onLogout"
                     maxWidth="Infinity" styleClass="sidebar-button,sidebar-logout-button"/>
         </VBox>
     </VBox>
     <BorderPane HBox.hgrow="ALWAYS" styleClass="authenticated-main">
         <top>
             <VBox fx:id="sharedHeader" spacing="3" styleClass="shared-page-header">
-                <Label fx:id="pageTitleLabel" text="Đấu hạng 1v1" styleClass="shared-page-title"/>
-                <Label fx:id="pageSubtitleLabel" text="" styleClass="shared-page-subtitle"/>
+                <HBox alignment="CENTER_LEFT" spacing="12">
+                    <Region styleClass="header-accent"/>
+                    <VBox spacing="3">
+                        <Label fx:id="pageTitleLabel" text="Đấu hạng 1v1" styleClass="shared-page-title"/>
+                        <Label fx:id="pageSubtitleLabel" text="" styleClass="shared-page-subtitle"/>
+                    </VBox>
+                </HBox>
             </VBox>
         </top>
         <center>

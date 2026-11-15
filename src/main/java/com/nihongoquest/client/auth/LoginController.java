@@ -7,6 +7,7 @@ import com.nihongoquest.client.profile.Player;
 import com.nihongoquest.client.network.GameClient;
 import com.nihongoquest.common.protocol.Message;
 import com.nihongoquest.common.protocol.Payloads;
+import com.nihongoquest.ui.Icons;
 import com.fasterxml.jackson.databind.JsonNode;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -15,6 +16,7 @@ import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.StackPane;
 
 import java.io.IOException;
 
@@ -46,10 +48,23 @@ public class LoginController {
     private Label modePromptLabel;
     @FXML
     private Hyperlink modeLink;
+    @FXML
+    private StackPane featureIconOne;
+    @FXML
+    private StackPane featureIconTwo;
+    @FXML
+    private StackPane featureIconThree;
 
     private ClientApp app;
     private GameClient gameClient;
     private boolean loginMode = true;
+
+    @FXML
+    private void initialize() {
+        featureIconOne.getChildren().setAll(Icons.icon(Icons.SWORDS));
+        featureIconTwo.getChildren().setAll(Icons.icon(Icons.GAMEPAD));
+        featureIconThree.getChildren().setAll(Icons.icon(Icons.TROPHY));
+    }
 
     public void setApp(ClientApp app, GameClient gameClient) {
         this.app = app;
@@ -167,7 +182,7 @@ public class LoginController {
 
     private void handleServerMessage(Message message) {
         switch (message.getType()) {
-            case LOGIN_OK -> app.showMatchmaking(parsePlayer(message.getPayload()));
+            case LOGIN_OK -> app.showHome(parsePlayer(message.getPayload()));
             case REGISTER_OK -> {
                 setMode(true);
                 passwordField.clear();
