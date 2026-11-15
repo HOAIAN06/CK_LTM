@@ -1,0 +1,374 @@
+/* ============================================================================
+   NihongoQuest Desktop — Design Tokens
+   "Sumi" (墨) — a calm, ink-and-paper visual language.
+
+   HOW THIS FILE WORKS
+   -------------------
+   Every *colour* token is declared twice:
+
+       --nq-x: <light>;                  <- static fallback (old engines, tests)
+       --nq-x: light-dark(<light>, <dark>);
+
+   `light-dark()` resolves against the used `color-scheme` of the element, so a
+   single declaration carries both themes and light/dark can never drift apart.
+   Electron 45 ships Chromium >= 130 where `light-dark()` is supported; the plain
+   declaration above it keeps the light theme working if that ever changes.
+
+   Theme switching is therefore controlled by `color-scheme`, not by
+   duplicating palettes:
+     - default ........................ light
+     - <html data-theme="dark"> ........ dark   (explicit user choice)
+     - <html data-theme="light"> ....... light  (explicit user choice, wins over OS)
+     - OS dark + no data-theme ......... dark   (follows the system)
+
+   Non-colour tokens (spacing, radii, type, motion, z-index) are theme-neutral
+   and use the same 8pt rhythm in both themes.
+
+   RULES
+   -----
+   1. Components never hardcode colour. They consume `--nq-*` via the Tailwind
+      aliases declared in `index.css` (`bg-nq-surface`, `text-nq-text`, ...).
+   2. One primary accent (deep teal ink), one secondary accent (sage). Semantic
+      colours are reserved for state, never decoration.
+   3. Radii are chosen from the scale below — not invented per component.
+   ========================================================================== */
+
+/* ----------------------------------------------------------------------------
+   0. Theme switch (drives light-dark())
+   ---------------------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   1. Surfaces — warm paper in light, deep ink in dark
+   ---------------------------------------------------------------------------- */
+:root {
+  --nq-bg: #f4f4ef;
+  --nq-bg: light-dark(#f4f4ef, #0f1415); /* app canvas */
+  --nq-bg-subtle: #eceee7;
+  --nq-bg-subtle: light-dark(#eceee7, #0a0f10); /* wells, sunken strips */
+  --nq-surface: #fbfbf8;
+  --nq-surface: light-dark(#fbfbf8, #171e1f); /* cards, panels */
+  --nq-surface-raised: #ffffff;
+  --nq-surface-raised: light-dark(#ffffff, #1e2729); /* popovers, menus */
+  --nq-surface-overlay: #ffffff;
+  --nq-surface-overlay: light-dark(#ffffff, #232d2f); /* dialogs, sheets */
+  --nq-surface-sunken: #e8eae2;
+  --nq-surface-sunken: light-dark(#e8eae2, #0d1213); /* inputs at rest */
+  --nq-surface-hover: #f1f2ec;
+  --nq-surface-hover: light-dark(#f1f2ec, #202a2c); /* row / item hover */
+}
+
+/* ----------------------------------------------------------------------------
+   2. Text — warm near-black ink; tertiary is still >= 4.5:1 on surface
+   ---------------------------------------------------------------------------- */
+:root {
+  --nq-text: #17201f;
+  --nq-text: light-dark(#17201f, #edf2f0); /* 14.9:1 on surface / 13.4:1 dark */
+  --nq-text-secondary: #55636a;
+  --nq-text-secondary: light-dark(#55636a, #a9b6b5); /* 6.1:1 / 7.9:1 */
+  --nq-text-tertiary: #6b7780;
+  --nq-text-tertiary: light-dark(#6b7780, #8c9b9b); /* 4.6:1 / 6.0:1 */
+  --nq-text-inverse: #f7f8f6;
+  --nq-text-inverse: light-dark(#f7f8f6, #10191a);
+  --nq-text-link: #1f5560;
+  --nq-text-link: light-dark(#1f5560, #9fd3d5);
+}
+
+/* ----------------------------------------------------------------------------
+   3. Borders — hairlines do the work that shadows would otherwise do
+   ---------------------------------------------------------------------------- */
+:root {
+  --nq-border: #dfe1d8;
+  --nq-border: light-dark(#dfe1d8, #2a3436);
+  --nq-border-subtle: #eaebe4;
+  --nq-border-subtle: light-dark(#eaebe4, #202a2c);
+  --nq-border-strong: #c6c9be;
+  --nq-border-strong: light-dark(#c6c9be, #3a4648);
+  --nq-border-inverse: #ffffff;
+  --nq-border-inverse: light-dark(#ffffff, #0b1112);
+}
+
+/* ----------------------------------------------------------------------------
+   4. Primary — deep teal ink (brand). Accent — sage (progress / learning).
+   ---------------------------------------------------------------------------- */
+:root {
+  --nq-primary: #1f5560;
+  --nq-primary: light-dark(#1f5560, #74b8be);
+  --nq-primary-hover: #17454f;
+  --nq-primary-hover: light-dark(#17454f, #8ac9ce);
+  --nq-primary-active: #113840;
+  --nq-primary-active: light-dark(#113840, #5ea6ad);
+  --nq-primary-contrast: #ffffff;
+  --nq-primary-contrast: light-dark(#ffffff, #07202a); /* 8.5:1 / 7.5:1 */
+  --nq-primary-soft: #e4edec;
+  --nq-primary-soft: light-dark(#e4edec, #16302f);
+  --nq-primary-soft-text: #1b4a54;
+  --nq-primary-soft-text: light-dark(#1b4a54, #9fd3d5);
+  --nq-primary-border: #b9d2d0;
+  --nq-primary-border: light-dark(#b9d2d0, #2e4e4f);
+
+  --nq-accent: #5e8b62;
+  --nq-accent: light-dark(#5e8b62, #93c49a);
+  --nq-accent-strong: #4a7350;
+  --nq-accent-strong: light-dark(#4a7350, #a8d4ae); /* AA for text on surface */
+  --nq-accent-soft: #e7efe4;
+  --nq-accent-soft: light-dark(#e7efe4, #1b2a1e);
+  --nq-accent-border: #c3d6c5;
+  --nq-accent-border: light-dark(#c3d6c5, #2f4733);
+  --nq-accent-contrast: #ffffff;
+  --nq-accent-contrast: light-dark(#ffffff, #10210f);
+}
+
+/* ----------------------------------------------------------------------------
+   5. Semantic state — success / warning / danger / info (+ soft & border pairs)
+   ---------------------------------------------------------------------------- */
+:root {
+  --nq-success: #2e6b4d;
+  --nq-success: light-dark(#2e6b4d, #6fc79a);
+  --nq-success-soft: #e3efe6;
+  --nq-success-soft: light-dark(#e3efe6, #14281e);
+  --nq-success-border: #b9d6c2;
+  --nq-success-border: light-dark(#b9d6c2, #2a4636);
+  --nq-success-contrast: #ffffff;
+  --nq-success-contrast: light-dark(#ffffff, #06251a);
+
+  --nq-warning: #9a6412;
+  --nq-warning: light-dark(#9a6412, #e7b45c);
+  --nq-warning-soft: #f6eddc;
+  --nq-warning-soft: light-dark(#f6eddc, #2c2214);
+  --nq-warning-border: #e0cba8;
+  --nq-warning-border: light-dark(#e0cba8, #46361f);
+  --nq-warning-contrast: #ffffff;
+  --nq-warning-contrast: light-dark(#ffffff, #2a1a02);
+
+  --nq-danger: #a83a34;
+  --nq-danger: light-dark(#a83a34, #f08a82);
+  --nq-danger-hover: #8f2f2a;
+  --nq-danger-hover: light-dark(#8f2f2a, #f7a29b);
+  --nq-danger-soft: #f7e7e4;
+  --nq-danger-soft: light-dark(#f7e7e4, #301a19);
+  --nq-danger-border: #e3c0bb;
+  --nq-danger-border: light-dark(#e3c0bb, #4a2c2a);
+  --nq-danger-contrast: #ffffff;
+  --nq-danger-contrast: light-dark(#ffffff, #2a0b09);
+
+  --nq-info: #2c5f8a;
+  --nq-info: light-dark(#2c5f8a, #83b8e4);
+  --nq-info-soft: #e6eef5;
+  --nq-info-soft: light-dark(#e6eef5, #16232e);
+  --nq-info-border: #c0d2e2;
+  --nq-info-border: light-dark(#c0d2e2, #293e4e);
+  --nq-info-contrast: #ffffff;
+  --nq-info-contrast: light-dark(#ffffff, #06141f);
+}
+
+/* ----------------------------------------------------------------------------
+   6. Focus, scrim, glass, hairline highlights
+   ---------------------------------------------------------------------------- */
+:root {
+  --nq-focus-ring: #2f6e78;
+  --nq-focus-ring: light-dark(#2f6e78, #8fd3d6);
+  --nq-focus-ring-soft: rgb(47 110 120 / 0.35);
+  --nq-focus-ring-soft: light-dark(rgb(47 110 120 / 0.28), rgb(143 211 214 / 0.4));
+  --nq-focus-ring-width: 2px;
+  --nq-focus-ring-offset: 2px;
+  --nq-scrim: rgb(16 21 22 / 0.42);
+  --nq-scrim: light-dark(rgb(16 21 22 / 0.42), rgb(3 6 7 / 0.64));
+  --nq-glass-bg: rgb(251 251 248 / 0.72);
+  --nq-glass-bg: light-dark(rgb(251 251 248 / 0.72), rgb(15 20 21 / 0.66));
+  --nq-glass-border: rgb(23 32 31 / 0.08);
+  --nq-glass-border: light-dark(rgb(23 32 31 / 0.08), rgb(255 255 255 / 0.07));
+  --nq-glass-blur: 20px;
+  --nq-glass-saturate: 150%;
+  --nq-highlight-top: rgb(255 255 255 / 0.6);
+  --nq-highlight-top: light-dark(rgb(255 255 255 / 0.6), rgb(255 255 255 / 0.05));
+}
+
+/* ----------------------------------------------------------------------------
+   7. Elevation — composed from tint tokens so shadows never need duplicating
+   ---------------------------------------------------------------------------- */
+:root {
+  --nq-shadow-tint-fine: rgb(23 32 31 / 0.07);
+  --nq-shadow-tint-fine: light-dark(rgb(23 32 31 / 0.07), rgb(0 0 0 / 0.55));
+  --nq-shadow-tint-soft: rgb(23 32 31 / 0.1);
+  --nq-shadow-tint-soft: light-dark(rgb(23 32 31 / 0.1), rgb(0 0 0 / 0.62));
+  --nq-shadow-tint-deep: rgb(23 32 31 / 0.18);
+  --nq-shadow-tint-deep: light-dark(rgb(23 32 31 / 0.18), rgb(0 0 0 / 0.72));
+
+  --nq-shadow-rest: none;
+  --nq-shadow-sm:
+    0 1px 2px var(--nq-shadow-tint-fine);
+  --nq-shadow-md:
+    0 1px 2px var(--nq-shadow-tint-fine),
+    0 6px 16px -8px var(--nq-shadow-tint-soft);
+  --nq-shadow-lg:
+    0 2px 4px -2px var(--nq-shadow-tint-fine),
+    0 14px 34px -14px var(--nq-shadow-tint-deep);
+  --nq-shadow-xl:
+    0 6px 16px -8px var(--nq-shadow-tint-soft),
+    0 30px 70px -28px var(--nq-shadow-tint-deep);
+  --nq-ring-inset: inset 0 1px 0 var(--nq-highlight-top);
+}
+
+/* ----------------------------------------------------------------------------
+   8. Spacing — 4px base, 8pt rhythm for layout
+   ---------------------------------------------------------------------------- */
+:root {
+  --nq-space-0: 0px;
+  --nq-space-1: 4px;
+  --nq-space-2: 8px;
+  --nq-space-3: 12px;
+  --nq-space-4: 16px;
+  --nq-space-5: 20px;
+  --nq-space-6: 24px;
+  --nq-space-7: 32px;
+  --nq-space-8: 40px;
+  --nq-space-9: 48px;
+  --nq-space-10: 56px;
+  --nq-space-11: 64px;
+  --nq-space-12: 80px;
+}
+
+/* ----------------------------------------------------------------------------
+   9. Radii — six values, one rule each (see docs/desktop/design-system.md)
+   ---------------------------------------------------------------------------- */
+:root {
+  --nq-radius-xs: 4px; /* tags, kbd, tiny chips */
+  --nq-radius-sm: 8px; /* inline chips, icon buttons */
+  --nq-radius-md: 10px; /* inputs, buttons, menu items */
+  --nq-radius-lg: 14px; /* cards, panels */
+  --nq-radius-xl: 20px; /* dialogs, sheets, palette */
+  --nq-radius-2xl: 28px; /* hero surfaces only */
+  --nq-radius-full: 999px; /* pills, avatars, dots */
+}
+
+/* ----------------------------------------------------------------------------
+   10. Typography — humanist UI face, tighter display cut, real Japanese stack
+   ---------------------------------------------------------------------------- */
+:root {
+  --nq-font-sans:
+    'Be Vietnam Pro', 'Inter', 'Segoe UI Variable Text', 'Segoe UI', -apple-system,
+    BlinkMacSystemFont, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  --nq-font-display:
+    'Be Vietnam Pro', 'Inter Tight', 'Segoe UI Variable Display', 'Segoe UI', -apple-system,
+    BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  --nq-font-jp:
+    'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic UI', 'Yu Gothic', 'Meiryo', 'Noto Sans CJK JP',
+    var(--nq-font-sans);
+  --nq-font-brand:
+    'Yu Mincho', 'Hiragino Mincho ProN', 'Noto Serif JP', 'Iowan Old Style',
+    'Palatino Linotype', Georgia, serif;
+  --nq-font-mono:
+    'JetBrains Mono', 'Cascadia Mono', 'SF Mono', 'Consolas', ui-monospace, monospace;
+
+  --nq-fs-2xs: 11px;
+  --nq-fs-xs: 12px;
+  --nq-fs-sm: 13px;
+  --nq-fs-md: 14px;
+  --nq-fs-base: 15px;
+  --nq-fs-lg: 17px;
+  --nq-fs-xl: 20px;
+  --nq-fs-2xl: 24px;
+  --nq-fs-3xl: 30px;
+  --nq-fs-4xl: 36px;
+  --nq-fs-5xl: 44px;
+
+  --nq-leading-tight: 1.15;
+  --nq-leading-snug: 1.32;
+  --nq-leading-normal: 1.5;
+  --nq-leading-relaxed: 1.7;
+
+  --nq-tracking-tight: -0.018em;
+  --nq-tracking-normal: 0;
+  --nq-tracking-caps: 0.09em;
+
+  --nq-weight-regular: 400;
+  --nq-weight-medium: 500;
+  --nq-weight-semibold: 600;
+  --nq-weight-bold: 700;
+}
+
+/* ----------------------------------------------------------------------------
+   11. Motion — 150/200/250 ms, one standard curve, no bounce in layout
+   ---------------------------------------------------------------------------- */
+:root {
+  --nq-motion-fast: 150ms;
+  --nq-motion-base: 200ms;
+  --nq-motion-slow: 250ms;
+  --nq-motion-page: 280ms;
+  --nq-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --nq-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --nq-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --nq-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --nq-ease-emphasis: cubic-bezier(0.34, 1.16, 0.64, 1); /* score pop only */
+}
+
+/* ----------------------------------------------------------------------------
+   12. Layout constants, control metrics, z-index, opacity
+   ---------------------------------------------------------------------------- */
+:root {
+  --nq-titlebar-height: 40px;
+  /* Electron `titleBarOverlay`: the OS reserves this strip on the right edge
+     for the native minimize / maximize / close buttons. Components must not
+     hardcode this number — read the token. */
+  --nq-titlebar-controls-width: 138px;
+  --nq-sidebar-width: 248px;
+  --nq-sidebar-collapsed-width: 72px;
+  --nq-content-max: 1120px;
+  --nq-rail-width: 320px;
+  --nq-gutter: 32px;
+
+  --nq-control-sm: 30px;
+  --nq-control-md: 38px;
+  --nq-control-lg: 46px;
+  --nq-icon-sm: 16px;
+  --nq-icon-md: 18px;
+  --nq-icon-lg: 22px;
+
+  --nq-z-base: 0;
+  --nq-z-raised: 10;
+  --nq-z-sticky: 100;
+  --nq-z-sidebar: 200;
+  --nq-z-overlay: 300;
+  --nq-z-sheet: 400;
+  --nq-z-dialog: 500;
+  --nq-z-toast: 600;
+  --nq-z-tooltip: 700;
+
+  --nq-opacity-disabled: 0.46;
+  --nq-opacity-muted: 0.72;
+  --nq-opacity-ghost: 0.08;
+  --nq-opacity-wash: 0.14;
+}
+
+/* ----------------------------------------------------------------------------
+   13. Reduced motion — token override
+   This block MUST stay unlayered. Every token above is unlayered too, and an
+   unlayered declaration beats any `@layer` block, so a `@layer base` override
+   here would silently lose and components would keep their 150–250 ms durations.
+   (The universal `!important` kill-switch lives in base.css.)
+   ---------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --nq-motion-fast: 1ms;
+    --nq-motion-base: 1ms;
+    --nq-motion-slow: 1ms;
+    --nq-motion-page: 1ms;
+  }
+}

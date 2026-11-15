@@ -21,6 +21,8 @@
         </HBox>
         <Separator styleClass="sidebar-separator"/>
         <VBox spacing="6" styleClass="sidebar-menu" VBox.vgrow="ALWAYS">
+            <Button fx:id="homeButton" text="Trang chủ" onAction="#onHome"
+                    maxWidth="Infinity" styleClass="sidebar-button"/>
             <Label text="CHƠI" styleClass="sidebar-section-label"/>
             <Button fx:id="matchmakingButton" text="Đấu hạng 1v1" onAction="#onMatchmaking"
                     maxWidth="Infinity" styleClass="sidebar-button"/>

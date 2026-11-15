@@ -1,7 +1,8 @@
 # Đề xuất UI/UX overhaul — NihongoQuest
 
 - Ngày: 2026-11-15
-- Trạng thái: **đã chốt hướng B. Sakura Arcade**; Phase 1 đã triển khai design foundation (D-017/D-018).
+- Trạng thái: **đã chốt hướng B. Sakura Arcade**; Phase 1 (design foundation) và Phase 2
+  (Login, Home, Quiz Room, Lobby, Battle) đã triển khai (D-017/D-018/D-019).
 - Phạm vi: client JavaFX (16 màn hình) + server dashboard
 - Font: bundle **Nunito + Be Vietnam Pro**; tiếng Nhật fallback Noto Sans JP/Yu Gothic UI
 - Không đổi protocol, TCP framing, server authority, camera/proctoring
@@ -157,12 +158,12 @@ Quyết định:
 | Màn hình | Bố cục chính |
 |---|---|
 | Shell | Rail trái 240px (thu gọn 72px), brand, nhóm nav “Chơi / Khám phá / Cộng đồng”, user card dưới cùng; top bar có breadcrumb, XP/streak, quick actions |
-| Home | Grid 12 cột: hero + daily goal ring + CTA; 3 mode card; trận gần đây; mini leaderboard; daily quest |
-| Login | 2 cột 55/45: brand + illustration + feature; auth card; “Cấu hình server” thu gọn với status pill |
+| Home | Hero + tiến độ thật (độ chính xác/thắng/tổng điểm) + 3 mode card + panel mẹo & lịch sử — **đã xong** |
+| Login | 2 cột brand/auth; 3 feature row có icon; “Cấu hình server” thu gọn (host + cổng) + status pill — **đã xong** |
 | Matchmaking | Card radar ở giữa; segmented 3/5 phút; elapsed time; cancel; overlay VS khi tìm thấy |
-| Quiz Room | 2 card hành động lớn: Tạo phòng / Vào phòng; PIN 6 ô; phòng gần đây |
-| Lobby | Player card grid 2–3 cột; host badge; camera status chip; copy PIN; host bar sticky |
-| Battle | Stage rộng; opponent HUD; timer ring; question card + furigana; answer 2×2; combo; camera panel; live leaderboard |
+| Quiz Room | 2 action card lớn Tạo/Vào; PIN 6 số có badge; step bar 3 bước — **đã xong** |
+| Lobby | PIN panel gradient + copy; player card có chip vai trò/camera; camera + info panel; action bar — **đã xong** |
+| Battle | HUD + timer lớn; question card; đáp án 2×2 badge A–D; camera panel; leaderboard highlight — **đã xong** |
 | Result | Hero thắng/thua; pháo hoa/confetti Canvas; stats grid; XP bar; rank change; rematch |
 | Leaderboard | Podium top 3; table sticky header; filter tab; highlight “bạn” |
 | Profile | Banner + avatar + level ring; stat card; accuracy chart; recent matches; achievements |
@@ -178,7 +179,7 @@ Quyết định:
 |---|---|---|
 | 0 | Git workflow, skill, audit, chọn hướng | `chore/ui-phase0-tooling` |
 | 1 | Design tokens, font, icon, shell, component cơ bản — **đã xong** | `feature/ui-foundation` |
-| 2 | Login, Home, Quiz Room, Lobby, Battle | `feature/ui-quiz-flow` |
+| 2 | Login, Home, Quiz Room, Lobby, Battle — **đã xong** | `feature/ui-quiz-flow` |
 | 3 | Ranked, Matchmaking, Result, celebration | `feature/ui-ranked-result` |
 | 4 | Data/social/proctor/server dashboard | `feature/ui-data-social` |
 | 5 | Responsive/DPI, accessibility, Windows QA, docs | `polish/ui-qa` |

@@ -34,17 +34,17 @@ class UiThemeTest {
     }
 
     @Test
-    void themeUsesSakuraArcadePalette() throws IOException {
+    void themeUsesCalmStudyPalette() throws IOException {
         String css = loadSharedTheme();
-        // Design Tokens tập trung: palette Sakura Arcade (D-017).
+        // Design Tokens tập trung: palette Calm Study.
         for (String token : new String[]{
-                "-ndq-primary: #4F46E5", "-ndq-primary-dark: #3730A3",
-                "-ndq-accent: #06B6D4", "-ndq-sakura: #F472B6",
-                "-ndq-sakura-deep: #DB2777", "-ndq-coral: #FB7185",
-                "-ndq-bg: #FFF7FA", "-ndq-surface: #FFFFFF", "-ndq-text: #1E1B4B",
-                "-ndq-text-secondary: #64748B", "-ndq-border: #FBCFE8",
-                "-ndq-sakura-soft: #FCE7F3", "-ndq-sakura-border: #FBCFE8",
-                "-ndq-success: #16A34A", "-ndq-warning: #D97706", "-ndq-error: #DC2626"}) {
+                "-ndq-primary: #315A63", "-ndq-primary-dark: #24444B",
+                "-ndq-accent: #7A9E7E", "-ndq-sakura: #C98B72",
+                "-ndq-sakura-deep: #A96852", "-ndq-coral: #C98B72",
+                "-ndq-bg: #F7F7F2", "-ndq-surface: #FFFFFF", "-ndq-text: #24323A",
+                "-ndq-text-secondary: #607078", "-ndq-border: #D9E2E0",
+                "-ndq-sakura-soft: #F3E9E3", "-ndq-sakura-border: #DFC4B8",
+                "-ndq-success: #55765A", "-ndq-warning: #A96852", "-ndq-error: #B94A48"}) {
             assertTrue(css.contains(token), "Thiếu design token: " + token);
         }
         // Nền sáng: không có nền tối toàn cục.
@@ -93,12 +93,29 @@ class UiThemeTest {
     }
 
     @Test
+    void quizFlowThemeDefinesSakuraComponentBlocks() throws IOException {
+        String css = loadSharedTheme();
+        for (String selector : new String[]{
+                ".auth-brand-panel", ".auth-scroll", ".auth-server-pane",
+                ".connection-status-pill",
+                ".home-hero-card", ".home-mode-card", ".home-stat-value",
+                ".quiz-action-card", ".quiz-steps-bar", ".pin-field",
+                ".lobby-player-card", ".lobby-pin-panel", ".chip-camera-ok",
+                ".lobby-action-bar",
+                ".battle-hud", ".question-card", ".answer-letter",
+                ".battle-side-panel", ".leaderboard-row.leaderboard-me",
+                ".camera-caption"}) {
+            assertTrue(css.contains(selector), "Thiếu component Phase 2: " + selector);
+        }
+    }
+
+    @Test
     void serverDashboardSharesSakuraArcadeTokensAndFonts() throws IOException {
         String css = loadResource("/server/dashboard/server-dashboard.css");
         for (String token : new String[]{
-                "-ndq-primary: #4F46E5", "-ndq-sakura: #F472B6",
-                "-ndq-sakura-deep: #DB2777", "-ndq-bg: #FFF7FA",
-                "-ndq-text: #1E1B4B", "-ndq-border: #FBCFE8"}) {
+                "-ndq-primary: #315A63", "-ndq-sakura: #C98B72",
+                "-ndq-sakura-deep: #A96852", "-ndq-bg: #F7F7F2",
+                "-ndq-text: #24323A", "-ndq-border: #D9E2E0"}) {
             assertTrue(css.contains(token), "Dashboard thiếu token: " + token);
         }
         assertTrue(css.contains("\"Nunito\""), "Dashboard thiếu heading Nunito");

@@ -1,0 +1,539 @@
+/* ============================================================================
+   NihongoQuest Desktop — style entry
+   Order matters: Tailwind first (its preflight lands in @layer base), then the
+   token contract, then the base layer, then theme mappings + shared semantics.
+   ========================================================================== */
+
+@import 'tailwindcss';
+@import './tokens.css';
+@import './base.css';
+
+/* ----------------------------------------------------------------------------
+   Tailwind theme bridge
+   `@theme inline` emits the *runtime* token reference into every utility, so a
+   single utility (`bg-nq-surface`) resolves differently per colour-scheme
+   without generating duplicate dark: variants.
+   ---------------------------------------------------------------------------- */
+@theme inline {
+  /* surfaces */
+  --color-nq-bg: var(--nq-bg);
+  --color-nq-bg-subtle: var(--nq-bg-subtle);
+  --color-nq-surface: var(--nq-surface);
+  --color-nq-surface-raised: var(--nq-surface-raised);
+  --color-nq-surface-overlay: var(--nq-surface-overlay);
+  --color-nq-surface-sunken: var(--nq-surface-sunken);
+  --color-nq-surface-hover: var(--nq-surface-hover);
+  --color-nq-glass: var(--nq-glass-bg);
+  --color-nq-scrim: var(--nq-scrim);
+
+  /* text */
+  --color-nq-text: var(--nq-text);
+  --color-nq-text-secondary: var(--nq-text-secondary);
+  --color-nq-text-tertiary: var(--nq-text-tertiary);
+  --color-nq-text-inverse: var(--nq-text-inverse);
+  --color-nq-link: var(--nq-text-link);
+
+  /* lines */
+  --color-nq-border: var(--nq-border);
+  --color-nq-border-subtle: var(--nq-border-subtle);
+  --color-nq-border-strong: var(--nq-border-strong);
+  --color-nq-border-inverse: var(--nq-border-inverse);
+
+  /* brand */
+  --color-nq-primary: var(--nq-primary);
+  --color-nq-primary-hover: var(--nq-primary-hover);
+  --color-nq-primary-active: var(--nq-primary-active);
+  --color-nq-primary-contrast: var(--nq-primary-contrast);
+  --color-nq-primary-soft: var(--nq-primary-soft);
+  --color-nq-primary-soft-text: var(--nq-primary-soft-text);
+  --color-nq-primary-border: var(--nq-primary-border);
+  --color-nq-accent: var(--nq-accent);
+  --color-nq-accent-strong: var(--nq-accent-strong);
+  --color-nq-accent-soft: var(--nq-accent-soft);
+  --color-nq-accent-border: var(--nq-accent-border);
+  --color-nq-accent-contrast: var(--nq-accent-contrast);
+
+  /* state */
+  --color-nq-success: var(--nq-success);
+  --color-nq-success-soft: var(--nq-success-soft);
+  --color-nq-success-border: var(--nq-success-border);
+  --color-nq-success-contrast: var(--nq-success-contrast);
+  --color-nq-warning: var(--nq-warning);
+  --color-nq-warning-soft: var(--nq-warning-soft);
+  --color-nq-warning-border: var(--nq-warning-border);
+  --color-nq-warning-contrast: var(--nq-warning-contrast);
+  --color-nq-danger: var(--nq-danger);
+  --color-nq-danger-hover: var(--nq-danger-hover);
+  --color-nq-danger-soft: var(--nq-danger-soft);
+  --color-nq-danger-border: var(--nq-danger-border);
+  --color-nq-danger-contrast: var(--nq-danger-contrast);
+  --color-nq-info: var(--nq-info);
+  --color-nq-info-soft: var(--nq-info-soft);
+  --color-nq-info-border: var(--nq-info-border);
+  --color-nq-info-contrast: var(--nq-info-contrast);
+
+  /* radii */
+  --radius-nq-xs: var(--nq-radius-xs);
+  --radius-nq-sm: var(--nq-radius-sm);
+  --radius-nq-md: var(--nq-radius-md);
+  --radius-nq-lg: var(--nq-radius-lg);
+  --radius-nq-xl: var(--nq-radius-xl);
+  --radius-nq-2xl: var(--nq-radius-2xl);
+  --radius-nq-full: var(--nq-radius-full);
+
+  /* elevation */
+  --shadow-nq-sm: var(--nq-shadow-sm);
+  --shadow-nq-md: var(--nq-shadow-md);
+  --shadow-nq-lg: var(--nq-shadow-lg);
+  --shadow-nq-xl: var(--nq-shadow-xl);
+  --shadow-nq-inset: var(--nq-ring-inset);
+
+  /* type */
+  --font-sans: var(--nq-font-sans);
+  --font-display: var(--nq-font-display);
+  --font-jp: var(--nq-font-jp);
+  --font-brand: var(--nq-font-brand);
+  --font-mono: var(--nq-font-mono);
+
+  --text-nq-2xs: var(--nq-fs-2xs);
+  --text-nq-xs: var(--nq-fs-xs);
+  --text-nq-sm: var(--nq-fs-sm);
+  --text-nq-md: var(--nq-fs-md);
+  --text-nq-base: var(--nq-fs-base);
+  --text-nq-lg: var(--nq-fs-lg);
+  --text-nq-xl: var(--nq-fs-xl);
+  --text-nq-2xl: var(--nq-fs-2xl);
+  --text-nq-3xl: var(--nq-fs-3xl);
+  --text-nq-4xl: var(--nq-fs-4xl);
+  --text-nq-5xl: var(--nq-fs-5xl);
+
+  /* motion */
+  --ease-nq: var(--nq-ease-standard);
+  --ease-nq-out: var(--nq-ease-out);
+  --ease-nq-in-out: var(--nq-ease-in-out);
+  --ease-nq-emphasis: var(--nq-ease-emphasis);
+
+  /* layout */
+  --spacing-titlebar: var(--nq-titlebar-height);
+  --spacing-sidebar: var(--nq-sidebar-width);
+  --spacing-rail: var(--nq-rail-width);
+}
+
+/* ----------------------------------------------------------------------------
+   Shared semantic classes
+   Only what utilities express badly: pseudo-elements, keyframes, states that
+   must reach native form controls, and cross-component primitives.
+   ---------------------------------------------------------------------------- */
+@layer components {
+  /* --- material ---------------------------------------------------------- */
+  .nq-glass {
+    background-color: var(--nq-glass-bg);
+    border-color: var(--nq-glass-border);
+    -webkit-backdrop-filter: blur(var(--nq-glass-blur)) saturate(var(--nq-glass-saturate));
+    backdrop-filter: blur(var(--nq-glass-blur)) saturate(var(--nq-glass-saturate));
+  }
+
+  /* Opt-out for low-power / oscillation-prone surfaces (large lists, video). */
+  .nq-no-material {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background-color: var(--nq-surface);
+  }
+
+  /* --- typography helpers ------------------------------------------------ */
+  .nq-caps {
+    font-family: var(--nq-font-sans);
+    font-size: var(--nq-fs-2xs);
+    font-weight: var(--nq-weight-semibold);
+    letter-spacing: var(--nq-tracking-caps);
+    line-height: var(--nq-leading-snug);
+    text-transform: uppercase;
+    color: var(--nq-text-tertiary);
+  }
+
+  .nq-display {
+    font-family: var(--nq-font-display);
+    font-weight: var(--nq-weight-bold);
+    letter-spacing: var(--nq-tracking-tight);
+    line-height: var(--nq-leading-tight);
+    color: var(--nq-text);
+    text-wrap: balance;
+  }
+
+  .nq-balance {
+    text-wrap: balance;
+  }
+
+  .nq-pretty {
+    text-wrap: pretty;
+  }
+
+  /* Numbers that change (scores, timers, PINs) must not reflow. */
+  .nq-tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+
+  .nq-kanji-mark {
+    font-family: var(--nq-font-jp);
+    font-feature-settings: 'palt' 1;
+    line-height: 1;
+    letter-spacing: 0.04em;
+  }
+
+  /* --- checkbox ---------------------------------------------------------- */
+  .nq-checkbox-input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    pointer-events: none;
+  }
+
+  .nq-checkbox-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 18px;
+    height: 18px;
+    border: 1px solid var(--nq-border-strong);
+    border-radius: var(--nq-radius-xs);
+    background-color: var(--nq-surface);
+    color: var(--nq-primary-contrast);
+    transition:
+      background-color var(--nq-motion-fast) var(--nq-ease-standard),
+      border-color var(--nq-motion-fast) var(--nq-ease-standard),
+      box-shadow var(--nq-motion-fast) var(--nq-ease-standard);
+  }
+
+  .nq-checkbox-input:hover + .nq-checkbox-box {
+    border-color: var(--nq-primary);
+  }
+
+  .nq-checkbox-input:checked + .nq-checkbox-box,
+  .nq-checkbox-input:indeterminate + .nq-checkbox-box {
+    background-color: var(--nq-primary);
+    border-color: var(--nq-primary);
+  }
+
+  .nq-checkbox-input:focus-visible + .nq-checkbox-box {
+    box-shadow: 0 0 0 3px var(--nq-focus-ring-soft);
+    border-color: var(--nq-primary);
+  }
+
+  .nq-checkbox-input:disabled + .nq-checkbox-box {
+    opacity: var(--nq-opacity-disabled);
+  }
+
+  .nq-checkbox-box > svg {
+    opacity: 0;
+    transform: scale(0.7);
+    transition:
+      opacity var(--nq-motion-fast) var(--nq-ease-standard),
+      transform var(--nq-motion-fast) var(--nq-ease-emphasis);
+  }
+
+  .nq-checkbox-input:checked + .nq-checkbox-box > svg,
+  .nq-checkbox-input:indeterminate + .nq-checkbox-box > svg {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* --- native select ----------------------------------------------------- */
+  .nq-select {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    border: 1px solid var(--nq-border);
+    border-radius: var(--nq-radius-md);
+    background-color: var(--nq-surface);
+    color: var(--nq-text);
+    padding-inline: var(--nq-space-3) calc(var(--nq-space-8) + var(--nq-space-1));
+    transition:
+      border-color var(--nq-motion-fast) var(--nq-ease-standard),
+      box-shadow var(--nq-motion-fast) var(--nq-ease-standard),
+      background-color var(--nq-motion-fast) var(--nq-ease-standard);
+  }
+
+  .nq-select:hover:not(:disabled) {
+    border-color: var(--nq-border-strong);
+  }
+
+  .nq-select:focus-visible {
+    border-color: var(--nq-primary);
+    box-shadow: 0 0 0 3px var(--nq-focus-ring-soft);
+  }
+
+  .nq-select:disabled {
+    cursor: not-allowed;
+    opacity: var(--nq-opacity-disabled);
+  }
+
+  .nq-select option {
+    background-color: var(--nq-surface-raised);
+    color: var(--nq-text);
+  }
+
+  /* --- tooltip ----------------------------------------------------------- */
+  .nq-tooltip {
+    position: absolute;
+    z-index: var(--nq-z-tooltip);
+    max-width: 260px;
+    width: max-content;
+    padding: var(--nq-space-1) var(--nq-space-2);
+    border-radius: var(--nq-radius-sm);
+    border: 1px solid var(--nq-glass-border);
+    background-color: var(--nq-surface-raised);
+    color: var(--nq-text);
+    box-shadow: var(--nq-shadow-md);
+    font-size: var(--nq-fs-xs);
+    line-height: var(--nq-leading-snug);
+    pointer-events: none;
+    animation: nq-fade-in var(--nq-motion-fast) var(--nq-ease-standard) both;
+  }
+
+  .nq-tooltip[data-placement='top'] {
+    bottom: calc(100% + 6px);
+    left: 50%;
+    translate: -50% 0;
+  }
+
+  .nq-tooltip[data-placement='bottom'] {
+    top: calc(100% + 6px);
+    left: 50%;
+    translate: -50% 0;
+  }
+
+  .nq-tooltip[data-placement='left'] {
+    right: calc(100% + 6px);
+    top: 50%;
+    translate: 0 -50%;
+  }
+
+  .nq-tooltip[data-placement='right'] {
+    left: calc(100% + 6px);
+    top: 50%;
+    translate: 0 -50%;
+  }
+
+  /* --- skeleton ---------------------------------------------------------- */
+  .nq-skeleton {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--nq-radius-sm);
+    background-color: var(--nq-surface-sunken);
+  }
+
+  .nq-skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    translate: -100% 0;
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--nq-surface-hover) 45%,
+      var(--nq-surface) 55%,
+      transparent 100%
+    );
+    animation: nq-shimmer 1.4s var(--nq-ease-in-out) infinite;
+  }
+
+  .nq-skeleton[data-static='true']::after {
+    animation: none;
+    content: none;
+  }
+
+  /* --- answer / score feedback ------------------------------------------ */
+  .nq-feedback-correct {
+    animation: nq-pop var(--nq-motion-slow) var(--nq-ease-emphasis) both;
+  }
+
+  .nq-feedback-wrong {
+    animation: nq-shake var(--nq-motion-slow) var(--nq-ease-in-out) both;
+  }
+
+  .nq-score-updated {
+    animation: nq-score-pop var(--nq-motion-slow) var(--nq-ease-emphasis) both;
+  }
+
+  .nq-timer-critical {
+    animation: nq-tick 1s var(--nq-ease-in-out) infinite;
+  }
+
+  .nq-page-enter {
+    animation: nq-page-in var(--nq-motion-page) var(--nq-ease-out) both;
+  }
+
+  .nq-pop-enter {
+    animation: nq-pop-in var(--nq-motion-base) var(--nq-ease-out) both;
+  }
+
+  /* --- overlay motion ---------------------------------------------------- */
+  .nq-scrim-enter {
+    animation: nq-fade-in var(--nq-motion-base) var(--nq-ease-standard) both;
+  }
+
+  .nq-dialog-enter {
+    animation: nq-dialog-in var(--nq-motion-slow) var(--nq-ease-out) both;
+  }
+
+  .nq-sheet-enter-right {
+    animation: nq-sheet-in-right var(--nq-motion-slow) var(--nq-ease-out) both;
+  }
+
+  .nq-sheet-enter-left {
+    animation: nq-sheet-in-left var(--nq-motion-slow) var(--nq-ease-out) both;
+  }
+
+  .nq-toast-enter {
+    animation: nq-toast-in var(--nq-motion-slow) var(--nq-ease-out) both;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   Keyframes
+   Every keyframe ends at the resting state so that `prefers-reduced-motion`
+   (duration 0.01ms + fill both) snaps to the correct visible result.
+   ---------------------------------------------------------------------------- */
+@keyframes nq-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes nq-page-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes nq-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes nq-dialog-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes nq-sheet-in-right {
+  from {
+    opacity: 0.4;
+    transform: translate3d(24px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes nq-sheet-in-left {
+  from {
+    opacity: 0.4;
+    transform: translate3d(-24px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes nq-toast-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes nq-shimmer {
+  from {
+    translate: -100% 0;
+  }
+  to {
+    translate: 100% 0;
+  }
+}
+
+@keyframes nq-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.012);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes nq-shake {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  20% {
+    transform: translate3d(-4px, 0, 0);
+  }
+  40% {
+    transform: translate3d(4px, 0, 0);
+  }
+  60% {
+    transform: translate3d(-3px, 0, 0);
+  }
+  80% {
+    transform: translate3d(2px, 0, 0);
+  }
+}
+
+@keyframes nq-score-pop {
+  0% {
+    transform: translate3d(0, 4px, 0);
+    opacity: 0.5;
+  }
+  60% {
+    transform: translate3d(0, -1px, 0);
+    opacity: 1;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes nq-tick {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.035);
+  }
+}

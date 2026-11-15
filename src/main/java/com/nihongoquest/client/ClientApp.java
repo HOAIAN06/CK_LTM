@@ -90,9 +90,24 @@ public class ClientApp extends Application {
         setStandaloneScene(root, 980, 650);
     }
 
-    public void showMatchmaking(Player player) {
+    public void showHome(Player player) {
         currentPlayer = player;
-        showMatchmaking();
+        showHome();
+    }
+
+    public void showHome() {
+        requirePlayer();
+        try {
+            FXMLLoader loader = loader("/client/home/home.fxml");
+            Parent root = loader.load();
+            com.nihongoquest.client.home.HomeController controller = loader.getController();
+            controller.setSession(this, currentPlayer);
+            showInShell(root, controller, "Trang chủ",
+                    "Chào mừng trở lại, " + currentPlayer.getUsername(),
+                    AuthenticatedRoute.HOME, true, true);
+        } catch (IOException e) {
+            throw screenError("Trang chủ", e);
+        }
     }
 
     public void showProfile() {
@@ -304,6 +319,7 @@ public class ClientApp extends Application {
             return;
         }
         switch (target) {
+            case HOME -> showHome();
             case MATCHMAKING -> showMatchmaking();
             case QUIZ_ROOM -> showQuizRoomMenu();
             case QUIZ_SETS -> showQuizSets();

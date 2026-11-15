@@ -9,7 +9,7 @@
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.nihongoquest.client.quiz.QuizSetListController">
     <center>
-        <VBox spacing="14" styleClass="page-content,page-surface">
+        <VBox spacing="14" styleClass="page-content,page-surface,quiz-sets-page">
             <HBox spacing="10" alignment="CENTER_LEFT">
                 <Button text="Bộ đề của tôi" onAction="#onOwned"/>
                 <Button text="Bộ đề công khai" onAction="#onPublished" styleClass="secondary-button"/>

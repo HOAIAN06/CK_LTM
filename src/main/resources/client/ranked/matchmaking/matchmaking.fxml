@@ -8,7 +8,7 @@
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.nihongoquest.client.ranked.matchmaking.MatchmakingController">
     <center>
-        <VBox alignment="CENTER" spacing="22" styleClass="page-content,page-surface">
+        <VBox alignment="CENTER" spacing="22" styleClass="page-content,page-surface,matchmaking-page">
             <VBox alignment="CENTER" spacing="18" styleClass="search-card">
                 <Label text="THI ĐẤU RANKED 1V1" styleClass="search-title"/>
                 <Label fx:id="usernameLabel" text="Đang tìm cho: Người chơi"

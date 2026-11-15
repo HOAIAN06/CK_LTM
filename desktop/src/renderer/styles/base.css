@@ -1,0 +1,346 @@
+/* ============================================================================
+   NihongoQuest Desktop — Base layer
+
+   LAYERING (important):
+   Tailwind v4 emits `theme` → `base` → `components` → `utilities`. Only rules
+   inside `@layer base` lose to utility classes; **unlayered** rules beat every
+   layer. An earlier revision was fully unlayered "to beat preflight", which
+   also beat `text-nq-3xl`, `bg-nq-primary` and `px-4` — headings collapsed to
+   body size and buttons rendered transparent.
+
+   Rules of this file:
+   - resets / document sizing / scrollbars / selection / CJK  → @layer base
+   - focus rings (must beat `shadow-*` utilities)             → @layer utilities
+   - scroll & skip-link behaviours                            → @layer components
+   ========================================================================== */
+
+@layer base {
+  /* --------------------------------------------------------------------------
+     1. Reset
+     -------------------------------------------------------------------------- */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    height: 100%;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  figure,
+  blockquote,
+  dl,
+  dd,
+  ol,
+  ul,
+  fieldset {
+    margin: 0;
+  }
+
+  ol,
+  ul {
+    padding: 0;
+    list-style: none;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+
+  img,
+  picture,
+  svg,
+  video,
+  canvas {
+    display: block;
+    max-width: 100%;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+    letter-spacing: inherit;
+  }
+
+  button {
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  /* Pointer focus keeps no ring; the visible ring is defined in
+     `@layer utilities` (`:focus-visible`), which outranks this reset. */
+  :focus {
+    outline: none;
+  }
+
+  table {
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+
+  hr {
+    border: 0;
+    border-top: 1px solid var(--nq-border-subtle);
+    margin: 0;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+
+  /* --------------------------------------------------------------------------
+     2. Root / frameless window sizing
+     The BrowserWindow is frameless. The document must never scroll: every
+     region manages its own overflow so the drag region and sticky bars stay.
+     -------------------------------------------------------------------------- */
+  body {
+    height: 100%;
+    height: 100dvh;
+    overflow: hidden;
+    background-color: var(--nq-bg);
+    color: var(--nq-text);
+    font-family: var(--nq-font-sans);
+    font-size: var(--nq-fs-md);
+    line-height: var(--nq-leading-normal);
+    font-synthesis-weight: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overscroll-behavior: none;
+
+    /* Desktop app, not a document: chrome text is not selectable. */
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  #root {
+    height: 100%;
+    height: 100dvh;
+    isolation: isolate;
+  }
+
+  /* Content a user may legitimately want to copy (PINs, answers, prose). */
+  input,
+  textarea,
+  [contenteditable='true'],
+  .nq-selectable,
+  .nq-prose {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  /* --------------------------------------------------------------------------
+     3. Window drag regions
+     -------------------------------------------------------------------------- */
+  .nq-drag {
+    -webkit-app-region: drag;
+    app-region: drag;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .nq-no-drag,
+  .nq-drag :is(button, a, input, select, textarea, [role='button'], [tabindex]) {
+    -webkit-app-region: no-drag;
+    app-region: no-drag;
+  }
+
+  /* --------------------------------------------------------------------------
+     4. Scrollbars — thin, neutral, only where content actually scrolls
+     -------------------------------------------------------------------------- */
+  .nq-scroll,
+  .nq-scroll-x {
+    scrollbar-width: thin;
+    scrollbar-color: var(--nq-border-strong) transparent;
+    overscroll-behavior: contain;
+  }
+
+  .nq-scroll::-webkit-scrollbar,
+  .nq-scroll-x::-webkit-scrollbar,
+  textarea::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  .nq-scroll::-webkit-scrollbar-track,
+  .nq-scroll-x::-webkit-scrollbar-track,
+  textarea::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .nq-scroll::-webkit-scrollbar-thumb,
+  .nq-scroll-x::-webkit-scrollbar-thumb,
+  textarea::-webkit-scrollbar-thumb {
+    background-color: var(--nq-border-strong);
+    border: 3px solid transparent;
+    border-radius: var(--nq-radius-full);
+    background-clip: content-box;
+  }
+
+  .nq-scroll::-webkit-scrollbar-thumb:hover,
+  .nq-scroll-x::-webkit-scrollbar-thumb:hover,
+  textarea::-webkit-scrollbar-thumb:hover {
+    background-color: var(--nq-text-tertiary);
+    background-clip: content-box;
+  }
+
+  .nq-scroll::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* --------------------------------------------------------------------------
+     5. Selection & caret
+     -------------------------------------------------------------------------- */
+  ::selection {
+    background-color: var(--nq-primary-soft);
+    color: var(--nq-primary-soft-text);
+  }
+
+  input,
+  textarea {
+    caret-color: var(--nq-primary);
+  }
+
+  /* --------------------------------------------------------------------------
+     6. Japanese / CJK rendering
+     `:where()` keeps specificity at 0 so utility classes can still win.
+     -------------------------------------------------------------------------- */
+  :where([lang='ja'], [lang^='ja-'], .nq-jp) {
+    font-family: var(--nq-font-jp);
+    line-height: var(--nq-leading-relaxed);
+    letter-spacing: 0.01em;
+    font-feature-settings: 'palt' 1;
+    text-spacing-trim: space-all;
+    word-break: normal;
+    overflow-wrap: anywhere;
+  }
+
+  :where([lang='ja'], .nq-jp) :where(h1, h2, h3, h4) {
+    line-height: var(--nq-leading-snug);
+  }
+
+  /* --------------------------------------------------------------------------
+     7. Motion — honour the OS "reduce motion" setting everywhere
+     The token override lives in tokens.css (unlayered, because it has to beat
+     the unlayered token declarations there). This block is the kill-switch:
+     `!important` reverses layer order, so it still beats every utility.
+     -------------------------------------------------------------------------- */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      animation-delay: 0ms !important;
+      transition-duration: 0.01ms !important;
+      transition-delay: 0ms !important;
+      scroll-behavior: auto !important;
+    }
+
+    /* Movement is removed; opacity cross-fades remain the only transition. */
+    .nq-motion-lift:hover {
+      transform: none !important;
+    }
+  }
+
+  /* --------------------------------------------------------------------------
+     8. Accessibility helpers
+     -------------------------------------------------------------------------- */
+  .nq-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
+@layer components {
+  /* Scroll behaviour belongs to the component layer: a screen may still need
+     `overflow-hidden`/`overflow-visible` from utilities to win. */
+  .nq-scroll {
+    overflow: auto;
+  }
+
+  .nq-scroll-x {
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  /* Skip link: visible only when focused. */
+  .nq-skip-link {
+    position: absolute;
+    top: var(--nq-space-2);
+    left: var(--nq-space-2);
+    z-index: var(--nq-z-tooltip);
+    padding: var(--nq-space-2) var(--nq-space-4);
+    border-radius: var(--nq-radius-md);
+    background-color: var(--nq-surface-raised);
+    color: var(--nq-text);
+    box-shadow: var(--nq-shadow-md);
+    transform: translateY(-200%);
+    transition: transform var(--nq-motion-fast) var(--nq-ease-standard);
+  }
+
+  .nq-skip-link:focus-visible {
+    transform: translateY(0);
+  }
+}
+
+@layer utilities {
+  /* Focus is always visible for keyboard users, never for pointer users.
+     `.nq-focusable:focus-visible` lives in the utilities layer so it can beat a
+     `shadow-*` utility on the same element (buttons carry `shadow-nq-sm`); it is
+     also more specific than any single utility, so it wins on both counts.
+     The pointer-focus reset stays in `@layer base` so `focus:outline-*` from a
+     screen can still replace the ring. */
+  :focus-visible {
+    outline: var(--nq-focus-ring-width) solid var(--nq-focus-ring);
+    outline-offset: var(--nq-focus-ring-offset);
+    border-radius: inherit;
+  }
+
+  /* Ring drawn with a box-shadow for controls whose outline would be clipped by
+     an overflow container (buttons, segmented items, list rows). */
+  .nq-focusable {
+    outline: none;
+  }
+
+  .nq-focusable:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 var(--nq-focus-ring-width) var(--nq-bg),
+      0 0 0 calc(var(--nq-focus-ring-width) * 2) var(--nq-focus-ring);
+  }
+}

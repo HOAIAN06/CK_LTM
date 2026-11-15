@@ -9,7 +9,7 @@
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.nihongoquest.client.leaderboard.LeaderboardController">
     <center>
-        <VBox spacing="14" styleClass="page-content,page-surface">
+        <VBox spacing="14" styleClass="page-content,page-surface,leaderboard-page">
             <HBox alignment="CENTER_RIGHT" styleClass="page-action-row">
                 <Button text="LÀM MỚI" onAction="#onRefresh" styleClass="primary-button"/>
             </HBox>

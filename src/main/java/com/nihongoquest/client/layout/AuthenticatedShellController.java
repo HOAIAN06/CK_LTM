@@ -23,6 +23,7 @@ public class AuthenticatedShellController {
     @FXML private StackPane contentHost;
     @FXML private Label pageTitleLabel;
     @FXML private Label pageSubtitleLabel;
+    @FXML private Button homeButton;
     @FXML private Button matchmakingButton;
     @FXML private Button quizRoomButton;
     @FXML private Button quizSetsButton;
@@ -39,6 +40,7 @@ public class AuthenticatedShellController {
     @FXML
     private void initialize() {
         applyNavigationIcons();
+        routeButtons.put(AuthenticatedRoute.HOME, homeButton);
         routeButtons.put(AuthenticatedRoute.MATCHMAKING, matchmakingButton);
         routeButtons.put(AuthenticatedRoute.QUIZ_ROOM, quizRoomButton);
         routeButtons.put(AuthenticatedRoute.QUIZ_SETS, quizSetsButton);
@@ -49,6 +51,7 @@ public class AuthenticatedShellController {
     }
 
     private void applyNavigationIcons() {
+        homeButton.setGraphic(Icons.icon(Icons.HOME));
         matchmakingButton.setGraphic(Icons.icon(Icons.SWORDS));
         quizRoomButton.setGraphic(Icons.icon(Icons.GAMEPAD));
         quizSetsButton.setGraphic(Icons.icon(Icons.LAYERS));
@@ -99,6 +102,7 @@ public class AuthenticatedShellController {
         }
     }
 
+    @FXML private void onHome() { app.navigateFromSidebar(AuthenticatedRoute.HOME); }
     @FXML private void onMatchmaking() { app.navigateFromSidebar(AuthenticatedRoute.MATCHMAKING); }
     @FXML private void onQuizRoom() { app.navigateFromSidebar(AuthenticatedRoute.QUIZ_ROOM); }
     @FXML private void onQuizSets() { app.navigateFromSidebar(AuthenticatedRoute.QUIZ_SETS); }

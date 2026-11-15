@@ -49,6 +49,31 @@ cho phép Java/Maven ở mạng Private. Log runtime nằm trong `logs/server.lo
 
 Database dùng các script trong `sql/`. Cấu hình thật không commit vào Git. Chi tiết kiến trúc, protocol, camera, UI và kiểm thử nằm trong thư mục `docs/`.
 
+## Client desktop (Electron + React + TypeScript)
+
+Từ 2026-11-15 có thêm client desktop hiện đại trong `desktop/`. Đây là client **bổ sung**:
+Java server, PostgreSQL và client JavaFX ở trên vẫn giữ nguyên và chạy độc lập.
+
+```powershell
+cd desktop
+npm install
+npm run dev          # mở cửa sổ Electron, kết nối localhost:5000
+npm run typecheck
+npm test
+npm run build
+npm run package:win  # NSIS installer → desktop/dist
+```
+
+- Kiến trúc: main process giữ kết nối TCP JSON-line; renderer chỉ gọi `window.nq` qua IPC
+  (`contextIsolation`, `sandbox`, không `nodeIntegration`). Server vẫn quyết định đáp án,
+  điểm, timer và trạng thái phòng.
+- Tài liệu: `docs/desktop/contracts.md`, `architecture.md`, `protocol.md`,
+  `design-system.md`, `proctoring.md`, `qa-report.md`, `visual-qa.md`.
+- Trạng thái từng màn hình: `TASKS.md` mục **P5**.
+- Lưu ý môi trường: nếu repo nằm trên volume exFAT (Linux), `npm install` trong `desktop/`
+  sẽ lỗi `EPERM` vì không tạo được symlink; dùng `desktop/scripts/verify-linux.sh`
+  (xem `docs/desktop/contracts.md` §7.1). Trên Windows không gặp vấn đề này.
+
 Khi chạy từ source, client và server ghi log xoay vòng trong `logs/client.log*` và
 `logs/server.log*`. Bản đóng gói ghi tại `%USERPROFILE%\.nihongoquest\logs`.
 
@@ -62,7 +87,7 @@ Khi chạy từ source, client và server ghi log xoay vòng trong `logs/client.
 - P4 UI overhaul: Phase 0 xong (Git workflow + UI UX Pro Max); Phase 1 xong design foundation
   **Sakura Arcade** (token, font Nunito/Be Vietnam Pro, icon Lucide, shell/sidebar/header)
   theo D-017/D-018. Phase 2–4 sẽ redesign từng màn hình.
-- Baseline 2026-11-15: `mvnw.cmd clean test` trên JDK 21 đạt 132 test, không có failure/error/skip.
+- Baseline 2026-11-15: `mvnw.cmd clean test` trên JDK 21 đạt 135 test, không có failure/error/skip.
 
 ## Tài liệu điều khiển dự án
 

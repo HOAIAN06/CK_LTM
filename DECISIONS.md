@@ -1,5 +1,49 @@
 # DECISIONS — Nhật ký quyết định
 
+## D-023 — Kiểm chứng toolchain desktop ngoài repo (exFAT không hỗ trợ symlink)
+
+- Trạng thái: đã quyết định và triển khai 2026-11-15.
+- Bối cảnh: repo nằm trên volume exFAT `/run/media/...`; exFAT không hỗ trợ symlink/hardlink
+  nên `npm install` trong `desktop/` lỗi `EPERM: symlink node_modules/.bin/...`.
+- Quyết định: giữ nguyên vị trí source; cài dependency một lần tại `/tmp/opencode/nq-verify`
+  (ext4) và dùng `desktop/scripts/verify-linux.sh` để rsync `desktop/` sang sandbox rồi chạy
+  `tsc`/`vitest`/`vite build`. Không commit `node_modules/`, `out/`, `dist/`.
+- Hệ quả: Windows vẫn dùng `npm install` + `npm run typecheck|test|build` bình thường;
+  script chỉ là công cụ kiểm chứng trên máy Linux hiện tại.
+
+## D-022 — Electron main sở hữu TCP transport, renderer chỉ thấy IPC có kiểu
+
+- Trạng thái: đã quyết định và triển khai nền 2026-11-15.
+- Lý do: renderer có `sandbox: true`, `contextIsolation: true`, không `nodeIntegration`;
+  renderer không thể và không được mở socket, đọc file hay chạm database.
+- Quyết định: `node:net` chỉ tồn tại trong `desktop/src/main/net`; preload expose
+  `window.nq` gồm `connect/disconnect/send/getStatus/onEvent`; main là nguồn sự thật về
+  trạng thái kết nối và phát `nq:event` (`message`/`status`/`transport-error`).
+- Hệ quả: mọi payload đi qua IPC phải được validate; log không bao giờ chứa payload credential.
+  Protocol Java giữ nguyên framing JSON-line UTF-8.
+
+## D-021 — Electron desktop client là client bổ sung, không thay thế JavaFX
+
+- Trạng thái: đã quyết định và triển khai nền 2026-11-15.
+- Lý do: yêu cầu chuyển UI sang desktop hiện đại nhưng vẫn phải giữ JavaFX và Java server
+  chạy độc lập để bảo vệ đồ án và làm fallback demo.
+- Quyết định: thêm `desktop/` (Electron + React + TypeScript) như một client thứ hai nói
+  cùng TCP protocol; không sửa `src/main/java`, FXML, `pom.xml` hay `sql/`.
+- Hệ quả: server và JavaFX vẫn là baseline kiểm thử (135 test). Hai client dùng chung
+  protocol; mọi thay đổi protocol phải cập nhật cả `Payloads.java` và mirror TypeScript.
+
+## D-020 — Chuyển UI từ Sakura Arcade sang Calm Study
+
+- Trạng thái: đã quyết định và triển khai 2026-11-15.
+- Lý do: Sakura/Coral/Cyan cùng xuất hiện trên nhiều card và gradient khiến màn hình bị
+  neon, rối mắt; các màn hình cũ chưa cùng nhịp bố cục.
+- Quyết định: dùng nền giấy `#F7F7F2`, teal sâu `#315A63`, sage `#7A9E7E`,
+  terracotta tiết chế `#C98B72`, text `#24323A`; không gradient và không dùng màu trang trí
+  cạnh tranh trong cùng một màn hình.
+- Phạm vi: client shared theme, server dashboard, đấu hạng, phòng quiz/lobby/battle,
+  quản lý bộ đề/editor và bảng xếp hạng. Giữ nguyên `fx:id`, controller, protocol,
+  server authority, camera/proctoring và không thêm âm thanh.
+
 ## D-001 — Giữ srccode.md
 
 - Trạng thái: đã quyết định
@@ -168,3 +212,18 @@
 - Hệ quả: font/icon hoạt động nhất quán trên Windows/Linux, jar chỉ tăng khoảng 800 KB font.
   Khi thêm icon mới phải giữ license Lucide trong `src/main/resources/licenses/Lucide-ISC.txt`
   và ưu tiên icon stroke 24×24 để đồng bộ theme.
+
+## D-019 — Home là màn hình đích sau đăng nhập
+
+- Trạng thái: đã quyết định và triển khai 2026-11-15 (Phase 2).
+- Bối cảnh: trước Phase 2, `LOGIN_OK` đưa thẳng người chơi vào màn hình Tìm trận 1v1 và
+  `home.fxml` không có route trong sidebar, nên không có nơi tổng hợp tiến độ học tập.
+- Quyết định:
+  - Thêm `AuthenticatedRoute.HOME`, nút "Trang chủ" đầu sidebar và `ClientApp.showHome()`
+    (kèm overload `showHome(Player)` khi vừa đăng nhập).
+  - `LOGIN_OK` điều hướng về Home; Home hiển thị số liệu thật từ `Player` mà server trả về
+    (thắng, độ chính xác, tổng điểm) và các lối vào Ranked 1v1 / Phòng Quiz / Bộ đề / Lịch sử.
+  - Rời phòng Quiz (lobby hoặc battle) và phòng bị hủy cũng quay về Home thay vì Matchmaking.
+- Hệ quả: `ClientApp.showMatchmaking(Player)` bị xóa để tránh hai đường vào đầu tiên; mọi
+  điều hướng chính đi qua `navigateFromSidebar`. Home chỉ đọc dữ liệu đã có, không gọi mạng,
+  không tính điểm và không truy cập database.

@@ -12,6 +12,21 @@ import javafx.scene.shape.SVGPath;
  */
 public final class Icons {
 
+    public static final String HOME =
+            "M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9"
+                    + "a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8";
+    public static final String PLUS =
+            "M5 12h14M12 5v14";
+    public static final String KEY =
+            "M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1"
+                    + "a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0"
+                    + " 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4zM16.5 7.5h.01";
+    public static final String COPY =
+            "M8 8h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2z"
+                    + "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h12c1.1 0 2 .9 2 2";
+    public static final String CAMERA =
+            "M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9"
+                    + "a2 2 0 0 0-2-2h-3l-2.5-3zM12 10a3 3 0 1 0 0 6 3 3 0 0 0 0-6";
     public static final String SWORDS =
             "M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2M5 14l6 6M2 22l3-3";
     public static final String GAMEPAD =

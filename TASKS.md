@@ -73,7 +73,86 @@
 - [x] Xác nhận giữ chính sách không âm thanh (D-015); pháo hoa/confetti chỉ là hiệu ứng hình ảnh.
 - [x] Chốt hướng thị giác **B. Sakura Arcade**; bundle Nunito + Be Vietnam Pro; scope client + server dashboard (D-017).
 - [x] Phase 1: design tokens Sakura Arcade, font, icon, shell và component cơ bản.
-- [ ] Phase 2: Login, Home, Quiz Room, Lobby, Battle.
+- [x] Phase 2: Login, Home (màn hình đích sau đăng nhập — D-019), Quiz Room, Lobby, Battle.
 - [ ] Phase 3: Ranked, Matchmaking, Result và celebration overlay.
 - [ ] Phase 4: Leaderboard, Profile, Friends, History, Quiz sets, Proctor, Server dashboard.
 - [ ] Phase 5: responsive/DPI, accessibility, Windows QA và cập nhật tài liệu.
+
+## P4.1 — Calm Study visual correction (2026-11-15)
+
+- [x] Rà soát theo UI UX Pro Max: thay palette neon Sakura Arcade bằng Calm Study.
+- [x] Token hóa lại màu client/dashboard; bỏ gradient, giảm shadow và bo góc.
+- [x] Đồng bộ đấu hạng, phòng quiz/lobby/battle, quản lý bộ đề/editor và xếp hạng.
+- [ ] Kiểm tra trực quan trên Windows 10/11 ở 1024×680, 1280×720 và DPI 125%.
+
+## P5 — Desktop client (Electron + React + TypeScript)
+
+Nhánh `feature/electron-desktop`. Không sửa Java/JavaFX; server giữ quyền quyết định.
+
+### Phase 0 — Audit
+
+- [x] Audit kiến trúc, protocol (71 `MessageType`), 17 FXML, dependency và rủi ro.
+- [x] Xác nhận baseline JavaFX 135 test pass trên JDK 21.
+- [x] Ghi quyết định D-021/D-022/D-023 và `docs/desktop/contracts.md`.
+
+### Phase 1–2 — Foundation
+
+- [x] Scaffold `desktop/` (electron-vite 6, Vite 7, React 19, TS 5.9, Tailwind 4, Vitest 5).
+- [x] Quy tắc sở hữu file: orchestrator giữ `package.json` + config; agent giữ thư mục riêng.
+- [x] `architecture`: IPC contract, main process, preload, CSP/permission.
+- [x] `protocol`: mirror 71 `MessageType`, payload types, codec, framing, TCP control channel + test.
+- [x] `ui-designer`: design tokens light/dark, primitives, shell, command palette, preview.
+- [x] Xác minh tích hợp: `typecheck` (node+web) → `vitest` **144 pass** → `electron-vite build` OK.
+- [x] Kiểm tra trực quan bằng headless Chromium: shell + gallery ở light/dark/1024.
+- [x] Sửa lỗi cascade `base.css` không nằm trong `@layer` (đè toàn bộ utility Tailwind).
+
+### Phase 3 — Visual redesign
+
+- [x] Login dựng trên design system, flow thật: connect → LOGIN/REGISTER → LOGIN_OK/FAIL,
+      validate username 3–20 / password ≥ 4, cấu hình server, watchdog 15 s.
+- [x] Home dùng dữ liệu thật (`PlayerStats`, `MATCH_HISTORY_GET`), không số liệu ước lượng.
+- [x] Shell/navigation thật: sidebar 8 mục, theme provider light/dark/system, error boundary,
+      connection store, route guard, trang placeholder cho màn chưa làm.
+- [x] Xác minh trực quan bằng Chromium headless (login/home light+dark, 1440/1024).
+- [x] Sửa `AppShell` không giới hạn chiều cao → footer sidebar bị đẩy khỏi màn hình
+      (đo lại: aside = viewport, logout trong màn hình ở 1440/1280/1024).
+- [x] Chừa vùng native window controls trên title bar (`--nq-titlebar-controls-width` 138px).
+
+### Phase 4 — Feature migration
+
+- [x] Ranked: matchmaking (180/300), battle reducer (attempt/sessionId guards, timeout locks
+      without deciding outcome), result WIN/LOSE/DRAW; 60 test riêng, server giữ quyền chấm điểm.
+- [x] Quiz Room: menu (tạo/join PIN), lobby (start không phụ thuộc camera), battle reducer riêng,
+      leaderboard realtime, finish, reconnect qua `QUIZ_REJOINED`.
+- [x] Quiz sets: danh sách OWN/PUBLISHED, editor (validate 4 lựa chọn/1 đáp án, publish ≥3 câu),
+      guard thay đổi chưa lưu.
+- [x] Leaderboard (top 10, highlight bản thân), Profile (read-only), Friends (search, request,
+      presence, invite Ranked/Quiz, modal lời mời 60 s), History (lọc kết quả).
+
+### Phase 5 — Camera và kiểm thử
+
+- [x] Codec media (handshake, ACK 0–5, frame 0x10/0x11, VisionMetadata) + golden vector test.
+- [x] Publisher/subscriber TCP trong main, latest-frame 3 tầng, backpressure, không retry vô hạn.
+- [x] IPC `nq:media:*` + preload fail-closed + validate sender/size; nối vào `index.ts`.
+- [x] Renderer: `getUserMedia` 640×480@15, trạng thái DENIED/NOT_FOUND/FAILED, nút thử lại,
+      camera lỗi **không** chặn quiz; dừng track khi unmount, tạm dừng khi tab ẩn.
+- [ ] Chạy với webcam thật + relay Java trên Windows/LAN (không thể làm ở môi trường này).
+
+### QA
+
+- [x] Review nền tảng + auth: 0 blocker; 71/71 `MessageType`, 55/55 record khớp field;
+      1 HIGH (reload khi đã đăng nhập → dead-end `/login`) đã sửa menu + đang bổ sung nút
+      "Ngắt kết nối"; MEDIUM home timeout; LOW doc drift đã sửa `contracts.md`/`protocol.md`.
+- [x] QA lại F-01: `/login` có banner + nút "Ngắt kết nối", `ALREADY_AUTHENTICATED` tự ngắt phiên.
+- [x] Proctoring: consent, status report, event APP_FOCUS_LOST/APP_MINIMIZED/CAMERA_BLOCKED
+      (không có AI nên không phát 4 loại cần vision), dashboard host `/proctor/:pin`.
+- [x] Demo fixture `?demo=1&screen=…` cho 9 màn; production 0 rò rỉ (grep 0 chunk/chuỗi).
+- [x] QA độc lập cuối cùng: 7/7 PASS; audit 12/12 subscriber không nuốt message; F-07/F-08/F-09 đã sửa.
+- [ ] Kiểm tra thủ công trên Windows 10/11 (Electron thật, webcam, DPI, firewall 5001).
+
+### Phase 6 — Packaging
+
+- [x] `electron-builder --win --dir` chạy được: `dist/win-unpacked/NihongoQuest.exe` +
+      `resources/app.asar` 54 MB chứa `out/main|preload|renderer`.
+- [ ] NSIS installer + icon thương hiệu (cần Windows/wine và asset icon).
+- [x] Hướng dẫn chạy/đóng gói trong `desktop/README.md` và `docs/desktop/`.

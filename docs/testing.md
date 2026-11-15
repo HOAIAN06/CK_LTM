@@ -38,8 +38,10 @@ FPS từng stage, `avgMs`, `maxMs`, `dropped`, độ mượt UI và false positi
 
 ## Baseline gần nhất
 
-- 2026-11-15 Phase 1 UI: **132 test pass** trên JDK 21 (`mvnw -o clean test` với wrapper LF tạm),
-  0 failure/error/skip, `BUILD SUCCESS`. Thêm 8 test cho theme Sakura, font, icon và dashboard.
+- 2026-11-15 Phase 2 UI: **135 test pass** trên JDK 21 (`mvnw -o clean test` với wrapper LF tạm),
+  0 failure/error/skip, `BUILD SUCCESS`. Thêm 3 test cấu trúc cho shell Home và 5 màn hình
+  Phase 2 (Login, Home, Quiz Room, Lobby, Battle) cùng selector CSS mới.
+- 2026-11-15 Phase 1 UI: 132 test pass. Thêm 8 test cho theme Sakura, font, icon và dashboard.
 - 2026-11-15 Phase 0/tài liệu: 124 test pass (mốc trước Phase 1).
 - 2026-11-03 P2: 120 test pass trên JDK 21 (mốc lịch sử).
 - Có test policy lobby cho mọi camera state, server start không phụ thuộc camera và lifecycle timeout/stale callback bằng fake camera.

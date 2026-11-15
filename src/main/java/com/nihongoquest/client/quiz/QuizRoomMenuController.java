@@ -4,6 +4,7 @@ import com.nihongoquest.client.ClientApp;
 import com.nihongoquest.client.network.GameClient;
 import com.nihongoquest.common.protocol.Message;
 import com.nihongoquest.common.protocol.Payloads;
+import com.nihongoquest.ui.Icons;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -15,6 +16,8 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
+import javafx.scene.layout.StackPane;
 
 /** Màn hình chọn bộ đề để tạo phòng hoặc nhập PIN để tham gia. */
 public class QuizRoomMenuController {
@@ -26,12 +29,18 @@ public class QuizRoomMenuController {
     @FXML private Label statusLabel;
     @FXML private Button createButton;
     @FXML private Button joinButton;
+    @FXML private StackPane createIcon;
+    @FXML private StackPane joinIcon;
 
     private ClientApp app;
     private GameClient gameClient;
 
     @FXML
     private void initialize() {
+        createIcon.getChildren().setAll(Icons.icon(Icons.PLUS));
+        joinIcon.getChildren().setAll(Icons.icon(Icons.KEY));
+        pinField.setTextFormatter(new TextFormatter<>(change ->
+                change.getControlNewText().matches("\\d{0,6}") ? change : null));
         durationSpinner.setValueFactory(
                 new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 15, 3));
         quizSetCombo.setCellFactory(ignored -> summaryCell());

@@ -1,34 +1,34 @@
 /* ==========================================================================
    NihongoQuest — Server Dashboard
-   Dùng CHUNG Design Tokens với client (client/shared/style.css) — Sakura
-   Arcade: Indigo nhận diện, Sakura nhấn, nền sáng, heading Nunito.
+   Dùng CHUNG Design Tokens với client (client/shared/style.css) — Calm Study:
+   teal sâu, sage tiết chế, nền giấy sáng, heading Nunito.
    ========================================================================== */
 .dashboard-root {
-    -ndq-primary: #4F46E5;
-    -ndq-primary-dark: #3730A3;
-    -ndq-primary-hover: #4338CA;
-    -ndq-accent: #06B6D4;
-    -ndq-accent-text: #0E7490;
-    -ndq-sakura: #F472B6;
-    -ndq-sakura-deep: #DB2777;
-    -ndq-sakura-soft: #FCE7F3;
-    -ndq-sakura-border: #FBCFE8;
-    -ndq-bg: #FFF7FA;
+    -ndq-primary: #315A63;
+    -ndq-primary-dark: #24444B;
+    -ndq-primary-hover: #3D6D75;
+    -ndq-accent: #7A9E7E;
+    -ndq-accent-text: #55765A;
+    -ndq-sakura: #C98B72;
+    -ndq-sakura-deep: #A96852;
+    -ndq-sakura-soft: #F3E9E3;
+    -ndq-sakura-border: #DFC4B8;
+    -ndq-bg: #F7F7F2;
     -ndq-surface: #FFFFFF;
-    -ndq-text: #1E1B4B;
-    -ndq-text-secondary: #64748B;
-    -ndq-text-muted: #94A3B8;
-    -ndq-border: #FBCFE8;
-    -ndq-success: #16A34A;
-    -ndq-warning: #D97706;
-    -ndq-error: #DC2626;
-    -ndq-primary-soft: #EEF2FF;
-    -ndq-primary-border: #C7D2FE;
-    -ndq-neutral-soft: #F8FAFC;
-    -ndq-neutral-border: #E2E8F0;
-    -ndq-surface-alt: #FFFBFD;
-    -ndq-neutral-dark: #475569;
-    -ndq-log-bg: #1E1B4B;
+    -ndq-text: #24323A;
+    -ndq-text-secondary: #607078;
+    -ndq-text-muted: #89969A;
+    -ndq-border: #D9E2E0;
+    -ndq-success: #55765A;
+    -ndq-warning: #A96852;
+    -ndq-error: #B94A48;
+    -ndq-primary-soft: #E8F0EF;
+    -ndq-primary-border: #B8CECA;
+    -ndq-neutral-soft: #F1F3F0;
+    -ndq-neutral-border: #D9E2E0;
+    -ndq-surface-alt: #FBFBF8;
+    -ndq-neutral-dark: #607078;
+    -ndq-log-bg: #24323A;
     -ndq-log-text: #E2E8F0;
     -ndq-error-text: #B91C1C;
 
@@ -45,7 +45,7 @@
 }
 
 .header {
-    -fx-background-color: linear-gradient(to right, -ndq-primary-dark, -ndq-primary);
+    -fx-background-color: -ndq-primary-dark;
     -fx-border-color: transparent transparent -ndq-sakura transparent;
     -fx-border-width: 0 0 4px 0;
 }
