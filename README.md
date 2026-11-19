@@ -91,6 +91,7 @@ Khi chạy từ source, client và server ghi log xoay vòng trong `logs/client.
 
 ## Tài liệu điều khiển dự án
 
+- [docs/README.md](docs/README.md): mục lục trung tâm, phân loại tài liệu Frontend/Backend/Toàn hệ thống và mô tả rule/skill.
 - [AGENTS.md](AGENTS.md): quy tắc cho AI/người phát triển.
 - [PROGRESS.md](PROGRESS.md): trạng thái sau mỗi phiên AI.
 - [TASKS.md](TASKS.md): backlog và tiêu chí hoàn thành.

@@ -63,6 +63,8 @@
 
 - [x] Viết lại `docs/protocol.md`, thêm `docs/ranked.md` và cập nhật `docs/architecture.md`
   theo code ngày 2026-11-14; đối chiếu baseline **124 test**.
+- [x] Tạo mục lục Markdown tập trung, phân loại tài liệu Frontend / Backend / Toàn hệ thống;
+  mô tả rule, skill local, nguồn sự thật và tài liệu lịch sử.
 - [ ] Viết test và kịch bản demo bảo vệ đồ án.
 - [x] Cập nhật README, PROGRESS, TASKS và AI_LOG sau phiên tài liệu.
 

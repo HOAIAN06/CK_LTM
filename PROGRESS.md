@@ -1,5 +1,20 @@
 # PROGRESS — Trạng thái dự án
 
+## Cập nhật 2026-11-16 — Mục lục tài liệu
+
+- Đã rà soát toàn bộ Markdown được Git quản lý, rule trong `AGENTS.md`, cấu hình agent và
+  các skill local bị ignore trong `.opencode/skills/`.
+- Thêm `docs/README.md` làm mục lục trung tâm theo ba nhóm Frontend, Backend và Toàn hệ thống;
+  mỗi file có mô tả mục đích và nhãn hiện hành/tham chiếu/lịch sử/cần đồng bộ/lưu trữ.
+- Ghi rõ source of truth, lộ trình đọc theo loại task, trạng thái `.cursor/rules/`, danh sách
+  skill local và cảnh báo không dùng `srccode.md` làm nguồn sự thật.
+- Cập nhật liên kết trong `README.md` và đánh dấu task tài liệu hoàn tất trong `TASKS.md`.
+- Chưa làm: chưa sửa nội dung các tài liệu bị đánh dấu lệch trạng thái; task này chỉ lập bản đồ.
+- Runtime log đã kiểm tra: `logs/client.log.0` và `logs/server.log.0`; không có lỗi mới liên quan
+  task tài liệu. Log cũ còn ghi camera timeout và lỗi kết nối database từ các phiên trước.
+- Kiểm thử: không chạy Maven/npm vì chỉ thay đổi Markdown; đã kiểm tra link và inventory bằng
+  script cục bộ.
+
 ## Cập nhật gần nhất
 
 - Ngày: 2026-11-15
